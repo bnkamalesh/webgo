@@ -29,7 +29,7 @@ func (ds *DataStore) getSession() *mgo.Session {
 // ===
 
 // Get appropriate MongoDB collection
-func (ds *DataStore) getSessionCollection(collection string) (*mgo.Session, *mgo.Collection) {
+func (ds *DataStore) GetSessionCollection(collection string) (*mgo.Session, *mgo.Collection) {
 	s := ds.getSession()
 	c := s.DB(ds.DbName).C(collection)
 
@@ -39,14 +39,25 @@ func (ds *DataStore) getSessionCollection(collection string) (*mgo.Session, *mgo
 // ===
 
 // Do a MongoDB Get
-func (ds *DataStore) Get(collection string, conditions interface{}) ([]bson.M, error) {
-	var data []bson.M
+func (ds *DataStore) Get(collection string, conditions interface{}, resultStruct interface{}) ([]bson.M, error) {
 
-	s, c := ds.getSessionCollection(collection)
+	s, c := ds.GetSessionCollection(collection)
 	defer s.Close()
 
+	if resultStruct != nil {
+		err := c.Find(conditions).All(resultStruct)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	var data []bson.M
 	err := c.Find(conditions).All(&data)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return data, nil
@@ -55,12 +66,20 @@ func (ds *DataStore) Get(collection string, conditions interface{}) ([]bson.M, e
 // ===
 
 // Do a MongoDB GetAll
-func (ds *DataStore) GetAll(collection string) ([]bson.M, error) {
-	var data []bson.M
+func (ds *DataStore) GetAll(collection string, resultStruct interface{}) ([]bson.M, error) {
 
-	s, c := ds.getSessionCollection(collection)
+	s, c := ds.GetSessionCollection(collection)
 	defer s.Close()
 
+	if resultStruct != nil {
+		err := c.Find(nil).All(resultStruct)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	var data []bson.M
 	err := c.Find(nil).All(&data)
 	if err != nil {
 		return nil, err
@@ -71,12 +90,20 @@ func (ds *DataStore) GetAll(collection string) ([]bson.M, error) {
 // ===
 
 // Do a MongoDB GetOne
-func (ds *DataStore) GetOne(collection string, conditions interface{}) (bson.M, error) {
-	var data bson.M
+func (ds *DataStore) GetOne(collection string, conditions interface{}, resultStruct interface{}) (bson.M, error) {
 
-	s, c := ds.getSessionCollection(collection)
+	s, c := ds.GetSessionCollection(collection)
 	defer s.Close()
 
+	if resultStruct != nil {
+		err := c.Find(conditions).One(resultStruct)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	var data bson.M
 	err := c.Find(conditions).One(&data)
 	if err != nil {
 		return nil, err
@@ -88,7 +115,7 @@ func (ds *DataStore) GetOne(collection string, conditions interface{}) (bson.M, 
 
 // Do a MongoDB Save
 func (ds *DataStore) Save(collection string, data interface{}) error {
-	s, c := ds.getSessionCollection(collection)
+	s, c := ds.GetSessionCollection(collection)
 	defer s.Close()
 
 	err := c.Insert(data)
@@ -103,7 +130,7 @@ func (ds *DataStore) Save(collection string, data interface{}) error {
 
 // Do a MongoDB Update - multiple records
 func (ds *DataStore) Update(collection string, condition, updateData interface{}) error {
-	s, c := ds.getSessionCollection(collection)
+	s, c := ds.GetSessionCollection(collection)
 	defer s.Close()
 
 	err := c.Update(condition, updateData)
@@ -118,7 +145,7 @@ func (ds *DataStore) Update(collection string, condition, updateData interface{}
 
 // Do a MongoDB update - single record, by MongoID
 func (ds *DataStore) UpdateId(collection string, _id, data interface{}) error {
-	s, c := ds.getSessionCollection(collection)
+	s, c := ds.GetSessionCollection(collection)
 	defer s.Close()
 
 	err := c.UpdateId(_id, data)
