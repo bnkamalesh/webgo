@@ -1,0 +1,13 @@
+{
+	"environment":  "",
+	"port": "",
+	"templatePath": "",
+
+	"dbConfig": {
+		"name":     "",
+		"host":     "",
+		"port":     "",
+		"username": "",
+		"password": "" 
+	}
+}
