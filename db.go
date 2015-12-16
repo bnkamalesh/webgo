@@ -47,6 +47,9 @@ func (ds *DataStore) Get(collection string, conditions interface{}, resultStruct
 	if resultStruct != nil {
 		err := c.Find(conditions).All(resultStruct)
 		if err != nil {
+			if err == mgo.ErrNotFound {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return nil, nil
@@ -74,6 +77,9 @@ func (ds *DataStore) GetAll(collection string, resultStruct interface{}) ([]bson
 	if resultStruct != nil {
 		err := c.Find(nil).All(resultStruct)
 		if err != nil {
+			if err == mgo.ErrNotFound {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return nil, nil
@@ -82,6 +88,9 @@ func (ds *DataStore) GetAll(collection string, resultStruct interface{}) ([]bson
 	var data []bson.M
 	err := c.Find(nil).All(&data)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return data, nil
@@ -98,6 +107,9 @@ func (ds *DataStore) GetOne(collection string, conditions interface{}, resultStr
 	if resultStruct != nil {
 		err := c.Find(conditions).One(resultStruct)
 		if err != nil {
+			if err == mgo.ErrNotFound {
+				return nil, nil
+			}
 			return nil, err
 		}
 		return nil, nil
@@ -106,6 +118,9 @@ func (ds *DataStore) GetOne(collection string, conditions interface{}, resultStr
 	var data bson.M
 	err := c.Find(conditions).One(&data)
 	if err != nil {
+		if err == mgo.ErrNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return data, nil
