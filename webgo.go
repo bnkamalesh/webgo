@@ -26,7 +26,7 @@ func Start(cfg *Config, router *httprouter.Router) {
 	} else {
 		n := negroni.Classic()
 		n.UseHandler(router)
-		n.Run(":7003")
+		n.Run(":" + cfg.Port)
 	}
 
 }

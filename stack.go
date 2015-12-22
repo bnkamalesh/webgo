@@ -6,19 +6,19 @@ package webgo
 import "net/http"
 
 type chainHandler func(*Context) http.Handler
-type chainMiddleware func(*Context, http.Handler) http.Handler
+type ChainMiddleware func(*Context, http.Handler) http.Handler
 
 type Chain struct {
-	mws []chainMiddleware
+	mws []ChainMiddleware
 	h   chainHandler
 }
 
-func NewStack(mws ...chainMiddleware) Chain {
+func NewStack(mws ...ChainMiddleware) Chain {
 	return Chain{mws: mws}
 }
 
-func (c Chain) Append(mws ...chainMiddleware) Chain {
-	newMws := make([]chainMiddleware, len(c.mws)+len(mws))
+func (c Chain) Append(mws ...ChainMiddleware) Chain {
+	newMws := make([]ChainMiddleware, len(c.mws)+len(mws))
 	copy(newMws[:len(c.mws)], c.mws)
 	copy(newMws[len(c.mws):], mws)
 	c.mws = newMws
@@ -66,8 +66,8 @@ func StackInject(hc HandlerChain, key string, val interface{}) HandlerChain {
 }
 
 // Adapt third party middleware with the signature
-// func(http.Handler) http.Handler into chainMiddleware
-func Adapt(fn func(http.Handler) http.Handler) chainMiddleware {
+// func(http.Handler) http.Handler into ChainMiddleware
+func Adapt(fn func(http.Handler) http.Handler) ChainMiddleware {
 	return func(ctx *Context, h http.Handler) http.Handler {
 		return fn(h)
 	}
