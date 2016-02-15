@@ -43,14 +43,14 @@ func (e *Errors) Init(errTypes map[string]error) {
 */
 
 // Error logging in any module should use this log function for consistency
-func (e *Errors) Log(location, fname string, err error) {
+func (e *Errors) Log(location, fname string, err interface{}) {
 	log.Println("Error: ", location, " -> ", fname, "\n  -", err)
 }
 
 // ===
 
 // Fatal errors which will exit the app after printig on console
-func (e *Errors) Fatal(location, fname string, err error) {
+func (e *Errors) Fatal(location, fname string, err interface{}) {
 	log.Fatal("Fatal Error: ", location, " -> ", fname, "\n  -", err)
 }
 

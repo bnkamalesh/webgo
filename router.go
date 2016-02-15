@@ -41,6 +41,10 @@ func InitRouter(routes []Route) *httprouter.Router {
 	// Handles all the route types
 	for _, route := range routes {
 		switch route.Method {
+		case "OPTIONS":
+			router.OPTIONS(
+				route.Pattern,
+				InjectParams(route))
 		case "GET":
 			router.GET(
 				route.Pattern,
