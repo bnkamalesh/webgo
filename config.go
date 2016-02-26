@@ -1,7 +1,6 @@
 package webgo
 
 import (
-	"github.com/bitly/go-simplejson"
 	htpl "html/template"
 	"io/ioutil"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 // Struct for reading app's configuration from json file
 type Config struct {
 	Env               string `json:"environment"`
+	Host              string `json:"host,omitempty"`
 	Port              string `json:"port"`
 	TemplatesBasePath string `json:"templatePath"`
 

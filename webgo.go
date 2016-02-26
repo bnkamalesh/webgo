@@ -1,16 +1,24 @@
 package webgo
 
 import (
+	"net/http"
+
 	"github.com/codegangsta/negroni"
 	"github.com/julienschmidt/httprouter"
-	"net/http"
 )
 
 // Start the server with the appropriate configurations
 func Start(cfg *Config, router *httprouter.Router) {
+	host := cfg.Host
+	if len(host) <= 0 {
+		host = "127.0.0.1"
+	}
+
+	host += ":" + cfg.Port
+
 	if cfg.Env == "production" {
-		print("Starting server, listening on `http://localhost:" + cfg.Port + "`\n")
-		err := http.ListenAndServe(":"+cfg.Port, router)
+		print("Starting server in production mode, listening on `http://" + host + "`\n")
+		err := http.ListenAndServe(host, router)
 		if err != nil {
 			// Log error
 			Err.Log("webgo.go", "Start()", err)
@@ -24,9 +32,10 @@ func Start(cfg *Config, router *httprouter.Router) {
 			print("Server exited, no restart implemented")
 		}
 	} else {
+		print("Starting server in development mode")
 		n := negroni.Classic()
 		n.UseHandler(router)
-		n.Run(":" + cfg.Port)
+		n.Run(host)
 	}
 
 }
