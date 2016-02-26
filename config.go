@@ -48,6 +48,7 @@ func (cfg *Config) Load(filepath string) {
 
 	// Setting the config values gotten from the file
 	cfg.Env = cfg.Data.Get("environment").MustString()
+	cfg.Host = cfg.Data.Get("host").MustString()
 	cfg.Port = cfg.Data.Get("port").MustString()
 	cfg.TemplatesBasePath = cfg.Data.Get("templatePath").MustString()
 
