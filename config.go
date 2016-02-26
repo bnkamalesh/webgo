@@ -36,12 +36,12 @@ type Config struct {
 func (cfg *Config) Load(filepath string) {
 	file, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		Err.Fatal("config.go", "Load() - could not read file", err)
+		Err.Fatal("config.go", "Load() [1] - could not read file", err)
 	}
 
 	decode, decodeErr := simplejson.NewJson(file)
 	if decodeErr != nil {
-		Err.Fatal("config.go", "Load() - could not decode json file", err)
+		Err.Fatal("config.go", "Load() [2] - could not decode json file", err)
 	}
 	// Assigning the whole json data fetched from the config file
 	cfg.Data = decode
@@ -55,7 +55,7 @@ func (cfg *Config) Load(filepath string) {
 	// Reading dbConfig from the json file
 	dbConf, err := cfg.Data.Get("dbConfig").Map()
 	if err != nil {
-		Err.Fatal("config.go", "Load() - could not get dbConfig from file", err)
+		Err.Fatal("config.go", "Load() [3]- could not get dbConfig from file", err)
 	}
 
 	// Setting DB config values
@@ -74,15 +74,15 @@ func (cfg *Config) Load(filepath string) {
 
 func (cfg *Config) Validate() {
 	if cfg.Env != "production" && cfg.Env != "development" {
-		Err.Fatal("webgo - config.go", "Validate()", Err.C003)
+		Err.Fatal("webgo - config.go", "Validate() - [1]", Err.C003)
 	}
 
 	i, err := strconv.Atoi(cfg.Port)
 	if err != nil {
-		Err.Fatal("webgo - config.go", "Validate()", Err.C004)
+		Err.Fatal("webgo - config.go", "Validate() - [2]", Err.C004)
 	}
 	if i <= 0 || i > 65535 {
-		Err.Fatal("webgo - config.go", "Validate()", Err.C004)
+		Err.Fatal("webgo - config.go", "Validate() - [3]", Err.C004)
 	}
 }
 
