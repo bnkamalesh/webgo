@@ -4,6 +4,8 @@ import (
 	htpl "html/template"
 	"io/ioutil"
 	"strconv"
+
+	simplejson "github.com/bitly/go-simplejson"
 )
 
 // Struct for reading app's configuration from json file
