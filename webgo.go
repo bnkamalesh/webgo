@@ -10,9 +10,6 @@ import (
 // Start the server with the appropriate configurations
 func Start(cfg *Config, router *httprouter.Router) {
 	host := cfg.Host
-	if len(host) <= 0 {
-		host = "127.0.0.1"
-	}
 
 	host += ":" + cfg.Port
 
