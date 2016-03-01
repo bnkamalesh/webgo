@@ -14,7 +14,7 @@ func Start(cfg *Config, router *httprouter.Router) {
 	host += ":" + cfg.Port
 
 	if cfg.Env == "production" {
-		print("Starting server in production mode, listening on `http://" + host + "`\n")
+		print("Starting server in production mode, listening on `" + host + "`\n")
 		err := http.ListenAndServe(host, router)
 		if err != nil {
 			// Log error
