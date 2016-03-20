@@ -3,6 +3,7 @@ package webgo
 import (
 	Er "errors"
 	"log"
+	"os"
 )
 
 type Errors struct {
@@ -41,17 +42,18 @@ func (e *Errors) Init(errTypes map[string]error) {
  "err": the error generated
  "info": A simplified error message
 */
+var logger = log.New(os.Stderr, "app: ", log.LstdFlags|log.Lshortfile)
 
 // Error logging in any module should use this log function for consistency
-func (e *Errors) Log(location, fname string, err interface{}) {
-	log.Println("Error: ", location, " -> ", fname, "\n  -", err)
+func (e *Errors) Log(errs ...interface{}) {
+	logger.Println(errs)
 }
 
 // ===
 
 // Fatal errors which will exit the app after printig on console
-func (e *Errors) Fatal(location, fname string, err interface{}) {
-	log.Fatal("Fatal Error: ", location, " -> ", fname, "\n  -", err)
+func (e *Errors) Fatal(errs ...interface{}) {
+	logger.Fatal(errs)
 }
 
 // ===
