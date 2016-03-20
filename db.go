@@ -145,7 +145,6 @@ func (ds *DataStore) Save(dbName, collection string, data interface{}) error {
 
 	err := c.Insert(data)
 	if err != nil {
-		Err.Log("db.go", "Save()", err)
 		return err
 	}
 	return nil

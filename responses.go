@@ -42,8 +42,6 @@ func sendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 
 	// Encode data to json and send response
 	if err := json.NewEncoder(w).Encode(data); err != nil {
-		// Log using error
-		Err.Log("responses.go", "sendResponse()", err)
 		/*
 			In case of encoding error, send "internal server error" after
 			logging the actual error

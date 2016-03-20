@@ -17,16 +17,7 @@ func Start(cfg *Config, router *httprouter.Router) {
 		print("Starting server in production mode, listening on `" + host + "`\n")
 		err := http.ListenAndServe(host, router)
 		if err != nil {
-			// Log error
-			Err.Log("webgo.go", "Start()", err)
-
-			// Stay idle for 2 seconds
-			// time.Sleep(1000 * 1000 * 2)
-
-			// Start server again
-			// This is not a graceful restart, since all the clients connected to the server will be disconnected
-			// Graceful restart of the server should be implemented.
-			print("Server exited, no restart implemented")
+			Err.Log(err)
 		}
 	} else {
 		print("Starting server in development mode")
