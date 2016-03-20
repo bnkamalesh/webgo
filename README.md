@@ -14,10 +14,9 @@ $ export GO15VENDOREXPERIMENT=1
 
 ### Third party libraries used
 
-1. [simplejson](github.com/bitly/go-simplejson), to read `config.json` file.
-2. [mgo/mango](http://gopkg.in/mgo.v2), MongoDB driver.
-3. [HttpRouter](github.com/julienschmidt/httprouter), multiplexer.
-4. [Stack](https://github.com/alexedwards/stack), for chaining request handlers.
+1. [mgo/mango](http://gopkg.in/mgo.v2), MongoDB driver.
+2. [HttpRouter](github.com/julienschmidt/httprouter), multiplexer.
+3. [Stack](https://github.com/alexedwards/stack), for chaining request handlers.
 
 
 ### Usage
