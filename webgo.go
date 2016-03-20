@@ -17,7 +17,7 @@ func Start(cfg *Config, router *httprouter.Router) {
 		print("Starting server in production mode, listening on `" + host + "`\n")
 		err := http.ListenAndServe(host, router)
 		if err != nil {
-			Err.Log(err)
+			Err.Log.Println("Could not start http server -> ", err)
 		}
 	} else {
 		print("Starting server in development mode")

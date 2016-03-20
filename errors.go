@@ -7,6 +7,8 @@ import (
 )
 
 type Errors struct {
+	Log *log.Logger
+
 	// Errors in JSON response is a array of string containing all error messages
 	Errs []string
 
@@ -32,31 +34,9 @@ func (e *Errors) Init(errTypes map[string]error) {
 	e.C004 = Er.New("App port not provided in config file")
 	e.C005 = Er.New("Invalid JSON")
 
+	Err.Log = log.New(os.Stderr, "app: ", log.LstdFlags|log.Lshortfile)
 	e.AppErr = errTypes
 }
-
-/*
- Function to log error to the console
- "location": file from which the error is being logged
- "fname": function from which the error is being logged
- "err": the error generated
- "info": A simplified error message
-*/
-var logger = log.New(os.Stderr, "app: ", log.LstdFlags|log.Lshortfile)
-
-// Error logging in any module should use this log function for consistency
-func (e *Errors) Log(errs ...interface{}) {
-	logger.Println(errs)
-}
-
-// ===
-
-// Fatal errors which will exit the app after printig on console
-func (e *Errors) Fatal(errs ...interface{}) {
-	logger.Fatal(errs)
-}
-
-// ===
 
 // Global variable to access Error logging structure.
 var Err Errors

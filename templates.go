@@ -21,14 +21,14 @@ func (t *Templates) Load(files map[string]string) {
 	for key, filePath := range files {
 		content, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			Err.Fatal("templates.go", "Load()", err)
+			Err.Log.Fatal("templates.go", "Load()", err)
 			return
 		}
 
 		// Parsing the file into html template.
 		c, err := htpl.New("Error-Template").Parse(string(content))
 		if err != nil {
-			Err.Fatal("templates.go", "Load()", err)
+			Err.Log.Fatal("templates.go", "Load()", err)
 		}
 		t.Tpls[key] = c
 		// ===

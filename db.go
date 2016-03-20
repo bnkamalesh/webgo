@@ -232,7 +232,7 @@ func InitDB(dbc DBConfig) *DataStore {
 		dbc.MgoDialString,
 	)
 	if err != nil {
-		Err.Fatal("db.go", "InitDB()", err)
+		Err.Log.Fatal("Could not connect to MongoDB -> ", err)
 		return nil
 	}
 	return dStore

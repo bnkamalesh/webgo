@@ -27,12 +27,12 @@ type Config struct {
 func (cfg *Config) Load(filepath string) {
 	file, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		Err.Fatal("config.go", "Load() [1] - could not read file", err)
+		Err.Log.Fatal("config.go", "Load() [1] - could not read file", err)
 	}
 
 	err = json.Unmarshal(file, cfg)
 	if err != nil {
-		Err.Fatal("config.go", "Load() [2] - could not decode json file", err)
+		Err.Log.Fatal("config.go", "Load() [2] - could not decode json file", err)
 	}
 
 	cfg.Data = file
@@ -44,15 +44,15 @@ func (cfg *Config) Load(filepath string) {
 
 func (cfg *Config) Validate() {
 	if cfg.Env != "production" && cfg.Env != "development" {
-		Err.Fatal("webgo - config.go", "Validate() - [1]", Err.C003)
+		Err.Log.Fatal("webgo - config.go", "Validate() - [1]", Err.C003)
 	}
 
 	i, err := strconv.Atoi(cfg.Port)
 	if err != nil {
-		Err.Fatal("webgo - config.go", "Validate() - [2]", Err.C004)
+		Err.Log.Fatal("webgo - config.go", "Validate() - [2]", Err.C004)
 	}
 	if i <= 0 || i > 65535 {
-		Err.Fatal("webgo - config.go", "Validate() - [3]", Err.C004)
+		Err.Log.Fatal("webgo - config.go", "Validate() - [3]", Err.C004)
 	}
 }
 
