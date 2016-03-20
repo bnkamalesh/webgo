@@ -9,6 +9,8 @@
 		"host":     "",
 		"port":     "",
 		"username": "",
-		"password": "" 
+		"password": "",
+		"authSource": "",
+		"mgoDialString": ""
 	}
 }

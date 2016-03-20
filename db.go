@@ -9,6 +9,16 @@ import (
 // Only basic operations are implemented as of now.
 // Need to add Delete function
 
+type DBConfig struct {
+	Name          string `json:"name"`
+	Host          string `json:"host"`
+	Port          string `json:"port"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	AuthSource    string `json:"authSource"`
+	MgoDialString string `json:"mgoDialString"`
+}
+
 /*
  DB Session creation is done inside a struct
  Developed based on the answer in
@@ -23,15 +33,15 @@ type DataStore struct {
 
 // Clone the master session and return
 func (ds *DataStore) getSession() *mgo.Session {
-	return ds.Session.Clone()
+	return ds.Session.Copy()
 }
 
 // ===
 
 // Get appropriate MongoDB collection
-func (ds *DataStore) GetSessionCollection(collection string) (*mgo.Session, *mgo.Collection) {
+func (ds *DataStore) GetSessionCollection(dbName, collection string) (*mgo.Session, *mgo.Collection) {
 	s := ds.getSession()
-	c := s.DB(ds.DbName).C(collection)
+	c := s.DB(dbName).C(collection)
 
 	return s, c
 }
@@ -39,9 +49,9 @@ func (ds *DataStore) GetSessionCollection(collection string) (*mgo.Session, *mgo
 // ===
 
 // Do a MongoDB Get
-func (ds *DataStore) Get(collection string, conditions interface{}, resultStruct interface{}) ([]bson.M, error) {
+func (ds *DataStore) Get(dbName, collection string, conditions interface{}, resultStruct interface{}) ([]bson.M, error) {
 
-	s, c := ds.GetSessionCollection(collection)
+	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
 
 	if resultStruct != nil {
@@ -69,9 +79,9 @@ func (ds *DataStore) Get(collection string, conditions interface{}, resultStruct
 // ===
 
 // Do a MongoDB GetAll
-func (ds *DataStore) GetAll(collection string, resultStruct interface{}) ([]bson.M, error) {
+func (ds *DataStore) GetAll(dbName, collection string, resultStruct interface{}) ([]bson.M, error) {
 
-	s, c := ds.GetSessionCollection(collection)
+	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
 
 	if resultStruct != nil {
@@ -99,9 +109,9 @@ func (ds *DataStore) GetAll(collection string, resultStruct interface{}) ([]bson
 // ===
 
 // Do a MongoDB GetOne
-func (ds *DataStore) GetOne(collection string, conditions interface{}, resultStruct interface{}) (bson.M, error) {
+func (ds *DataStore) GetOne(dbName, collection string, conditions interface{}, resultStruct interface{}) (bson.M, error) {
 
-	s, c := ds.GetSessionCollection(collection)
+	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
 
 	if resultStruct != nil {
@@ -129,8 +139,8 @@ func (ds *DataStore) GetOne(collection string, conditions interface{}, resultStr
 // ===
 
 // Do a MongoDB Save
-func (ds *DataStore) Save(collection string, data interface{}) error {
-	s, c := ds.GetSessionCollection(collection)
+func (ds *DataStore) Save(dbName, collection string, data interface{}) error {
+	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
 
 	err := c.Insert(data)
@@ -144,8 +154,8 @@ func (ds *DataStore) Save(collection string, data interface{}) error {
 // ===
 
 // Do a MongoDB Update - multiple records
-func (ds *DataStore) Update(collection string, condition, updateData interface{}) error {
-	s, c := ds.GetSessionCollection(collection)
+func (ds *DataStore) Update(dbName, collection string, condition, updateData interface{}) error {
+	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
 
 	err := c.Update(condition, updateData)
@@ -159,8 +169,8 @@ func (ds *DataStore) Update(collection string, condition, updateData interface{}
 // ===
 
 // Do a MongoDB update - single record, by MongoID
-func (ds *DataStore) UpdateId(collection string, _id, data interface{}) error {
-	s, c := ds.GetSessionCollection(collection)
+func (ds *DataStore) UpdateId(dbName, collection string, _id, data interface{}) error {
+	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
 
 	err := c.UpdateId(_id, data)
@@ -174,8 +184,33 @@ func (ds *DataStore) UpdateId(collection string, _id, data interface{}) error {
 // ===
 
 // Create a new data store
-func newDataStore(user, pass, host, port, name string) (*DataStore, error) {
-	session, err := mgo.Dial("mongodb://" + user + ":" + pass + "@" + host + ":" + port + "/" + name)
+func newDataStore(user, pass, host, port, name, authSource, mgoDialString string) (*DataStore, error) {
+	dialString := "mongodb://"
+
+	if len(mgoDialString) > 0 {
+		dialString = mgoDialString
+	} else {
+		if len(user) > 0 && len(pass) > 0 {
+			dialString += (user + ":" + pass)
+		}
+
+		if len(host) > 0 {
+			dialString += ("@" + host)
+			if len(port) > 0 {
+				dialString += (":" + port)
+			}
+		}
+
+		if len(name) > 0 {
+			dialString += ("/" + name)
+		}
+
+		if len(authSource) > 0 {
+			dialString += "?authSource=" + authSource
+		}
+	}
+
+	session, err := mgo.Dial(dialString)
 	if err != nil {
 		return nil, err
 	}
@@ -187,8 +222,16 @@ func newDataStore(user, pass, host, port, name string) (*DataStore, error) {
 // ===
 
 // Initializing Mongo DB
-func InitDB(user, pass, host, port, name string) *DataStore {
-	dStore, err := newDataStore(user, pass, host, port, name)
+func InitDB(dbc DBConfig) *DataStore {
+	dStore, err := newDataStore(
+		dbc.Username,
+		dbc.Password,
+		dbc.Host,
+		dbc.Port,
+		dbc.Name,
+		dbc.AuthSource,
+		dbc.MgoDialString,
+	)
 	if err != nil {
 		Err.Fatal("db.go", "InitDB()", err)
 		return nil

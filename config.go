@@ -1,11 +1,10 @@
 package webgo
 
 import (
+	"encoding/json"
 	htpl "html/template"
 	"io/ioutil"
 	"strconv"
-
-	simplejson "github.com/bitly/go-simplejson"
 )
 
 // Struct for reading app's configuration from json file
@@ -15,19 +14,11 @@ type Config struct {
 	Port              string `json:"port"`
 	TemplatesBasePath string `json:"templatePath"`
 
-	DBConfig struct {
-		Name     string `json:"name"`
-		Host     string `json:"host"`
-		Port     string `json:"port"`
-		Username string `json:"username"`
-		Password string `json:"password"`
-	} `json:"dbConfig"`
+	DBC DBConfig `json:"dbConfig"`
 
-	// The whole json file read from the config file
-	Data *simplejson.Json
-
-	// If the app needs to add some extra info to the config, simple string key, value pairs
-	Misc map[string]string
+	Data []byte
+	// If the app needs to add some extra info to the config, simple key, value pairs
+	Misc map[string]interface{}
 }
 
 // ===
@@ -39,33 +30,12 @@ func (cfg *Config) Load(filepath string) {
 		Err.Fatal("config.go", "Load() [1] - could not read file", err)
 	}
 
-	decode, decodeErr := simplejson.NewJson(file)
-	if decodeErr != nil {
+	err = json.Unmarshal(file, cfg)
+	if err != nil {
 		Err.Fatal("config.go", "Load() [2] - could not decode json file", err)
 	}
-	// Assigning the whole json data fetched from the config file
-	cfg.Data = decode
 
-	// Setting the config values gotten from the file
-	cfg.Env = cfg.Data.Get("environment").MustString()
-	cfg.Host = cfg.Data.Get("host").MustString()
-	cfg.Port = cfg.Data.Get("port").MustString()
-	cfg.TemplatesBasePath = cfg.Data.Get("templatePath").MustString()
-
-	// Reading dbConfig from the json file
-	dbConf, err := cfg.Data.Get("dbConfig").Map()
-	if err != nil {
-		Err.Fatal("config.go", "Load() [3]- could not get dbConfig from file", err)
-	}
-
-	// Setting DB config values
-	cfg.DBConfig.Name = dbConf["name"].(string)
-	cfg.DBConfig.Host = dbConf["host"].(string)
-	cfg.DBConfig.Port = dbConf["port"].(string)
-	cfg.DBConfig.Username = dbConf["username"].(string)
-	cfg.DBConfig.Password = dbConf["password"].(string)
-
-	cfg.Misc = make(map[string]string)
+	cfg.Data = file
 
 	cfg.Validate()
 }

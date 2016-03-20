@@ -122,7 +122,7 @@ func R406(w http.ResponseWriter, data interface{}) {
 	sendResponse(w, data, 406)
 }
 
-// URL not found
+// Resource not found
 func R404(w http.ResponseWriter, data interface{}) {
 	sendResponse(w, data, 404)
 }
