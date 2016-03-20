@@ -34,7 +34,7 @@ func (e *Errors) Init(errTypes map[string]error) {
 	e.C004 = Er.New("App port not provided in config file")
 	e.C005 = Er.New("Invalid JSON")
 
-	Err.Log = log.New(os.Stderr, "app: ", log.LstdFlags|log.Lshortfile)
+	Err.Log = log.New(os.Stderr, "app: ", log.LstdFlags|log.Llongfile)
 	e.AppErr = errTypes
 }
 
