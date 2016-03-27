@@ -182,6 +182,45 @@ func (ds *DataStore) UpdateId(dbName, collection string, _id, data interface{}) 
 
 // ===
 
+// Do a MongoDB Remove, single record, by MongoID
+func (ds *DataStore) RemoveId(dbName, collection string, id interface{}) error {
+	s, c := ds.GetSessionCollection(dbName, collection)
+	defer s.Close()
+
+	err := c.RemoveId(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Do a MongoDB Remove
+func (ds *DataStore) Remove(dbName, collection string, condition interface{}) error {
+	s, c := ds.GetSessionCollection(dbName, collection)
+	defer s.Close()
+
+	err := c.Remove(condition)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Do a MongoDB RemoveAll
+func (ds *DataStore) RemoveAll(dbName, collection string) (*mgo.ChangeInfo, error) {
+	s, c := ds.GetSessionCollection(dbName, collection)
+	defer s.Close()
+
+	info, err := c.RemoveAll(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return info, nil
+}
+
 // Create a new data store
 func newDataStore(user, pass, host, port, name, authSource, mgoDialString string) (*DataStore, error) {
 	dialString := "mongodb://"

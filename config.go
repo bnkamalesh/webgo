@@ -16,9 +16,8 @@ type Config struct {
 
 	DBC DBConfig `json:"dbConfig"`
 
+	// Data holds the full json config file data as bytes
 	Data []byte
-	// If the app needs to add some extra info to the config, simple key, value pairs
-	Misc map[string]interface{}
 }
 
 // ===

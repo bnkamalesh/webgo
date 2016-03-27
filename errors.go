@@ -7,14 +7,6 @@ import (
 )
 
 type Errors struct {
-	Log *log.Logger
-
-	// Errors in JSON response is a array of string containing all error messages
-	Errs []string
-
-	// This is used to add custom error types
-	AppErr map[string]error
-
 	// C for `Code`
 	C001 error
 	C002 error
@@ -22,20 +14,29 @@ type Errors struct {
 	C004 error
 	C005 error
 	C006 error
+
+	// This is used to add custom error types
+	Log    *log.Logger
+	AppErr map[string]error
 }
 
-func (e *Errors) Init(errTypes map[string]error) {
-
+func (e *Errors) init(errTypes map[string]error) {
 	// Error codes which are to be used through out the app.
-	// App configuration errors
 	e.C001 = Er.New("Invalid number of arguments provided")
 	e.C002 = Er.New("Could not unmarshal JSON config file")
 	e.C003 = Er.New("App environment not provided in config file. Accepted values are `production` or `development`")
 	e.C004 = Er.New("App port not provided in config file")
 	e.C005 = Er.New("Invalid JSON")
 
-	Err.Log = log.New(os.Stderr, "app: ", log.LstdFlags|log.Llongfile)
+	// Setting up Go log with custom flags
+	Err.Log = log.New(os.Stderr, "", log.LstdFlags|log.Llongfile)
+	// App configuration errors
 	e.AppErr = errTypes
+}
+
+func init() {
+	// Initializing Err variable with default values
+	Err.init(nil)
 }
 
 // Global variable to access Error logging structure.
