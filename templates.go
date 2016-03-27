@@ -5,15 +5,12 @@ import (
 	"io/ioutil"
 )
 
-// This stores all the templates the app will use, and is given to all the request handlers
-// It's accessed using the `context`.
+// Templates stores all the templates the app will use, and is given to all the request handlers via context
 type Templates struct {
 	Tpls map[string]*htpl.Template
 }
 
-// ===
-
-// Function to load templates, parse them and keep them ready in the memory
+// Load templates, all the HTML files are parsed and made available for instant use
 func (t *Templates) Load(files map[string]string) {
 	t.Tpls = make(map[string]*htpl.Template)
 
@@ -31,9 +28,5 @@ func (t *Templates) Load(files map[string]string) {
 			Err.Log.Fatal("templates.go", "Load()", err)
 		}
 		t.Tpls[key] = c
-		// ===
 	}
-	// ===
 }
-
-// ===

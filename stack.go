@@ -1,7 +1,6 @@
-package webgo
-
 // This is part of the library that is being used directly inside this package.
 // https://github.com/alexedwards/stack
+package webgo
 
 import "net/http"
 

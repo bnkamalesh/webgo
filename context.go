@@ -1,7 +1,6 @@
-package webgo
-
 // This is part of the library that is being used directly inside this package.
 // https://github.com/alexedwards/stack
+package webgo
 
 import (
 	"sync"
@@ -18,8 +17,6 @@ func NewContext() *Context {
 	return &Context{m: m}
 }
 
-// ===
-
 // Get context, and lock it while it's being accessed
 func (c *Context) Get(key string) interface{} {
 	if !c.Exists(key) {
@@ -30,8 +27,6 @@ func (c *Context) Get(key string) interface{} {
 	return c.m[key]
 }
 
-// ===
-
 // Add/Update a key,val to the context
 func (c *Context) Put(key string, val interface{}) *Context {
 	c.mu.Lock()
@@ -39,8 +34,6 @@ func (c *Context) Put(key string, val interface{}) *Context {
 	c.m[key] = val
 	return c
 }
-
-// ===
 
 // Delete a key from the context
 func (c *Context) Delete(key string) *Context {
@@ -50,8 +43,6 @@ func (c *Context) Delete(key string) *Context {
 	return c
 }
 
-// ===
-
 // Check if a key exists in the context
 func (c *Context) Exists(key string) bool {
 	c.mu.RLock()
@@ -59,8 +50,6 @@ func (c *Context) Exists(key string) bool {
 	_, ok := c.m[key]
 	return ok
 }
-
-// ===
 
 // Copy a context
 func (c *Context) copy() *Context {
@@ -72,5 +61,3 @@ func (c *Context) copy() *Context {
 	}
 	return nc
 }
-
-// ===

@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// Struct for reading app's configuration from json file
+// Config struct for reading app's configuration from json file
 type Config struct {
 	Env               string `json:"environment"`
 	Host              string `json:"host,omitempty"`
@@ -19,8 +19,6 @@ type Config struct {
 	// Data holds the full json config file data as bytes
 	Data []byte
 }
-
-// ===
 
 // Load config file from the provided filepath
 func (cfg *Config) Load(filepath string) {
@@ -39,8 +37,7 @@ func (cfg *Config) Load(filepath string) {
 	cfg.Validate()
 }
 
-// ===
-
+// Validate the config parsed into the Config struct
 func (cfg *Config) Validate() {
 	if cfg.Env != "production" && cfg.Env != "development" {
 		Err.Log.Fatal("webgo - config.go", "Validate() - [1]", Err.C003)
@@ -55,8 +52,7 @@ func (cfg *Config) Validate() {
 	}
 }
 
-//	Add any global app configurations here.
-//	They're available to every single request handler, via context.
+//	Globals struct to hold configurations which are shared with all the request handlers via context.
 type Globals struct {
 	// Multiplexer params
 	Params map[string]string
@@ -75,14 +71,10 @@ type Globals struct {
 	App map[string]interface{}
 }
 
-// ===
-
 // Add a custom global config
 func (g *Globals) Add(key string, data interface{}) {
 	g.App[key] = data
 }
-
-// ===
 
 // Initialize the Context and set appropriate values
 func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template, ds *DataStore) {
@@ -93,5 +85,3 @@ func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template, ds *DataStor
 	g.Db = ds
 	g.Params = make(map[string]string)
 }
-
-// ===

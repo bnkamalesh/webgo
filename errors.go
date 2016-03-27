@@ -15,7 +15,7 @@ type Errors struct {
 	C005 error
 	C006 error
 
-	// This is used to add custom error types
+	// Log is used to log errors, which will print the filename and linenumber
 	Log    *log.Logger
 	AppErr map[string]error
 }
@@ -30,6 +30,7 @@ func (e *Errors) init(errTypes map[string]error) {
 
 	// Setting up Go log with custom flags
 	Err.Log = log.New(os.Stderr, "", log.LstdFlags|log.Llongfile)
+
 	// App configuration errors
 	e.AppErr = errTypes
 }

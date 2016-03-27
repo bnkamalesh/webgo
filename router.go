@@ -1,8 +1,9 @@
 package webgo
 
 import (
-	"github.com/julienschmidt/httprouter"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 // Struct to define a route for each API
@@ -31,12 +32,9 @@ func InjectParams(route Route) httprouter.Handle {
 	}
 }
 
-// ===
-
 // Initiate Router settings
 func InitRouter(routes []Route) *httprouter.Router {
 	router := httprouter.New()
-	// The `routes` variable is defined in routes.go
 
 	// Handles all the route types
 	for _, route := range routes {

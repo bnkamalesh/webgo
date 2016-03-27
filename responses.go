@@ -12,7 +12,7 @@ type ErrorData struct {
 	ErrDescription string
 }
 
-// The function to respond to any request (JSON response) based on the code, data etc.
+// SendReponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.WriteHeader(rCode)
 
@@ -51,7 +51,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	}
 }
 
-// For rendering templates (HTML)
+// Render is used for rendering templates (HTML)
 func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template) {
 	w.WriteHeader(rCode)
 	// In case of HTML response, setting appropriate header type for text/HTML response
@@ -60,7 +60,7 @@ func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Te
 	tpl.Execute(w, data)
 }
 
-// For rendering 404
+// Render404 - used to render a 404 page
 func Render404(w http.ResponseWriter, tpl *template.Template) {
 	Render(w, ErrorData{
 		404,
@@ -73,47 +73,47 @@ func Render404(w http.ResponseWriter, tpl *template.Template) {
 
 // For JSON response with appropriate response code
 
-// Successful/OK response
+// R200 - Successful/OK response
 func R200(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 200)
 }
 
-// New item created
+// R201 - New item created
 func R201(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 201)
 }
 
-// Temporary redirect
+// R302 - Temporary redirect
 func R302(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 302)
 }
 
-// Invalid request, any incorrect/erraneous value in the request body
+// R400 - Invalid request, any incorrect/erraneous value in the request body
 func R400(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 400)
 }
 
-// Unauthorized access
+// R403 - Unauthorized access
 func R403(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 403)
 }
 
-// Resource not found
+// R404 - Resource not found
 func R404(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 404)
 }
 
-// Unacceptable header. For any error related to values set in header
+// R406 - Unacceptable header. For any error related to values set in header
 func R406(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 406)
 }
 
-// Resource taken down because of a legal request
+// R451 - Resource taken down because of a legal request
 func R451(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 451)
 }
 
-// Internal server error
+// R500 - Internal server error
 func R500(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 500)
 }

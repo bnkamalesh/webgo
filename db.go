@@ -1,3 +1,5 @@
+// This file contains a wrapper to use over Mgo driver.
+// Only basic operations are implemented as of now.
 package webgo
 
 import (
@@ -5,10 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// This file contains a wrapper to use over Mgo driver.
-// Only basic operations are implemented as of now.
-// Need to add Delete function
-
+// Struct to parse Database configuration
 type DBConfig struct {
 	Name          string `json:"name"`
 	Host          string `json:"host"`
@@ -19,24 +18,18 @@ type DBConfig struct {
 	MgoDialString string `json:"mgoDialString"`
 }
 
-/*
- DB Session creation is done inside a struct
- Developed based on the answer in
- http://stackoverflow.com/questions/26574594/best-practice-to-maintain-a-mgo-session
-*/
+// DB Sessions are maintained inside a struct for better caching of the data stores
+// Developed based on the answer:
+// http://stackoverflow.com/questions/26574594/best-practice-to-maintain-a-mgo-session
 type DataStore struct {
 	DbName  string
 	Session *mgo.Session
 }
 
-// ===
-
 // Clone the master session and return
 func (ds *DataStore) getSession() *mgo.Session {
 	return ds.Session.Copy()
 }
-
-// ===
 
 // Get appropriate MongoDB collection
 func (ds *DataStore) GetSessionCollection(dbName, collection string) (*mgo.Session, *mgo.Collection) {
@@ -45,8 +38,6 @@ func (ds *DataStore) GetSessionCollection(dbName, collection string) (*mgo.Sessi
 
 	return s, c
 }
-
-// ===
 
 // Do a MongoDB Get
 func (ds *DataStore) Get(dbName, collection string, conditions interface{}, resultStruct interface{}) ([]bson.M, error) {
@@ -76,8 +67,6 @@ func (ds *DataStore) Get(dbName, collection string, conditions interface{}, resu
 	return data, nil
 }
 
-// ===
-
 // Do a MongoDB GetAll
 func (ds *DataStore) GetAll(dbName, collection string, resultStruct interface{}) ([]bson.M, error) {
 
@@ -105,8 +94,6 @@ func (ds *DataStore) GetAll(dbName, collection string, resultStruct interface{})
 	}
 	return data, nil
 }
-
-// ===
 
 // Do a MongoDB GetOne
 func (ds *DataStore) GetOne(dbName, collection string, conditions interface{}, resultStruct interface{}) (bson.M, error) {
@@ -136,8 +123,6 @@ func (ds *DataStore) GetOne(dbName, collection string, conditions interface{}, r
 	return data, nil
 }
 
-// ===
-
 // Do a MongoDB Save
 func (ds *DataStore) Save(dbName, collection string, data interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
@@ -149,8 +134,6 @@ func (ds *DataStore) Save(dbName, collection string, data interface{}) error {
 	}
 	return nil
 }
-
-// ===
 
 // Do a MongoDB Update - multiple records
 func (ds *DataStore) Update(dbName, collection string, condition, updateData interface{}) error {
@@ -165,8 +148,6 @@ func (ds *DataStore) Update(dbName, collection string, condition, updateData int
 	return nil
 }
 
-// ===
-
 // Do a MongoDB update - single record, by MongoID
 func (ds *DataStore) UpdateId(dbName, collection string, _id, data interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
@@ -179,8 +160,6 @@ func (ds *DataStore) UpdateId(dbName, collection string, _id, data interface{}) 
 
 	return nil
 }
-
-// ===
 
 // Do a MongoDB Remove, single record, by MongoID
 func (ds *DataStore) RemoveId(dbName, collection string, id interface{}) error {
@@ -257,8 +236,6 @@ func newDataStore(user, pass, host, port, name, authSource, mgoDialString string
 	return &DataStore{DbName: name, Session: session}, nil
 }
 
-// ===
-
 // Initializing Mongo DB
 func InitDB(dbc DBConfig) *DataStore {
 	dStore, err := newDataStore(
@@ -276,5 +253,3 @@ func InitDB(dbc DBConfig) *DataStore {
 	}
 	return dStore
 }
-
-// ===

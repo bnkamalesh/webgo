@@ -6,10 +6,8 @@ import (
 
 type Middlewares struct{}
 
-// Need to write more default middlewares, for logging  and others.
-
 // A basic Cors middleware definition.
-func (m Middlewares) Cors(ctx *Context, next http.Handler) http.Handler {
+func (m *Middlewares) Cors(ctx *Context, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set response appropriate headers required for CORS
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
@@ -23,7 +21,7 @@ func (m Middlewares) Cors(ctx *Context, next http.Handler) http.Handler {
 
 // Cors middleware just for Options request - adding this helped remove the
 // request method check from Cors middleware
-func (m Middlewares) CorsOptions(ctx *Context, next http.Handler) http.Handler {
+func (m *Middlewares) CorsOptions(ctx *Context, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set response appropriate headers required for CORS
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
