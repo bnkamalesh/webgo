@@ -15,7 +15,7 @@ func (m Middlewares) Cors(ctx *Context, next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Access-Control-Allow-Headers,"+r.Header.Get("Access-Control-Allow-Headers"))
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Access-Control-Request-Headers,"+r.Header.Get("Access-Control-Request-Headers"))
 
 		next.ServeHTTP(w, r)
 	})
@@ -29,7 +29,7 @@ func (m Middlewares) CorsOptions(ctx *Context, next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 		w.Header().Set("Access-Control-Allow-Methods", "OPTIONS")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Access-Control-Allow-Headers,"+r.Header.Get("Access-Control-Allow-Headers"))
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Access-Control-Request-Headers,"+r.Header.Get("Access-Control-Request-Headers"))
 		return
 	})
 }
