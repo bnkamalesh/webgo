@@ -21,7 +21,7 @@ $ export GO15VENDOREXPERIMENT=1
 
 ### Usage
 Most of the usage can be seen in this sample app.
-`Sample app built using webgo: [https://github.com/bnkamalesh/webgo-sample](https://github.com/bnkamalesh/webgo-sample)`
+Sample app built using webgo: [https://github.com/bnkamalesh/webgo-sample](https://github.com/bnkamalesh/webgo-sample)
 
 This framework does not force you to follow any architecture (e.g. MVC), instead is more of a configuration over convention based framework. There are a very limited set of HHTP responses available by default in the framework. They are
 `200, 201, 302, 400, 403, 404, 406, 451, 500`. If you need more, you can directly call the `SendResponse` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) with any status code you like.
