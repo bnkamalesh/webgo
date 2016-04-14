@@ -12,7 +12,7 @@ type Route struct {
 	Method  string       // Request type
 	Pattern string       // URI
 	Handler HandlerChain // Handler function with middlewares
-	G       Globals      // App globals
+	G       *Globals     // App globals
 }
 
 // Inject httprouter params to the context
