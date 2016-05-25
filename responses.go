@@ -83,6 +83,11 @@ func R201(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 201)
 }
 
+// R204 - empty result
+func R204(w http.ResponseWriter, data interface{}) {
+	SendResponse(w, data, 204)
+}
+
 // R302 - Temporary redirect
 func R302(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, 302)
