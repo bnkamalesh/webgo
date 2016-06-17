@@ -26,9 +26,8 @@ func InjectParams(route Route) httprouter.Handle {
 
 		// Injecting multiplexer params to every request context
 		newHandlerChain := StackInject(route.Handler, "params", params)
-		// Injecting globals to every request context
-		route.G.Params["routeName"] = route.Name
-		newHandlerChain = StackInject(newHandlerChain, "globals", route.G)
+
+		newHandlerChain = StackInject(newHandlerChain, "routeHandler", &route)
 		newHandlerChain.ServeHTTP(w, r)
 	}
 }
