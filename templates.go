@@ -23,7 +23,7 @@ func (t *Templates) Load(files map[string]string) {
 		}
 
 		// Parsing the file into html template.
-		c, err := htpl.New("Error-Template").Parse(string(content))
+		c, err := htpl.New(key).Parse(string(content))
 		if err != nil {
 			Err.Log.Fatal("templates.go", "Load()", err)
 		}
