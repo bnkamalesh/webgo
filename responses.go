@@ -42,7 +42,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.WriteHeader(rCode)
 
 	// Encode data to json and send response
-	if err := json.NewEncoder(w).Encode(dOutput{data, rCode}); err != nil {
+	if err := json.NewEncoder(w).Encode(&dOutput{data, rCode}); err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
 			logging the actual error
@@ -62,7 +62,7 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 
 	w.WriteHeader(rCode)
 
-	if err := json.NewEncoder(w).Encode(errOutput{data, rCode}); err != nil {
+	if err := json.NewEncoder(w).Encode(&errOutput{data, rCode}); err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
 			logging the actual error
