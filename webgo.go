@@ -19,7 +19,7 @@ func Start(cfg *Config, router *httprouter.Router) {
 		print("Starting server in production mode, listening on `" + host + "`\n")
 		err := http.ListenAndServe(host, router)
 		if err != nil {
-			Err.Log.Println("Could not start http server -> ", err)
+			Log.Println("Could not start http server -> ", err)
 		}
 	} else {
 		// In development mode, it runs using Negroni, which provides basic logging like access logs,
@@ -29,5 +29,4 @@ func Start(cfg *Config, router *httprouter.Router) {
 		n.UseHandler(router)
 		n.Run(host)
 	}
-
 }

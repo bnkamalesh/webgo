@@ -24,12 +24,12 @@ type Config struct {
 func (cfg *Config) Load(filepath string) {
 	file, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		Err.Log.Fatal("config.go", "Load() [1] - could not read file", err)
+		Log.Fatal(err)
 	}
 
 	err = json.Unmarshal(file, cfg)
 	if err != nil {
-		Err.Log.Fatal("config.go", "Load() [2] - could not decode json file", err)
+		Log.Fatal(err)
 	}
 
 	cfg.Data = file
@@ -40,19 +40,19 @@ func (cfg *Config) Load(filepath string) {
 // Validate the config parsed into the Config struct
 func (cfg *Config) Validate() {
 	if cfg.Env != "production" && cfg.Env != "development" {
-		Err.Log.Fatal("webgo - config.go", "Validate() - [1]", Err.C003)
+		Log.Fatal(C003)
 	}
 
 	i, err := strconv.Atoi(cfg.Port)
 	if err != nil {
-		Err.Log.Fatal("webgo - config.go", "Validate() - [2]", Err.C004)
+		Log.Fatal(C004)
 	}
 	if i <= 0 || i > 65535 {
-		Err.Log.Fatal("webgo - config.go", "Validate() - [3]", Err.C004)
+		Log.Fatal(C004)
 	}
 }
 
-//	Globals struct to hold configurations which are shared with all the request handlers via context.
+//Globals struct to hold configurations which are shared with all the request handlers via context.
 type Globals struct {
 	// Multiplexer params
 	Params map[string]string
@@ -76,7 +76,7 @@ func (g *Globals) Add(key string, data interface{}) {
 	g.App[key] = data
 }
 
-// Initialize the Context and set appropriate values
+//Init initializes the Context and set appropriate values
 func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template, ds *DataStore) {
 	g.App = make(map[string]interface{})
 	g.Templates = make(map[string]*htpl.Template)

@@ -1,44 +1,43 @@
 package webgo
 
 import (
-	Er "errors"
 	"log"
 	"os"
 )
 
-type Errors struct {
-	// C for `Code`
-	C001 error
-	C002 error
-	C003 error
-	C004 error
-	C005 error
-	C006 error
+const (
+	//C001 Error Code 1
+	C001 = "Invalid number of arguments provided"
+	//C002 Error Code 2
+	C002 = "Could not unmarshal JSON config file"
+	//C003 Error Code 3
+	C003 = "App environment not provided in config fil Accepted values are `production` or `development`"
+	//C004 Error Code 4
+	C004 = "App port not provided in config file"
+	//C005 Error Code 5
+	C005 = "Invalid JSON"
+)
 
-	// Log is used to log errors, which will print the filename and linenumber
-	Log    *log.Logger
-	AppErr map[string]error
+//Errors struct is the custom error for webgo error handling
+type Errors struct {
+	msg string
 }
 
-func (e *Errors) init(errTypes map[string]error) {
-	// Error codes which are to be used through out the app.
-	e.C001 = Er.New("Invalid number of arguments provided")
-	e.C002 = Er.New("Could not unmarshal JSON config file")
-	e.C003 = Er.New("App environment not provided in config file. Accepted values are `production` or `development`")
-	e.C004 = Er.New("App port not provided in config file")
-	e.C005 = Er.New("Invalid JSON")
+func (e *Errors) Error() string {
+	return e.msg
+}
 
-	// Setting up Go log with custom flags
-	Err.Log = log.New(os.Stderr, "", log.LstdFlags|log.Llongfile)
-
-	// App configuration errors
-	e.AppErr = errTypes
+//New returns a new instance of Errors struct
+func New(str string) *Errors {
+	return &Errors{
+		msg: str,
+	}
 }
 
 func init() {
-	// Initializing Err variable with default values
-	Err.init(nil)
+	// Setting up Go log with custom flags
+	Log = log.New(os.Stderr, "", log.LstdFlags|log.Llongfile)
 }
 
-// Global variable to access Error logging structure.
-var Err Errors
+// Log is used to log errors, which will print the filename and linenumber
+var Log *log.Logger

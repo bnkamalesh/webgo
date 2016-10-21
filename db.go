@@ -7,7 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// Struct to parse Database configuration
+//DBConfig Database configuration
 type DBConfig struct {
 	Name          string `json:"name"`
 	Host          string `json:"host"`
@@ -18,9 +18,9 @@ type DBConfig struct {
 	MgoDialString string `json:"mgoDialString"`
 }
 
-// DB Sessions are maintained inside a struct for better caching of the data stores
-// Developed based on the answer:
-// http://stackoverflow.com/questions/26574594/best-practice-to-maintain-a-mgo-session
+//DataStore DB Sessions are maintained inside a struct for better caching of the data stores
+//Developed based on the answer:
+//http://stackoverflow.com/questions/26574594/best-practice-to-maintain-a-mgo-session
 type DataStore struct {
 	DbName  string
 	Session *mgo.Session
@@ -31,7 +31,7 @@ func (ds *DataStore) getSession() *mgo.Session {
 	return ds.Session.Copy()
 }
 
-// Get appropriate MongoDB collection
+//GetSessionCollection gets the appropriate MongoDB collection
 func (ds *DataStore) GetSessionCollection(dbName, collection string) (*mgo.Session, *mgo.Collection) {
 	s := ds.getSession()
 	c := s.DB(dbName).C(collection)
@@ -39,7 +39,7 @@ func (ds *DataStore) GetSessionCollection(dbName, collection string) (*mgo.Sessi
 	return s, c
 }
 
-// Do a MongoDB Get
+//Get does a MongoDB Get
 func (ds *DataStore) Get(dbName, collection string, conditions interface{}, resultStruct interface{}) ([]bson.M, error) {
 
 	s, c := ds.GetSessionCollection(dbName, collection)
@@ -67,7 +67,7 @@ func (ds *DataStore) Get(dbName, collection string, conditions interface{}, resu
 	return data, nil
 }
 
-// Do a MongoDB GetAll
+//GetAll does a MongoDB GetAll
 func (ds *DataStore) GetAll(dbName, collection string, resultStruct interface{}) ([]bson.M, error) {
 
 	s, c := ds.GetSessionCollection(dbName, collection)
@@ -95,7 +95,7 @@ func (ds *DataStore) GetAll(dbName, collection string, resultStruct interface{})
 	return data, nil
 }
 
-// Do a MongoDB GetOne
+//GetOne does a MongoDB GetOne
 func (ds *DataStore) GetOne(dbName, collection string, conditions interface{}, resultStruct interface{}) (bson.M, error) {
 
 	s, c := ds.GetSessionCollection(dbName, collection)
@@ -123,7 +123,7 @@ func (ds *DataStore) GetOne(dbName, collection string, conditions interface{}, r
 	return data, nil
 }
 
-// Do a MongoDB Save
+//Save does a MongoDB Save
 func (ds *DataStore) Save(dbName, collection string, data interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
@@ -135,7 +135,7 @@ func (ds *DataStore) Save(dbName, collection string, data interface{}) error {
 	return nil
 }
 
-// Do a MongoDB Update - multiple records
+//Update does a MongoDB Update - multiple records
 func (ds *DataStore) Update(dbName, collection string, condition, updateData interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
@@ -148,7 +148,7 @@ func (ds *DataStore) Update(dbName, collection string, condition, updateData int
 	return nil
 }
 
-// Do a MongoDB update - single record, by MongoID
+//UpdateId does MongoDB update - single record, by MongoID
 func (ds *DataStore) UpdateId(dbName, collection string, _id, data interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
@@ -161,7 +161,7 @@ func (ds *DataStore) UpdateId(dbName, collection string, _id, data interface{}) 
 	return nil
 }
 
-// Do a MongoDB Remove, single record, by MongoID
+//RemoveId does a MongoDB Remove, single record, by MongoID
 func (ds *DataStore) RemoveId(dbName, collection string, id interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
@@ -174,7 +174,7 @@ func (ds *DataStore) RemoveId(dbName, collection string, id interface{}) error {
 	return nil
 }
 
-// Do a MongoDB Remove
+//Remove does a MongoDB Remove
 func (ds *DataStore) Remove(dbName, collection string, condition interface{}) error {
 	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
@@ -187,7 +187,7 @@ func (ds *DataStore) Remove(dbName, collection string, condition interface{}) er
 	return nil
 }
 
-// Do a MongoDB RemoveAll
+// RemoveAll does MongoDB RemoveAll
 func (ds *DataStore) RemoveAll(dbName, collection string) (*mgo.ChangeInfo, error) {
 	s, c := ds.GetSessionCollection(dbName, collection)
 	defer s.Close()
@@ -200,7 +200,7 @@ func (ds *DataStore) RemoveAll(dbName, collection string) (*mgo.ChangeInfo, erro
 	return info, nil
 }
 
-// Create a new data store
+//newDataStore creates a new data store
 func newDataStore(user, pass, host, port, name, authSource, mgoDialString string) (*DataStore, error) {
 	dialString := "mongodb://"
 
@@ -236,7 +236,7 @@ func newDataStore(user, pass, host, port, name, authSource, mgoDialString string
 	return &DataStore{DbName: name, Session: session}, nil
 }
 
-// Initializing Mongo DB
+// InitDB initializes MongoDB
 func InitDB(dbc DBConfig) *DataStore {
 	dStore, err := newDataStore(
 		dbc.Username,
@@ -248,7 +248,7 @@ func InitDB(dbc DBConfig) *DataStore {
 		dbc.MgoDialString,
 	)
 	if err != nil {
-		Err.Log.Fatal("Could not connect to MongoDB -> ", err)
+		Log.Fatal("Could not connect to MongoDB -> ", err)
 		return nil
 	}
 	return dStore

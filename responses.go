@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Struct used to render the error page
+//ErrorData used to render the error page
 type ErrorData struct {
 	ErrCode        int
 	ErrDescription string
@@ -23,49 +23,66 @@ type errOutput struct {
 	Status int         `json:"status"`
 }
 
-// SendReponse is used to respond to any request (JSON response) based on the code, data etc.
-func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
-	w.WriteHeader(rCode)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+const (
+	//HeaderContentType is the key for mentioning the response header content type
+	HeaderContentType = "Content-Type"
+	//JSONContentType is the MIME type when the response is JSON
+	JSONContentType = "application/json"
+	//HTMLContentType is the MIME type when the response is HTML
+	HTMLContentType = "text/html; charset=UTF-8"
 
-	data = &dOutput{data, rCode}
+	//ErrInternalServer to send when there's an internal server error
+	ErrInternalServer = "Internal server error."
+)
+
+//SendResponse is used to respond to any request (JSON response) based on the code, data etc.
+func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
+	w.Header().Set(HeaderContentType, JSONContentType)
+
+	w.WriteHeader(rCode)
+
 	// Encode data to json and send response
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	if err := json.NewEncoder(w).Encode(dOutput{data, rCode}); err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
 			logging the actual error
 		*/
+		Log.Println(err)
 		R500(w, struct {
 			errors []string
 		}{
-			[]string{"Internal server error."},
+			[]string{ErrInternalServer},
 		})
 	}
 }
 
+//SendError is used to respond to any request with an error
 func SendError(w http.ResponseWriter, data interface{}, rCode int) {
-	w.WriteHeader(rCode)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.Header().Set(HeaderContentType, JSONContentType)
 
-	data = &errOutput{data, rCode}
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	w.WriteHeader(rCode)
+
+	if err := json.NewEncoder(w).Encode(errOutput{data, rCode}); err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
 			logging the actual error
 		*/
+		Log.Println(err)
 		R500(w, struct {
 			errors []string
 		}{
-			[]string{"Internal server error."},
+			[]string{ErrInternalServer},
 		})
 	}
 }
 
 // Render is used for rendering templates (HTML)
 func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template) {
-	w.WriteHeader(rCode)
 	// In case of HTML response, setting appropriate header type for text/HTML response
-	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
+	w.Header().Set(HeaderContentType, HTMLContentType)
+
+	w.WriteHeader(rCode)
+
 	// Rendering an HTML template with appropriate data
 	tpl.Execute(w, data)
 }

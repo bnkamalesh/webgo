@@ -6,7 +6,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Struct to define a route for each API
+// Route struct defines a route for each API
 type Route struct {
 	Name    string       // Just a label to name the route/API, this is not used anywhere
 	Method  string       // Request type
@@ -15,7 +15,7 @@ type Route struct {
 	G       *Globals     // App globals
 }
 
-// Inject httprouter params to the context
+// InjectParams injects httprouter params to the context
 func InjectParams(route Route) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		// convert httprouter params to map of string
@@ -32,7 +32,7 @@ func InjectParams(route Route) httprouter.Handle {
 	}
 }
 
-// Initiate Router settings
+// InitRouter initializes Router settings
 func InitRouter(routes []Route) *httprouter.Router {
 	router := httprouter.New()
 
@@ -63,7 +63,13 @@ func InitRouter(routes []Route) *httprouter.Router {
 			router.PATCH(
 				route.Pattern,
 				InjectParams(route))
+
+		case "HEAD":
+			router.HEAD(
+				route.Pattern,
+				InjectParams(route))
 		}
+
 	}
 	return router
 }
