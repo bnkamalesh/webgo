@@ -1,4 +1,4 @@
-#Go web framework.boilerplate.
+#Go web framework/boilerplate.
 
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
