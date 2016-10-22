@@ -1,11 +1,11 @@
-#GoLang web framework.
+#Go web framework.boilerplate.
 
-A lightweight & simple web framework for GoLang.
+A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
 
 ###Requirements
 
-1. `GoLang 1.5` or higher
+1. `Go 1.5` or higher
 
 ``` 
 # Enable vendoring for Go1.5
