@@ -3,12 +3,14 @@ package webgo
 import (
 	"net/http"
 
+	"time"
+
 	"github.com/codegangsta/negroni"
 	"github.com/julienschmidt/httprouter"
 )
 
 // Start the server with the appropriate configurations
-func Start(cfg *Config, router *httprouter.Router) {
+func Start(cfg *Config, router *httprouter.Router, readTimeout, writeTimeout time.Duration) {
 	host := cfg.Host
 
 	if len(cfg.Port) > 0 {
@@ -17,7 +19,14 @@ func Start(cfg *Config, router *httprouter.Router) {
 
 	if cfg.Env == "production" {
 		print("Starting server in production mode, listening on `" + host + "`\n")
-		err := http.ListenAndServe(host, router)
+		httpServer := &http.Server{
+			Addr:         host,
+			Handler:      router,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+		}
+		// err := http.ListenAndServe(host, router)
+		err := httpServer.ListenAndServe()
 		if err != nil {
 			Log.Println("Could not start http server -> ", err)
 		}

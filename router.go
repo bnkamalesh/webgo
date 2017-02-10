@@ -1,10 +1,29 @@
 package webgo
 
 import (
+	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
 )
+
+var l *log.Logger
+
+type customResponseWriter struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+func (crw *customResponseWriter) WriteHeader(code int) {
+	crw.statusCode = code
+	crw.ResponseWriter.WriteHeader(code)
+}
+
+func init() {
+	l = log.New(os.Stdout, "", 0)
+}
 
 // Route struct defines a route for each API
 type Route struct {
@@ -18,17 +37,22 @@ type Route struct {
 // InjectParams injects httprouter params to the context
 func InjectParams(route Route) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		startTime := time.Now()
 		// convert httprouter params to map of string
 		params := make(map[string]string)
 		for i := range ps {
 			params[ps[i].Key] = ps[i].Value
 		}
 
+		crw := &customResponseWriter{w, http.StatusOK}
 		// Injecting multiplexer params to every request context
 		newHandlerChain := StackInject(route.Handler, "params", params)
-
 		newHandlerChain = StackInject(newHandlerChain, "routeHandler", &route)
-		newHandlerChain.ServeHTTP(w, r)
+		newHandlerChain.ServeHTTP(crw, r)
+
+		endTime := time.Now()
+		out := endTime.Format("2006-01-02 15:04:05 -0700 MST") + " " + r.Method + " " + r.URL.String() + " " + endTime.Sub(startTime).String()
+		l.Println(out, crw.statusCode)
 	}
 }
 
