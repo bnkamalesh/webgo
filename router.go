@@ -83,7 +83,7 @@ func (r *Route) init() error {
 	}
 
 	patternString = "^" + patternString + "/??$"
-	println("\npatternString:", patternString)
+
 	//compile the regex for the pattern string calculated
 	reg, err := regexp.Compile(patternString)
 	if err != nil {
@@ -125,7 +125,6 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			// ctx := context.WithValue(req.Context(), "params", params)
 			// ctx = context.WithValue(req.Context(), "routeHandler", &route)
 
-			l.Println("params:", params, "route.Pattern:", route.Pattern)
 			newHandlerChain := StackInject(route.Handler, "params", params)
 			newHandlerChain = StackInject(newHandlerChain, "routeHandler", &route)
 			newHandlerChain.ServeHTTP(crw, req)
