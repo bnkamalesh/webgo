@@ -6,11 +6,10 @@ import (
 	"time"
 
 	"github.com/codegangsta/negroni"
-	"github.com/julienschmidt/httprouter"
 )
 
 // Start the server with the appropriate configurations
-func Start(cfg *Config, router *httprouter.Router, readTimeout, writeTimeout time.Duration) {
+func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration) {
 	host := cfg.Host
 
 	if len(cfg.Port) > 0 {
