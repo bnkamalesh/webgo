@@ -10,7 +10,10 @@ import (
 )
 
 //urlchars is the set of characters which are allowed in a URI param
-const urlchars = `([a-zA-Z0-9\_%\-\.\@]+)`
+//Regex prepared based on http://stackoverflow.com/a/4669750/1359163, https://tools.ietf.org/html/rfc3986
+//const urlchars = `([a-zA-Z0-9\*\-+._~!$()=&',;:@%]+)`
+//Though this allows invalid characters in the URI parameter, it has better performance.
+const urlchars = `([^/]+)`
 const urlwildcard = `(.+)`
 
 var l *log.Logger
