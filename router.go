@@ -9,21 +9,26 @@ import (
 	"time"
 )
 
-const urlchars = `([a-zA-Z0-9_%.]+)`
+//urlchars is the set of characters which are allowed in a URI param
+const urlchars = `([a-zA-Z0-9\_%\-\.\@]+)`
+const urlwildcard = `(.+)`
 
 var l *log.Logger
 var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
 
+//customResponseWriter is a custom HTTP response writer
 type customResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
+//WriteHeader is the interface implementation to get HTTP response code and add it to the custom response writer
 func (crw *customResponseWriter) WriteHeader(code int) {
 	crw.statusCode = code
 	crw.ResponseWriter.WriteHeader(code)
 }
 
+//init initializes the logging variable
 func init() {
 	l = log.New(os.Stdout, "", 0)
 }
@@ -37,8 +42,8 @@ type Route struct {
 	//Pattern is the URI pattern to match
 	Pattern string
 
-	//ShowLog if enabled will print basic access log to the console
-	ShowLog bool
+	//HideAccessLog if enabled will not print the basic access log to console
+	HideAccessLog bool
 
 	Handler HandlerChain // Handler function with middlewares
 	G       *Globals     // App globals
@@ -46,6 +51,8 @@ type Route struct {
 	//uriKeys is the list of URI params
 	uriKeys []string
 
+	//uriPatternString is the pattern string which is compiled to regex object
+	uriPatternString string
 	//uriPattern is the compiled regex to match the URI pattern
 	uriPattern *regexp.Regexp
 }
@@ -58,39 +65,52 @@ func (r *Route) init() error {
 		//uriValues is a map of URI Key and it's respective value, this is calculated per request
 		var key = ""
 		var hasKey = false
+		var hasWildcard = false
 
 		for i := 0; i < len(r.Pattern); i++ {
 			char := string(r.Pattern[i])
 
 			if char == ":" {
 				hasKey = true
+			} else if char == "*" {
+				hasWildcard = true
 			} else if hasKey && char != "/" {
 				key += char
 			} else if hasKey && len(key) > 0 {
-				patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+				if hasWildcard {
+					patternString = strings.Replace(patternString, ":"+key+"*", urlwildcard, 1)
+				} else {
+					patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+				}
+
 				r.uriKeys = append(r.uriKeys, key)
 
-				hasKey = false
+				hasWildcard, hasKey = false, false
 				key = ""
 			}
 		}
 
 		if hasKey && len(key) > 0 {
-			patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+			if hasWildcard {
+				patternString = strings.Replace(patternString, ":"+key+"*", urlwildcard, 1)
+			} else {
+				patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+			}
 			r.uriKeys = append(r.uriKeys, key)
 		}
 
 	}
 
-	patternString = "^" + patternString + "/??$"
+	patternString = "^" + patternString + "$"
 
 	//compile the regex for the pattern string calculated
 	reg, err := regexp.Compile(patternString)
 	if err != nil {
 		return err
 	}
-	r.uriPattern = reg
 
+	r.uriPattern = reg
+	r.uriPatternString = patternString
 	return nil
 }
 
@@ -110,44 +130,59 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 //Router is the HTTP router
 type Router struct {
-	Handlers map[string][]Route
+	handlers      map[string][]*Route
+	HideAccessLog bool
+	NotFound      http.HandlerFunc
 }
 
 func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
-	for _, route := range rtr.Handlers[req.Method] {
-		startTime := time.Now()
+	startTime := time.Now()
+
+	for _, route := range rtr.handlers[req.Method] {
 		if ok, params := route.matchAndGet(req.RequestURI); ok {
-			endTime := time.Now()
+
 			crw := &customResponseWriter{rw, http.StatusOK}
 
-			// using request context
-			// ctx := context.WithValue(req.Context(), "params", params)
-			// ctx = context.WithValue(req.Context(), "routeHandler", &route)
-
+			//injecting URI parameters and the route handler itself to the context
 			newHandlerChain := StackInject(route.Handler, "params", params)
-			newHandlerChain = StackInject(newHandlerChain, "routeHandler", &route)
+			newHandlerChain = StackInject(newHandlerChain, "routeHandler", route)
+
 			newHandlerChain.ServeHTTP(crw, req)
 
-			out := endTime.Format("2006-01-02 15:04:05 -0700 MST") + " " + req.Method + " " + req.URL.String() + " " + endTime.Sub(startTime).String()
-			l.Println(out, crw.statusCode)
+			if rtr.HideAccessLog == false && route.HideAccessLog == false {
+				endTime := time.Now()
+
+				l.Println(
+					endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.String()+" "+endTime.Sub(startTime).String(),
+					crw.statusCode,
+				)
+			}
 			return
 		}
 
 	}
 
-	//serve 404
+	//serve 404 when there are no matching routes
+	rtr.NotFound(rw, req)
+	if rtr.HideAccessLog == false {
+		endTime := time.Now()
+		l.Println(
+			endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.String()+" "+endTime.Sub(startTime).String(),
+			http.StatusNotFound,
+		)
+	}
 }
 
 // InitRouter initializes Router settings
-func InitRouter(routes []Route) *Router {
-	var handlers = make(map[string][]Route, len(validHTTPMethods))
+func InitRouter(routes []*Route) *Router {
+	var handlers = make(map[string][]*Route, len(validHTTPMethods))
 
 	for _, validMethod := range validHTTPMethods {
-		handlers[validMethod] = []Route{}
+		handlers[validMethod] = []*Route{}
 	}
 
-	for _, route := range routes {
+	for idx, route := range routes {
 		found := false
 		for _, validMethod := range validHTTPMethods {
 			if route.Method == validMethod {
@@ -156,16 +191,35 @@ func InitRouter(routes []Route) *Router {
 		}
 
 		if found == false {
-			log.Fatal("Unsupported HTTP request method provided. Method:", route.Method)
+			l.Fatal("Unsupported HTTP request method provided. Method:", route.Method)
 		}
 
-		route.init()
+		err := route.init()
+		if err != nil {
+			l.Fatal("Unsupported URI pattern.", route.Pattern, err)
+		}
+
+		//checking if the URI pattern is duplicated
+		for i := 0; i < idx; i++ {
+			rt := routes[i]
+
+			if rt.Name == route.Name {
+				l.Println("Warning: Duplicate route name(\"" + rt.Name + "\") detected. Route name should be unique.")
+			}
+
+			if rt.Method == route.Method {
+				// regex pattern match
+				if ok, _ := rt.matchAndGet(route.Pattern); ok {
+					l.Fatal("Duplicate URI pattern detected.\nPattern:", rt.Pattern, "\nDuplicate pattern:", route.Pattern)
+				}
+			}
+		}
+
 		handlers[route.Method] = append(handlers[route.Method], route)
 	}
 
 	return &Router{
-		Handlers: handlers,
+		handlers: handlers,
+		NotFound: http.NotFound,
 	}
 }
-
-// ===

@@ -9,11 +9,18 @@ import (
 
 // Config struct for reading app's configuration from json file
 type Config struct {
-	Env               string `json:"environment"`
-	Host              string `json:"host,omitempty"`
-	Port              string `json:"port"`
-	TemplatesBasePath string `json:"templatePath"`
+	//Env is the deployment environment
+	Env string `json:"environment"`
+	//Host is the host on which the server is listening
+	Host string `json:"host,omitempty"`
+	//Port is the port number where the server has to listen for the HTTP requests
+	Port string `json:"port"`
+	//TemplatesBasePath is the base path where all the HTML templates are located
+	TemplatesBasePath string `json:"templatePath,omitempty"`
+	//HideAccessLog is true will disable print the access log
+	HideAccessLog bool `json:"hideAccessLog,omitempty"`
 
+	//DBC is the database configuration
 	DBC DBConfig `json:"dbConfig"`
 
 	// Data holds the full json config file data as bytes
