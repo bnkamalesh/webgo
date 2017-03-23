@@ -24,7 +24,7 @@ type Config struct {
 	DBC DBConfig `json:"dbConfig"`
 
 	// Data holds the full json config file data as bytes
-	Data []byte
+	Data []byte `json:"-"`
 }
 
 // Load config file from the provided filepath

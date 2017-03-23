@@ -5,13 +5,7 @@ A lightweight & simple web framework for Go.
 
 ###Requirements
 
-1. `Go 1.5` or higher
-
-``` 
-# Enable vendoring for Go1.5
-$ export GO15VENDOREXPERIMENT=1
-# ===
-```
+1. `Go 1.8` or higher
 
 ### Third party libraries used
 
@@ -41,6 +35,7 @@ cfg.Load("path/to/config.json")
 	"host": "", // Host on which the app should run
 	"port": "", // Port on which the app should listen to
 	"templatePath": "", // Folder containing all the templates
+	"hideAccessLog": false, // if true, access log will not be printed
 
 	"dbConfig": { // This is by default meant for MongoDB. You can use it for any database
 		"name":     "",
