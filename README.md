@@ -16,8 +16,7 @@ $ export GO15VENDOREXPERIMENT=1
 ### Third party libraries used
 
 1. [mgo/mango](https://gopkg.in/mgo.v2), MongoDB driver.
-2. [HttpRouter](https://github.com/julienschmidt/httprouter), multiplexer.
-3. [Stack](https://github.com/alexedwards/stack), for chaining request handlers.
+2. [Stack](https://github.com/alexedwards/stack), for chaining request handlers.
 
 
 ### Usage
