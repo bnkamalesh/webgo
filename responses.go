@@ -35,6 +35,12 @@ const (
 	ErrInternalServer = "Internal server error."
 )
 
+//SendHeader is used to send only a response header, i.e no response body
+func SendHeader(w http.ResponseWriter, rCode int) {
+	w.WriteHeader(rCode)
+	fmt.Fprint(w)
+}
+
 //SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)
@@ -110,8 +116,7 @@ func R201(w http.ResponseWriter, data interface{}) {
 
 // R204 - empty, no content
 func R204(w http.ResponseWriter) {
-	w.WriteHeader(204)
-	fmt.Fprint(w)
+	SendHeader(w, 204)
 }
 
 // R302 - Temporary redirect

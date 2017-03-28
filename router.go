@@ -1,6 +1,7 @@
 package webgo
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,8 @@ import (
 //Though this allows invalid characters in the URI parameter, it has better performance.
 const urlchars = `([^/]+)`
 const urlwildcard = `(.+)`
+const errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
+const errMultiWrite = `http: multiple response.Write calls`
 
 var l *log.Logger
 var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
@@ -23,12 +26,28 @@ var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.Method
 type customResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
+	written    bool
 }
 
 //WriteHeader is the interface implementation to get HTTP response code and add it to the custom response writer
 func (crw *customResponseWriter) WriteHeader(code int) {
-	crw.statusCode = code
-	crw.ResponseWriter.WriteHeader(code)
+	if crw.written == false {
+		crw.statusCode = code
+		crw.ResponseWriter.WriteHeader(code)
+	} else {
+		l.Println(errMultiHeaderWrite)
+	}
+}
+
+//Write is the interface implementation to respond to the HTTP request, but check if a response was already sent
+func (crw *customResponseWriter) Write(body []byte) (int, error) {
+	if crw.written {
+		l.Println(errMultiWrite)
+		return 0, nil
+	}
+
+	crw.written = true
+	return crw.ResponseWriter.Write(body)
 }
 
 //init initializes the logging variable
@@ -48,8 +67,13 @@ type Route struct {
 	//HideAccessLog if enabled will not print the basic access log to console
 	HideAccessLog bool
 
-	Handler HandlerChain // Handler function with middlewares
-	G       *Globals     // App globals
+	//FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
+	FallThroughPostResponse bool
+
+	//Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
+	//subsquent writes from the following handlers will be ignored
+	Handler []http.HandlerFunc
+	G       *Globals // App globals
 
 	//uriKeys is the list of URI params
 	uriKeys []string
@@ -58,6 +82,12 @@ type Route struct {
 	uriPatternString string
 	//uriPattern is the compiled regex to match the URI pattern
 	uriPattern *regexp.Regexp
+}
+
+//WC is the webgocontext
+type WC struct {
+	Params map[string]string
+	Route  *Route
 }
 
 //init intializes prepares the URIKeys, compile regex for the provided pattern
@@ -142,16 +172,36 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	startTime := time.Now()
 
+	crw := &customResponseWriter{
+		ResponseWriter: rw,
+	}
+
 	for _, route := range rtr.handlers[req.Method] {
 		if ok, params := route.matchAndGet(req.RequestURI); ok {
 
-			crw := &customResponseWriter{rw, http.StatusOK}
+			//webgo context object created for this request
+			wc := &WC{
+				Params: params,
+				Route:  route,
+			}
 
-			//injecting URI parameters and the route handler itself to the context
-			newHandlerChain := StackInject(route.Handler, "params", params)
-			newHandlerChain = StackInject(newHandlerChain, "routeHandler", route)
+			//request context injected with webgo context
+			reqwc := req.WithContext(context.WithValue(req.Context(), "webgocontext", wc))
 
-			newHandlerChain.ServeHTTP(crw, req)
+			for _, handler := range route.Handler {
+				if crw.written == false {
+					// If there has been no write to response writer yet
+					handler(crw, reqwc)
+				} else {
+					if route.FallThroughPostResponse {
+						//run a handler post response write, only if fall through is enabled
+						handler(crw, reqwc)
+					} else {
+						//Do not run any more handlers if already responded an no fall through enabled
+						break
+					}
+				}
+			}
 
 			if rtr.HideAccessLog == false && route.HideAccessLog == false {
 				endTime := time.Now()
@@ -195,6 +245,10 @@ func InitRouter(routes []*Route) *Router {
 
 		if found == false {
 			l.Fatal("Unsupported HTTP request method provided. Method:", route.Method)
+		}
+
+		if route.Handler == nil || len(route.Handler) == 0 {
+			l.Fatal("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
 		}
 
 		err := route.init()
