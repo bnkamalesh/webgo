@@ -2,7 +2,6 @@ package webgo
 
 import (
 	"net/http"
-
 	"time"
 )
 
@@ -14,7 +13,7 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 		host += ":" + cfg.Port
 	}
 
-	println("Starting server in production mode, listening on `" + host + "`\n")
+	println("Starting server, listening on `" + host + "`\n")
 
 	httpServer := &http.Server{
 		Addr:         host,
@@ -25,6 +24,6 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 
 	err := httpServer.ListenAndServe()
 	if err != nil {
-		Log.Println("Could not start http server -> ", err)
+		Log.Println("Server exited with error:", err)
 	}
 }

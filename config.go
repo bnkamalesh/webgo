@@ -17,8 +17,6 @@ type Config struct {
 	Port string `json:"port"`
 	//TemplatesBasePath is the base path where all the HTML templates are located
 	TemplatesBasePath string `json:"templatePath,omitempty"`
-	//HideAccessLog is true will disable print the access log
-	HideAccessLog bool `json:"hideAccessLog,omitempty"`
 
 	//DBC is the database configuration
 	DBC DBConfig `json:"dbConfig"`
@@ -46,9 +44,6 @@ func (cfg *Config) Load(filepath string) {
 
 // Validate the config parsed into the Config struct
 func (cfg *Config) Validate() {
-	if cfg.Env != "production" && cfg.Env != "development" {
-		Log.Fatal(C003)
-	}
 
 	i, err := strconv.Atoi(cfg.Port)
 	if err != nil {
