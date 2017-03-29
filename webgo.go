@@ -13,7 +13,7 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 		host += ":" + cfg.Port
 	}
 
-	println("Starting server, listening on `" + host + "`\n")
+	println("\nStarting server, listening on '" + host + "'")
 
 	httpServer := &http.Server{
 		Addr:         host,
@@ -24,6 +24,6 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 
 	err := httpServer.ListenAndServe()
 	if err != nil {
-		Log.Println("Server exited with error:", err)
+		println("Server exited with error:", err.Error())
 	}
 }
