@@ -163,7 +163,16 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 //Router is the HTTP router
 type Router struct {
-	handlers      map[string][]*Route
+	handlers map[string][]*Route
+
+	optHandlers    []*Route
+	headHandlers   []*Route
+	getHandlers    []*Route
+	postHandlers   []*Route
+	putHandlers    []*Route
+	patchHandlers  []*Route
+	deleteHandlers []*Route
+
 	HideAccessLog bool
 	NotFound      http.HandlerFunc
 }
@@ -176,7 +185,28 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		ResponseWriter: rw,
 	}
 
-	for _, route := range rtr.handlers[req.Method] {
+	var handlers []*Route
+
+	switch req.Method {
+	case http.MethodOptions:
+		handlers = rtr.optHandlers
+	case http.MethodHead:
+		handlers = rtr.headHandlers
+	case http.MethodGet:
+		handlers = rtr.getHandlers
+	case http.MethodPost:
+		handlers = rtr.postHandlers
+	case http.MethodPut:
+		handlers = rtr.putHandlers
+	case http.MethodPatch:
+		handlers = rtr.patchHandlers
+	case http.MethodDelete:
+		handlers = rtr.deleteHandlers
+	}
+
+	// handlers = rtr.handlers[req.Method]
+
+	for _, route := range handlers {
 		if ok, params := route.matchAndGet(req.RequestURI); ok {
 
 			//webgo context object created for this request
@@ -277,6 +307,15 @@ func InitRouter(routes []*Route) *Router {
 
 	return &Router{
 		handlers: handlers,
+
+		optHandlers:    handlers[http.MethodOptions],
+		headHandlers:   handlers[http.MethodHead],
+		getHandlers:    handlers[http.MethodGet],
+		postHandlers:   handlers[http.MethodPost],
+		putHandlers:    handlers[http.MethodPut],
+		patchHandlers:  handlers[http.MethodPatch],
+		deleteHandlers: handlers[http.MethodDelete],
+
 		NotFound: http.NotFound,
 	}
 }

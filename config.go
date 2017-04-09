@@ -15,6 +15,16 @@ type Config struct {
 	Host string `json:"host,omitempty"`
 	//Port is the port number where the server has to listen for the HTTP requests
 	Port string `json:"port"`
+
+	//CertFile is the TLS/SSL certificate file path, required for HTTPS
+	CertFile string `json:"certFile,omitempty"`
+	//KeyFile is the filepath of private key of the certificate
+	KeyFile string `json:"keyFile,omitempty"`
+	//HTTPSPort is the port number where the server has to listen for the HTTP requests
+	HTTPSPort string `json:"httpsPort,omitempty"`
+	//HTTPSOnly if true will enable HTTPS server alone
+	HTTPSOnly bool `json:"httpsOnly,omitempty"`
+
 	//TemplatesBasePath is the base path where all the HTML templates are located
 	TemplatesBasePath string `json:"templatePath,omitempty"`
 
@@ -56,8 +66,6 @@ func (cfg *Config) Validate() {
 
 //Globals struct to hold configurations which are shared with all the request handlers via context.
 type Globals struct {
-	// Multiplexer params
-	Params map[string]string
 
 	// All the app configurations
 	Cfg *Config
@@ -85,5 +93,4 @@ func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template, ds *DataStor
 	g.Cfg = cfg
 	g.Templates = tpls
 	g.Db = ds
-	g.Params = make(map[string]string)
 }

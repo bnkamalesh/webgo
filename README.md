@@ -5,7 +5,7 @@ A lightweight & simple web framework for Go.
 
 ###Requirements
 
-1. `Go 1.8` or higher
+1. `Go 1.7` or higher
 
 ### Third party libraries used
 
@@ -33,6 +33,11 @@ cfg.Load("path/to/config.json")
 	"environment":  "", // running mode, it can be "production" or "development"
 	"host": "", // Host on which the app should run
 	"port": "", // Port on which the app should listen to
+	"httpsOnly": false, // If true, only HTTPS server is started
+	"httpsPort":  "", // Port on which the HTTPS server should listen to
+	"certFile": "", // Certificate file path for HTTPS
+	"keyFile": "", // Private key file path of the certificate
+
 	"templatePath": "", // Folder containing all the templates
 	"hideAccessLog": false, // if true, access log will not be printed
 
