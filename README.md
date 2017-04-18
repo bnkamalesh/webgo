@@ -35,16 +35,6 @@ cfg.Load("path/to/config.json")
 	"keyFile": "", // Private key file path of the certificate
 
 	"templatePath": "", // Folder containing all the templates
-	"hideAccessLog": false, // if true, access log will not be printed
-
-	"dbConfig": { // This is by default meant for MongoDB. You can use it for any database
-		"name":     "",
-		"host":     "",
-		"port":     "",
-		"username": "",
-		"password": "",
-		"authSource": "",
-		"mgoDialString": "" // The full dial string, can be provided instead of filling all the other fields. It uses `mgo` //driver.
-	}
+	"hideAccessLog": false // if true, access log will not be printed
 }
 ```
