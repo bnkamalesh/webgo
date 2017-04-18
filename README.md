@@ -7,10 +7,6 @@ A lightweight & simple web framework for Go.
 
 1. `Go 1.7` or higher
 
-### Third party libraries used
-
-1. [mgo/mango](https://gopkg.in/mgo.v2), MongoDB driver.
-
 
 ### Usage
 Most of the usage can be seen in this sample app.

@@ -41,6 +41,20 @@ func SendHeader(w http.ResponseWriter, rCode int) {
 	fmt.Fprint(w)
 }
 
+//Send is used to send a completely custom response without wrapping in the `{data: <data>, status: <int>` struct
+func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int) {
+	w.Header().Set(HeaderContentType, contentType)
+	w.WriteHeader(rCode)
+	_, err := fmt.Fprint(w, data)
+	if err != nil {
+		R500(w, struct {
+			errors []string
+		}{
+			[]string{ErrInternalServer},
+		})
+	}
+}
+
 //SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)

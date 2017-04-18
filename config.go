@@ -28,9 +28,6 @@ type Config struct {
 	//TemplatesBasePath is the base path where all the HTML templates are located
 	TemplatesBasePath string `json:"templatePath,omitempty"`
 
-	//DBC is the database configuration
-	DBC DBConfig `json:"dbConfig"`
-
 	// Data holds the full json config file data as bytes
 	Data []byte `json:"-"`
 }
@@ -73,9 +70,6 @@ type Globals struct {
 	// All templates, which can be accessed anywhere from the app
 	Templates map[string]*htpl.Template
 
-	// Data store handler from the Database handling library
-	Db *DataStore
-
 	// This can be used to add any app specifc data, which needs to be shared
 	// E.g. This can be used to plug in a new DB driver, if someone does not want to use MongoDb
 	App map[string]interface{}
@@ -87,10 +81,9 @@ func (g *Globals) Add(key string, data interface{}) {
 }
 
 //Init initializes the Context and set appropriate values
-func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template, ds *DataStore) {
+func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template) {
 	g.App = make(map[string]interface{})
 	g.Templates = make(map[string]*htpl.Template)
 	g.Cfg = cfg
 	g.Templates = tpls
-	g.Db = ds
 }

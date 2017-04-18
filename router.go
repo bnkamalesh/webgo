@@ -217,7 +217,6 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 			//request context injected with webgo context
 			reqwc := req.WithContext(context.WithValue(req.Context(), "webgocontext", wc))
-
 			for _, handler := range route.Handler {
 				if crw.written == false {
 					// If there has been no write to response writer yet
