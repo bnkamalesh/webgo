@@ -3,18 +3,57 @@
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
 
+
 ###Requirements
 
-1. `Go 1.7` or higher
+1. `Go 1.8` or higher
 
 
 ### Usage
-Most of the usage can be seen in this sample app.
-Sample app built using webgo: [https://github.com/bnkamalesh/webgo-sample](https://github.com/bnkamalesh/webgo-sample)
+Please refer to the Sample app built using webgo: [https://github.com/bnkamalesh/webgo-sample](https://github.com/bnkamalesh/webgo-sample) to see how webgo's capabilities can be used.
 
-This framework does not force you to follow any architecture (e.g. MVC), instead is more of a configuration over convention based framework. There are a very limited set of HHTP responses available by default in the framework. They are `200, 201, 204, 302, 400, 403, 404, 406, 451, 500`. 
+Supported HTTP methods are: `OPTIONS, HEAD, GET, POST, PUT, PATCH, DELETE`.
 
-### If you need more, some helpful functions are:
+This framework (or to a level boilerplate) does not force you to follow any architecture (e.g. MVC), instead is more of a configuration over convention based framework/boilerplate. If using any of the default HTTP response function available, for any status less than 400, the JSON response is wrapped as follows:
+
+```
+{
+	data: <payload, any valid JSON data>,
+	status: <status code, integer>
+}
+```
+
+Any default HTTP response function used with status greater than or equal to 400 will be wrapped 
+follows:
+
+```
+{
+	errors: <payload, any valid JSON data>,
+	status: <status code, integer>
+}
+```
+	
+### Available HTTP response functions (JSON)
+1. `R200(http.ResponseWriter, payload)` to send a JSON response with status 200
+
+2. `R201(http.ResponseWriter, payload)` to send a JSON response with status 201
+
+3. `R204(http.ResponseWriter)` to send a response header with status 204
+
+4. `R302(http.ResponseWriter, payload)` to send a JSON response with status 302
+
+5. `R400(http.ResponseWriter, payload)` to send a JSON response with status 400
+
+6. `R403(http.ResponseWriter, payload)` to send a JSON response with status 403
+
+7. `R404(http.ResponseWriter, payload)` to send a JSON response with status 404
+
+7. `R406(http.ResponseWriter, payload)` to send a JSON response with status 406
+
+8. `R451(http.ResponseWriter, payload)` to send a JSON response with status 451
+
+
+### Functions to send customized responses
 
 1. `SendResponse(http.ResponseWriter, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the data struct, with any status code you like. 
 
@@ -27,6 +66,8 @@ This framework does not force you to follow any architecture (e.g. MVC), instead
 5. `Render(http.ResponseWriter, payload, responseCode, *template.Template)` can be used to render any template.
 
 All HTTP responses are in [JSON](https://en.wikipedia.org/wiki/JSON) (if not rendering HTML templates nor using `Send`). Any response with status code less than 400 will be wrapped in a JSON format `{data: "payload", status: 200/201}`. Every other response will be wrapped in `{errors: "payload", status: >= 400}`.
+
+### Configuration
 
 The app starts with configuration set in `config.json`. Configuration path(relative or absolute) can be provided as follows:
 
