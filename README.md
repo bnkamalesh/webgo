@@ -14,7 +14,7 @@ Please refer to the Sample app built using webgo: [https://github.com/bnkamalesh
 
 Supported HTTP methods are: `OPTIONS, HEAD, GET, POST, PUT, PATCH, DELETE`.
 
-This framework (or to a level boilerplate) does not force you to follow any architecture (e.g. MVC), instead is more of a configuration over convention based framework/boilerplate. If using any of the default HTTP response function available, for any status less than 400, the JSON response is wrapped as follows:
+This framework does not force you to follow any architecture (e.g. MVC), instead is more of a configuration over convention based framework. While using any of the default HTTP response function available, for any status less than 400, the JSON response is wrapped as follows:
 
 ```
 {
@@ -23,8 +23,7 @@ This framework (or to a level boilerplate) does not force you to follow any arch
 }
 ```
 
-Any default HTTP response function used with status greater than or equal to 400 will be wrapped 
-follows:
+While using any of the default HTTP response function available, for any status greater than 400, the JSON response is wrapped as follows:
 
 ```
 {
@@ -55,17 +54,17 @@ follows:
 
 ### Functions to send customized responses
 
-1. `SendResponse(http.ResponseWriter, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the data struct, with any status code you like. 
+1. `SendResponse(http.ResponseWriter, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the `data` struct, with any status code required. 
 
-2. `SendError(http.ResponseWriter, payload, errorCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in error struct, with any error code you like. 
+2. `SendError(http.ResponseWriter, payload, errorCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the `errors` struct, with any status code required. 
 
-3. `SendHeader(http.ResponseWriter, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a response header alone, with any HTTP status code you require.
+3. `SendHeader(http.ResponseWriter, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a response header alone, with any HTTP status code required.
 
 4. `Send(http.ResponseWriter, contentType, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a completely custom response.
 
 5. `Render(http.ResponseWriter, payload, responseCode, *template.Template)` can be used to render any template.
 
-All HTTP responses are in [JSON](https://en.wikipedia.org/wiki/JSON) (if not rendering HTML templates nor using `Send`). Any response with status code less than 400 will be wrapped in a JSON format `{data: "payload", status: 200/201}`. Every other response will be wrapped in `{errors: "payload", status: >= 400}`.
+All HTTP responses are in [JSON](https://en.wikipedia.org/wiki/JSON) (if not rendering HTML templates and not using `Send`).
 
 ### Configuration
 
@@ -86,7 +85,6 @@ cfg.Load("path/to/config.json")
 	"certFile": "", // Certificate file path for HTTPS
 	"keyFile": "", // Private key file path of the certificate
 
-	"templatePath": "", // Folder containing all the templates
-	"hideAccessLog": false // if true, access log will not be printed
+	"templatePath": "" // Folder containing all the templates
 }
 ```
