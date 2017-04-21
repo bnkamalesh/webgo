@@ -206,8 +206,10 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	// handlers = rtr.handlers[req.Method]
 
+	rawPath := req.URL.Path
+
 	for _, route := range handlers {
-		if ok, params := route.matchAndGet(req.RequestURI); ok {
+		if ok, params := route.matchAndGet(rawPath); ok {
 
 			//webgo context object created for this request
 			wc := &WC{
@@ -234,9 +236,8 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 			if rtr.HideAccessLog == false && route.HideAccessLog == false {
 				endTime := time.Now()
-
 				l.Println(
-					endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.String()+" "+endTime.Sub(startTime).String(),
+					endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.RawQuery+" "+endTime.Sub(startTime).String(),
 					crw.statusCode,
 				)
 			}
