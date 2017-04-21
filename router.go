@@ -14,10 +14,13 @@ import (
 //Regex prepared based on http://stackoverflow.com/a/4669750/1359163, https://tools.ietf.org/html/rfc3986
 //const urlchars = `([a-zA-Z0-9\*\-+._~!$()=&',;:@%]+)`
 //Though this allows invalid characters in the URI parameter, it has better performance.
-const urlchars = `([^/]+)`
-const urlwildcard = `(.+)`
-const errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
-const errMultiWrite = `http: multiple response.Write calls`
+const (
+	urlchars            = `([^/]+)`
+	urlwildcard         = `(.+)`
+	errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
+	errMultiWrite       = `http: multiple response.Write calls`
+	wgoCtxKey           = "webgocontext"
+)
 
 var l *log.Logger
 var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
@@ -218,7 +221,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 
 			//request context injected with webgo context
-			reqwc := req.WithContext(context.WithValue(req.Context(), "webgocontext", wc))
+			reqwc := req.WithContext(context.WithValue(req.Context(), wgoCtxKey, wc))
 			for _, handler := range route.Handler {
 				if crw.written == false {
 					// If there has been no write to response writer yet
@@ -255,6 +258,11 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			http.StatusNotFound,
 		)
 	}
+}
+
+//GetContext returns the WebgoContext saved inside the HTTP request context
+func GetContext(r *http.Request) *WC {
+	return r.Context().Value(wgoCtxKey).(*WC)
 }
 
 // InitRouter initializes Router settings
