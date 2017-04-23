@@ -1,16 +1,17 @@
-#Go web framework/boilerplate.
+# Go web framework/boilerplate.
 
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
 
 
-###Requirements
+### Requirements
 
 1. `Go 1.8` or higher
 
 
 ### Usage
-Please refer to the Sample app built using webgo: [https://github.com/bnkamalesh/webgo-sample](https://github.com/bnkamalesh/webgo-sample) to see how webgo's capabilities can be used.
+
+Please refer to the Sample app built using webgo: [webgo-sample](https://github.com/bnkamalesh/webgo-sample) to see how webgo's capabilities can be used.
 
 Supported HTTP methods are: `OPTIONS, HEAD, GET, POST, PUT, PATCH, DELETE`.
 
@@ -31,8 +32,13 @@ While using any of the default HTTP response function available, for any status 
 	status: <status code, integer>
 }
 ```
+
+### [Middlewares](https://github.com/bnkamalesh/webgo-sample/blob/master/middlewares.go)
+
+Middlewares and HTTP handlers have the same function signature (same as HTTP standard library's handler function). An execution chain (1 request passing through a set of middlewares and handler function) is stopped immediately after a response is sent. If you'd like the execution to continue even after a response is sent. Each `Route` specified has a property `FallThroughPostResponse` which if set to true will continue executing the chain, but no further responses will be written. You can see a sample [here](https://github.com/bnkamalesh/webgo-sample/blob/master/routes.go).
 	
-### Available HTTP response functions (JSON)
+### [Available HTTP response functions (JSON)](https://github.com/bnkamalesh/webgo/blob/master/responses.go)
+
 1. `R200(http.ResponseWriter, payload)` to send a JSON response with status 200
 
 2. `R201(http.ResponseWriter, payload)` to send a JSON response with status 201
@@ -52,7 +58,7 @@ While using any of the default HTTP response function available, for any status 
 8. `R451(http.ResponseWriter, payload)` to send a JSON response with status 451
 
 
-### Functions to send customized responses
+### [Functions to send customized responses](https://github.com/bnkamalesh/webgo/blob/master/responses.go)
 
 1. `SendResponse(http.ResponseWriter, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the `data` struct, with any status code required. 
 
@@ -66,7 +72,8 @@ While using any of the default HTTP response function available, for any status 
 
 All HTTP responses are in [JSON](https://en.wikipedia.org/wiki/JSON) (if not rendering HTML templates and not using `Send`).
 
-### Configuration
+
+### [Configuration](https://github.com/bnkamalesh/webgo-sample/blob/master/config.json)
 
 The app starts with configuration set in `config.json`. Configuration path(relative or absolute) can be provided as follows:
 
