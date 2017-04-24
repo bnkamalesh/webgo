@@ -33,7 +33,7 @@ While using any of the default HTTP response function available, for any status 
 }
 ```
 
-### [Middlewares](https://github.com/bnkamalesh/webgo-sample/blob/master/middlewares.go)
+### [Middlewares](https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
 
 Middlewares and HTTP handlers have the same function signature (same as HTTP standard library's handler function). An execution chain (1 request passing through a set of middlewares and handler function) is stopped immediately after a response is sent. If you'd like the execution to continue even after a response is sent. Each `Route` specified has a property `FallThroughPostResponse` which if set to true will continue executing the chain, but no further responses will be written. You can see a sample [here](https://github.com/bnkamalesh/webgo-sample/blob/master/routes.go).
 	
