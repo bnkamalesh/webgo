@@ -19,8 +19,11 @@ const (
 	urlwildcard         = `(.+)`
 	errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
 	errMultiWrite       = `http: multiple response.Write calls`
-	wgoCtxKey           = "webgocontext"
 )
+
+type ctxkey string
+
+var wgoCtxKey = ctxkey("webgocontext")
 
 var l *log.Logger
 var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
@@ -207,33 +210,31 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		handlers = rtr.deleteHandlers
 	}
 
-	// handlers = rtr.handlers[req.Method]
-
-	rawPath := req.URL.Path
-
 	for _, route := range handlers {
-		if ok, params := route.matchAndGet(rawPath); ok {
+		if ok, params := route.matchAndGet(req.URL.Path); ok {
 
-			//webgo context object created for this request
-			wc := &WC{
-				Params: params,
-				Route:  route,
-			}
+			//webgo context object created and is injected to the request context
+			reqwc := req.WithContext(
+				context.WithValue(
+					req.Context(),
+					wgoCtxKey,
+					&WC{
+						Params: params,
+						Route:  route,
+					},
+				),
+			)
 
-			//request context injected with webgo context
-			reqwc := req.WithContext(context.WithValue(req.Context(), wgoCtxKey, wc))
 			for _, handler := range route.Handler {
 				if crw.written == false {
 					// If there has been no write to response writer yet
 					handler(crw, reqwc)
+				} else if route.FallThroughPostResponse {
+					//run a handler post response write, only if fall through is enabled
+					handler(crw, reqwc)
 				} else {
-					if route.FallThroughPostResponse {
-						//run a handler post response write, only if fall through is enabled
-						handler(crw, reqwc)
-					} else {
-						//Do not run any more handlers if already responded an no fall through enabled
-						break
-					}
+					//Do not run any more handlers if already responded an no fall through enabled
+					break
 				}
 			}
 
