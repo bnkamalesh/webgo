@@ -11,7 +11,7 @@ const (
 	//C002 Error Code 2
 	C002 = "Could not unmarshal JSON config file"
 	//C003 Error Code 3
-	C003 = "App environment not provided in config fil Accepted values are `production` or `development`"
+	C003 = "App environment not provided in config file, accepted values are `production` or `development`"
 	//C004 Error Code 4
 	C004 = "App port not provided in config file"
 	//C005 Error Code 5
