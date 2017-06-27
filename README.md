@@ -95,3 +95,76 @@ cfg.Load("path/to/config.json")
 	"templatePath": "" // Folder containing all the templates
 }
 ```
+
+### Bencmark
+
+Benchmark with logging turned off. Simple hello world, JSON response 
+`{data: "Hello world", status: 200}`.
+
+Specs: 
+
+Machine   : MacBook Pro (Retina, 13-inch, Early 2015)
+
+Processor : 2.7 GHz Intel Core i5, Memory:
+
+Memory    : 8 GB 1867 MHz DDR3
+
+Ulimit    : 50,000
+
+```
+$ ab -k -n 25000 -c 500 http://127.0.0.1:8000/
+This is ApacheBench, Version 2.3 <$Revision: 1757674 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking 127.0.0.1 (be patient)
+Completed 2500 requests
+Completed 5000 requests
+Completed 7500 requests
+Completed 10000 requests
+Completed 12500 requests
+Completed 15000 requests
+Completed 17500 requests
+Completed 20000 requests
+Completed 22500 requests
+Completed 25000 requests
+Finished 25000 requests
+
+
+Server Software:        
+Server Hostname:        127.0.0.1
+Server Port:            8000
+
+Document Path:          /
+Document Length:        36 bytes
+
+Concurrency Level:      500
+Time taken for tests:   1.228 seconds
+Complete requests:      25000
+Failed requests:        0
+Keep-Alive requests:    25000
+Total transferred:      10575000 bytes
+HTML transferred:       900000 bytes
+Requests per second:    20354.01 [#/sec] (mean)
+Time per request:       24.565 [ms] (mean)
+Time per request:       0.049 [ms] (mean, across all concurrent requests)
+Transfer rate:          8407.96 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    1   4.5      0      37
+Processing:     7   24   6.5     22      65
+Waiting:        7   24   6.5     22      65
+Total:          7   24   8.1     22      65
+
+Percentage of the requests served within a certain time (ms)
+  50%     22
+  66%     25
+  75%     27
+  80%     30
+  90%     34
+  95%     37
+  98%     54
+  99%     60
+ 100%     65 (longest request)
+ ```
