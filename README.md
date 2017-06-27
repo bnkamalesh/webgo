@@ -100,21 +100,21 @@ cfg.Load("path/to/config.json")
 
 Simple hello world, JSON response `{data: "Hello world", status: 200}`.
 
-Middlewares: CORS (https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
+Middlewares: [CORS](https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
 
 Options    : Logging turned *off*.
 
-Source     : https://github.com/bnkamalesh/webgo-sample
+Source     : [WebGo Sample](https://github.com/bnkamalesh/webgo-sample)
 
-Specs: 
+#### Specs: 
 
 Machine   : MacBook Pro (Retina, 13-inch, Early 2015)
 
-Processor : 2.7 GHz Intel Core i5, Memory:
+Processor : 2.7 GHz Intel Core i5
 
 Memory    : 8 GB 1867 MHz DDR3
 
-Ulimit    : 50,000
+[Ulimit](http://wiki.linuxquestions.org/wiki/Ulimit)    : 50,000
 
 ```
 $ ab -k -n 25000 -c 500 http://127.0.0.1:8000/
