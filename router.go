@@ -23,7 +23,7 @@ const (
 
 type ctxkey string
 
-var wgoCtxKey = ctxkey("webgocontext")
+const wgoCtxKey = ctxkey("webgocontext")
 
 var l *log.Logger
 var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
