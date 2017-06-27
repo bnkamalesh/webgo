@@ -98,8 +98,13 @@ cfg.Load("path/to/config.json")
 
 ### Bencmark
 
-Benchmark with logging turned off. Simple hello world, JSON response 
-`{data: "Hello world", status: 200}`.
+Simple hello world, JSON response `{data: "Hello world", status: 200}`.
+
+Middlewares: CORS (https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
+
+Options    : Logging turned *off*.
+
+Source     : https://github.com/bnkamalesh/webgo-sample
 
 Specs: 
 
