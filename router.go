@@ -19,6 +19,7 @@ const (
 	urlwildcard         = `(.+)`
 	errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
 	errMultiWrite       = `http: multiple response.Write calls`
+	errDuplicateKey     = `Error: Duplicate URI keys found`
 )
 
 type ctxkey string
@@ -40,9 +41,10 @@ func (crw *customResponseWriter) WriteHeader(code int) {
 	if crw.written == false {
 		crw.statusCode = code
 		crw.ResponseWriter.WriteHeader(code)
-	} else {
-		l.Println(errMultiHeaderWrite)
+		return
 	}
+
+	l.Println(errMultiHeaderWrite)
 }
 
 //Write is the interface implementation to respond to the HTTP request, but check if a response was already sent
@@ -122,6 +124,12 @@ func (r *Route) init() error {
 					patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
 				}
 
+				for idx, k := range r.uriKeys {
+					if key == k {
+						l.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+					}
+				}
+
 				r.uriKeys = append(r.uriKeys, key)
 
 				hasWildcard, hasKey = false, false
@@ -134,6 +142,12 @@ func (r *Route) init() error {
 				patternString = strings.Replace(patternString, ":"+key+"*", urlwildcard, 1)
 			} else {
 				patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+			}
+
+			for idx, k := range r.uriKeys {
+				if key == k {
+					l.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+				}
 			}
 			r.uriKeys = append(r.uriKeys, key)
 		}
@@ -155,7 +169,12 @@ func (r *Route) init() error {
 
 //matchAndGet will match the given requestURI with its pattern and set its URI params accordingly
 func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
+	if ok := r.uriPattern.Match([]byte(requestURI)); !ok {
+		return false, nil
+	}
+
 	values := r.uriPattern.FindStringSubmatch(requestURI)
+
 	if len(values) > 0 {
 		var uriValues = make(map[string]string, len(values)-1)
 		for j := 1; j < len(values); j++ {
@@ -164,7 +183,9 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 		return true, uriValues
 	}
 
-	return r.uriPattern.Match([]byte(requestURI)), map[string]string{}
+	// Pattern matched, but no parameters available
+	return true, map[string]string{}
+
 }
 
 //Router is the HTTP router
@@ -210,44 +231,48 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		handlers = rtr.deleteHandlers
 	}
 
+	params := make(map[string]string)
+	ok := false
+
 	for _, route := range handlers {
-		if ok, params := route.matchAndGet(req.URL.Path); ok {
-
-			//webgo context object created and is injected to the request context
-			reqwc := req.WithContext(
-				context.WithValue(
-					req.Context(),
-					wgoCtxKey,
-					&WC{
-						Params: params,
-						Route:  route,
-					},
-				),
-			)
-
-			for _, handler := range route.Handler {
-				if crw.written == false {
-					// If there has been no write to response writer yet
-					handler(crw, reqwc)
-				} else if route.FallThroughPostResponse {
-					//run a handler post response write, only if fall through is enabled
-					handler(crw, reqwc)
-				} else {
-					//Do not run any more handlers if already responded an no fall through enabled
-					break
-				}
-			}
-
-			if rtr.HideAccessLog == false && route.HideAccessLog == false {
-				endTime := time.Now()
-				l.Println(
-					endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.RawQuery+" "+endTime.Sub(startTime).String(),
-					crw.statusCode,
-				)
-			}
-			return
+		if ok, params = route.matchAndGet(req.URL.Path); !ok {
+			continue
 		}
 
+		//webgo context object created and is injected to the request context
+		reqwc := req.WithContext(
+			context.WithValue(
+				req.Context(),
+				wgoCtxKey,
+				&WC{
+					Params: params,
+					Route:  route,
+				},
+			),
+		)
+
+		for _, handler := range route.Handler {
+			if crw.written == false {
+				// If there has been no write to response writer yet
+				handler(crw, reqwc)
+			} else if route.FallThroughPostResponse {
+				//run a handler post response write, only if fall through is enabled
+				handler(crw, reqwc)
+			} else {
+				//Do not run any more handlers if already responded and no fall through enabled
+				break
+			}
+		}
+
+		if rtr.HideAccessLog == false && route.HideAccessLog == false {
+			endTime := time.Now()
+			l.Println(
+				endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.RawQuery+" "+endTime.Sub(startTime).String(),
+				crw.statusCode,
+			)
+		}
+
+		return
 	}
 
 	//serve 404 when there are no matching routes
@@ -306,7 +331,8 @@ func InitRouter(routes []*Route) *Router {
 			if rt.Method == route.Method {
 				// regex pattern match
 				if ok, _ := rt.matchAndGet(route.Pattern); ok {
-					l.Fatal("Duplicate URI pattern detected.\nPattern:", rt.Pattern, "\nDuplicate pattern:", route.Pattern)
+					l.Println("Warning: Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
+					l.Println("Note: Only the first route to match the URI pattern would handle the request")
 				}
 			}
 		}
