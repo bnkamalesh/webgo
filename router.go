@@ -175,8 +175,9 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 	values := r.uriPattern.FindStringSubmatch(requestURI)
 
+	var uriValues map[string]string
 	if len(values) > 0 {
-		var uriValues = make(map[string]string, len(values)-1)
+		uriValues = make(map[string]string, len(values)-1)
 		for j := 1; j < len(values); j++ {
 			uriValues[r.uriKeys[j-1]] = values[j]
 		}
@@ -184,8 +185,7 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 	}
 
 	// Pattern matched, but no parameters available
-	return true, map[string]string{}
-
+	return true, uriValues
 }
 
 //Router is the HTTP router
@@ -231,9 +231,9 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		handlers = rtr.deleteHandlers
 	}
 
-	params := make(map[string]string)
-	ok := false
+	var params map[string]string
 
+	ok := false
 	for _, route := range handlers {
 		if ok, params = route.matchAndGet(req.URL.Path); !ok {
 			continue

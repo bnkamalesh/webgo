@@ -140,36 +140,36 @@ Server Software:
 Server Hostname:        127.0.0.1
 Server Port:            8000
 
-Document Path:          /
+Document Path:          /nparams
 Document Length:        36 bytes
 
 Concurrency Level:      500
-Time taken for tests:   1.228 seconds
+Time taken for tests:   0.873 seconds
 Complete requests:      25000
 Failed requests:        0
 Keep-Alive requests:    25000
-Total transferred:      10575000 bytes
+Total transferred:      4200000 bytes
 HTML transferred:       900000 bytes
-Requests per second:    20354.01 [#/sec] (mean)
-Time per request:       24.565 [ms] (mean)
-Time per request:       0.049 [ms] (mean, across all concurrent requests)
-Transfer rate:          8407.96 [Kbytes/sec] received
+Requests per second:    28621.57 [#/sec] (mean)
+Time per request:       17.469 [ms] (mean)
+Time per request:       0.035 [ms] (mean, across all concurrent requests)
+Transfer rate:          4695.73 [Kbytes/sec] received
 
 Connection Times (ms)
               min  mean[+/-sd] median   max
-Connect:        0    1   4.5      0      37
-Processing:     7   24   6.5     22      65
-Waiting:        7   24   6.5     22      65
-Total:          7   24   8.1     22      65
+Connect:        0    1   3.9      0      37
+Processing:     4   17   5.8     15      43
+Waiting:        4   16   5.8     15      43
+Total:          4   17   7.8     15      66
 
 Percentage of the requests served within a certain time (ms)
-  50%     22
-  66%     25
-  75%     27
-  80%     30
-  90%     34
-  95%     37
-  98%     54
-  99%     60
- 100%     65 (longest request)
+  50%     15
+  66%     17
+  75%     19
+  80%     21
+  90%     25
+  95%     29
+  98%     47
+  99%     55
+ 100%     66 (longest request)
  ```
