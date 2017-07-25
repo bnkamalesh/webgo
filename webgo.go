@@ -1,3 +1,15 @@
+/*
+WebGo is a lightweight framework for building web apps. It has a multiplexer,
+middleware plugging mechanism & context management of its own. The primary goal
+of WebGo is to get out of the developer's way as much as possible. i.e. it does
+not enfore you to build your app in any particular pattern instead just helps you
+get all the trivial things done faster and easier.
+
+e.g.
+1. Sharing your database handler among all the HTTP handlers.
+2. Getting named URI parameters.
+3. Multiplexer for regex matching of URI and such.
+*/
 package webgo
 
 import (
