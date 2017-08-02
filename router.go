@@ -173,6 +173,7 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 		return false, nil
 	}
 
+	// Getting URI parameters
 	values := r.uriPattern.FindStringSubmatch(requestURI)
 
 	var uriValues map[string]string
@@ -181,10 +182,8 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 		for j := 1; j < len(values); j++ {
 			uriValues[r.uriKeys[j-1]] = values[j]
 		}
-		return true, uriValues
 	}
 
-	// Pattern matched, but no parameters available
 	return true, uriValues
 }
 
@@ -286,8 +285,8 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-//GetContext returns the WebgoContext saved inside the HTTP request context
-func GetContext(r *http.Request) *WC {
+//Context returns the WebgoContext saved inside the HTTP request context
+func Context(r *http.Request) *WC {
 	return r.Context().Value(wgoCtxKey).(*WC)
 }
 
