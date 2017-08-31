@@ -16,7 +16,7 @@ import (
 //Though this allows invalid characters in the URI parameter, it has better performance.
 const (
 	urlchars            = `([^/]+)`
-	urlwildcard         = `(.+)`
+	urlwildcard         = `(.*)`
 	errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
 	errMultiWrite       = `http: multiple response.Write calls`
 	errDuplicateKey     = `Error: Duplicate URI keys found`
