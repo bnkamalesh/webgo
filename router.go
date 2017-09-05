@@ -233,8 +233,10 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	var params map[string]string
 
 	ok := false
+
+	path := req.URL.EscapedPath()
 	for _, route := range handlers {
-		if ok, params = route.matchAndGet(req.URL.Path); !ok {
+		if ok, params = route.matchAndGet(path); !ok {
 			continue
 		}
 
