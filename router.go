@@ -268,7 +268,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if rtr.HideAccessLog == false && route.HideAccessLog == false {
 			endTime := time.Now()
 			l.Println(
-				endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.RawQuery+" "+endTime.Sub(startTime).String(),
+				endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.RequestURI+" "+endTime.Sub(startTime).String(),
 				crw.statusCode,
 			)
 		}
