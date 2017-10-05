@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-//Middlewares has all the default middlewares provided by webgo
+// Middlewares has all the default middlewares provided by webgo
 type Middlewares struct{}
 
 const (
@@ -18,7 +18,7 @@ const (
 	allowHeaders       = "Accept,Content-Type,Content-Length,Accept-Encoding,Access-Control-Request-Headers,"
 )
 
-//Cors is a basic Cors middleware definition.
+// Cors is a basic Cors middleware definition.
 func (m *Middlewares) Cors(rw http.ResponseWriter, req *http.Request) {
 	// Set response appropriate headers required for CORS
 	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
@@ -29,7 +29,7 @@ func (m *Middlewares) Cors(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
 }
 
-//CorsOptions is a cors middleware just for Options request - adding this helped remove the request method check (an `if` block to check the request type) from Cors middleware
+// CorsOptions is a cors middleware just for Options request - adding this helped remove the request method check (an `if` block to check the request type) from Cors middleware
 func (m *Middlewares) CorsOptions(rw http.ResponseWriter, req *http.Request) {
 	// Set response appropriate headers required for CORS
 	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))

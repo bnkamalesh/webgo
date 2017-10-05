@@ -7,25 +7,25 @@ import (
 	"strconv"
 )
 
-// Config struct for reading app's configuration from json file
+// Config is used for reading app's configuration from json file
 type Config struct {
-	//Env is the deployment environment
+	// Env is the deployment environment
 	Env string `json:"environment"`
-	//Host is the host on which the server is listening
+	// Host is the host on which the server is listening
 	Host string `json:"host,omitempty"`
-	//Port is the port number where the server has to listen for the HTTP requests
+	// Port is the port number where the server has to listen for the HTTP requests
 	Port string `json:"port"`
 
-	//CertFile is the TLS/SSL certificate file path, required for HTTPS
+	// CertFile is the TLS/SSL certificate file path, required for HTTPS
 	CertFile string `json:"certFile,omitempty"`
-	//KeyFile is the filepath of private key of the certificate
+	// KeyFile is the filepath of private key of the certificate
 	KeyFile string `json:"keyFile,omitempty"`
-	//HTTPSPort is the port number where the server has to listen for the HTTP requests
+	// HTTPSPort is the port number where the server has to listen for the HTTP requests
 	HTTPSPort string `json:"httpsPort,omitempty"`
-	//HTTPSOnly if true will enable HTTPS server alone
+	// HTTPSOnly if true will enable HTTPS server alone
 	HTTPSOnly bool `json:"httpsOnly,omitempty"`
 
-	//TemplatesBasePath is the base path where all the HTML templates are located
+	// TemplatesBasePath is the base path where all the HTML templates are located
 	TemplatesBasePath string `json:"templatePath,omitempty"`
 
 	// Data holds the full json config file data as bytes
@@ -61,7 +61,7 @@ func (cfg *Config) Validate() {
 	}
 }
 
-//Globals struct to hold configurations which are shared with all the request handlers via context.
+// Globals struct to hold configurations which are shared with all the request handlers via context.
 type Globals struct {
 
 	// All the app configurations
@@ -80,7 +80,7 @@ func (g *Globals) Add(key string, data interface{}) {
 	g.App[key] = data
 }
 
-//Init initializes the Context and set appropriate values
+// Init initializes the Context and set appropriate values
 func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template) {
 	g.App = make(map[string]interface{})
 	g.Templates = make(map[string]*htpl.Template)

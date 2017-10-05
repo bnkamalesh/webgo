@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-//ErrorData used to render the error page
+// ErrorData used to render the error page
 type ErrorData struct {
 	ErrCode        int
 	ErrDescription string
@@ -24,24 +24,25 @@ type errOutput struct {
 }
 
 const (
-	//HeaderContentType is the key for mentioning the response header content type
+	// HeaderContentType is the key for mentioning the response header content type
 	HeaderContentType = "Content-Type"
-	//JSONContentType is the MIME type when the response is JSON
+	// JSONContentType is the MIME type when the response is JSON
 	JSONContentType = "application/json"
-	//HTMLContentType is the MIME type when the response is HTML
+	// HTMLContentType is the MIME type when the response is HTML
 	HTMLContentType = "text/html; charset=UTF-8"
 
-	//ErrInternalServer to send when there's an internal server error
+	// ErrInternalServer to send when there's an internal server error
 	ErrInternalServer = "Internal server error."
 )
 
-//SendHeader is used to send only a response header, i.e no response body
+// SendHeader is used to send only a response header, i.e no response body
 func SendHeader(w http.ResponseWriter, rCode int) {
 	w.WriteHeader(rCode)
 	fmt.Fprint(w)
 }
 
-//Send is used to send a completely custom response without wrapping in the `{data: <data>, status: <int>` struct
+// Send sends a completely custom response without wrapping in the
+// `{data: <data>, status: <int>` struct
 func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, contentType)
 	w.WriteHeader(rCode)
@@ -55,7 +56,7 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 	}
 }
 
-//SendResponse is used to respond to any request (JSON response) based on the code, data etc.
+// SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)
 
@@ -76,7 +77,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	}
 }
 
-//SendError is used to respond to any request with an error
+// SendError is used to respond to any request with an error
 func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)
 

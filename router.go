@@ -10,10 +10,11 @@ import (
 	"time"
 )
 
-//urlchars is the set of characters which are allowed in a URI param
-//Regex prepared based on http://stackoverflow.com/a/4669750/1359163, https://tools.ietf.org/html/rfc3986
-//const urlchars = `([a-zA-Z0-9\*\-+._~!$()=&',;:@%]+)`
-//Though this allows invalid characters in the URI parameter, it has better performance.
+// urlchars is regex to validate characters in a URI paramter
+// const urlchars = `([a-zA-Z0-9\*\-+._~!$()=&',;:@%]+)`
+// Regex prepared based on http://stackoverflow.com/a/4669750/1359163,
+// https://tools.ietf.org/html/rfc3986
+// Though the current one allows invalid characters in the URI parameter, it has better performance.
 const (
 	urlchars            = `([^/]+)`
 	urlwildcard         = `(.*)`
@@ -29,7 +30,7 @@ const wgoCtxKey = ctxkey("webgocontext")
 var l *log.Logger
 var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
 
-//customResponseWriter is a custom HTTP response writer
+// customResponseWriter is a custom HTTP response writer
 type customResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
@@ -47,7 +48,8 @@ func (crw *customResponseWriter) WriteHeader(code int) {
 	l.Println(errMultiHeaderWrite)
 }
 
-//Write is the interface implementation to respond to the HTTP request, but check if a response was already sent
+// Write is the interface implementation to respond to the HTTP request,
+// but check if a response was already sent.
 func (crw *customResponseWriter) Write(body []byte) (int, error) {
 	if crw.written {
 		l.Println(errMultiWrite)
@@ -58,52 +60,52 @@ func (crw *customResponseWriter) Write(body []byte) (int, error) {
 	return crw.ResponseWriter.Write(body)
 }
 
-//init initializes the logging variable
+// init initializes the logging variable
 func init() {
 	l = log.New(os.Stdout, "", 0)
 }
 
-// Route struct defines a route for each API
+// Route defines a route for each API
 type Route struct {
-	//Name is unique identifier for the route
+	// Name is unique identifier for the route
 	Name string
-	//Method is the HTTP request method/type
+	// Method is the HTTP request method/type
 	Method string
-	//Pattern is the URI pattern to match
+	// Pattern is the URI pattern to match
 	Pattern string
 
-	//HideAccessLog if enabled will not print the basic access log to console
+	// HideAccessLog if enabled will not print the basic access log to console
 	HideAccessLog bool
 
-	//FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
+	// FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
 	FallThroughPostResponse bool
 
-	//Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
-	//subsquent writes from the following handlers will be ignored
+	// Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
+	// subsquent writes from the following handlers will be ignored
 	Handler []http.HandlerFunc
 	G       *Globals // App globals
 
-	//uriKeys is the list of URI params
+	// uriKeys is the list of URI params
 	uriKeys []string
 
-	//uriPatternString is the pattern string which is compiled to regex object
+	// uriPatternString is the pattern string which is compiled to regex object
 	uriPatternString string
-	//uriPattern is the compiled regex to match the URI pattern
+	// uriPattern is the compiled regex to match the URI pattern
 	uriPattern *regexp.Regexp
 }
 
-//WC is the webgocontext
+// WC is the webgocontext
 type WC struct {
 	Params map[string]string
 	Route  *Route
 }
 
-//init intializes prepares the URIKeys, compile regex for the provided pattern
+// init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
 	var patternString = r.Pattern
 
 	if strings.Contains(r.Pattern, ":") {
-		//uriValues is a map of URI Key and it's respective value, this is calculated per request
+		// uriValues is a map of URI Key and it's respective value, this is calculated per request
 		var key = ""
 		var hasKey = false
 		var hasWildcard = false
@@ -156,7 +158,7 @@ func (r *Route) init() error {
 
 	patternString = "^" + patternString + "$"
 
-	//compile the regex for the pattern string calculated
+	// compile the regex for the pattern string calculated
 	reg, err := regexp.Compile(patternString)
 	if err != nil {
 		return err
@@ -167,7 +169,7 @@ func (r *Route) init() error {
 	return nil
 }
 
-//matchAndGet will match the given requestURI with its pattern and set its URI params accordingly
+// matchAndGet will match the given requestURI with its pattern and set its URI params accordingly
 func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 	if ok := r.uriPattern.Match([]byte(requestURI)); !ok {
 		return false, nil
@@ -187,7 +189,7 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 	return true, uriValues
 }
 
-//Router is the HTTP router
+// Router is the HTTP router
 type Router struct {
 	handlers map[string][]*Route
 
@@ -203,6 +205,8 @@ type Router struct {
 	NotFound      http.HandlerFunc
 }
 
+// ServeHTTP is the required `ServeHTTP` implementation to listen to requests HTTP requests
+// for the server
 func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	startTime := time.Now()
@@ -240,7 +244,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			continue
 		}
 
-		//webgo context object created and is injected to the request context
+		// webgo context object created and is injected to the request context
 		reqwc := req.WithContext(
 			context.WithValue(
 				req.Context(),
@@ -257,10 +261,10 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				// If there has been no write to response writer yet
 				handler(crw, reqwc)
 			} else if route.FallThroughPostResponse {
-				//run a handler post response write, only if fall through is enabled
+				// run a handler post response write, only if fall through is enabled
 				handler(crw, reqwc)
 			} else {
-				//Do not run any more handlers if already responded and no fall through enabled
+				// Do not run any more handlers if already responded and no fall through enabled
 				break
 			}
 		}
@@ -276,7 +280,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//serve 404 when there are no matching routes
+	// serve 404 when there are no matching routes
 	rtr.NotFound(rw, req)
 	if rtr.HideAccessLog == false {
 		endTime := time.Now()
@@ -287,7 +291,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-//Context returns the WebgoContext saved inside the HTTP request context
+// Context returns the WebgoContext injected inside the HTTP request context
 func Context(r *http.Request) *WC {
 	return r.Context().Value(wgoCtxKey).(*WC)
 }
@@ -321,7 +325,7 @@ func InitRouter(routes []*Route) *Router {
 			l.Fatal("Unsupported URI pattern.", route.Pattern, err)
 		}
 
-		//checking if the URI pattern is duplicated
+		// checking if the URI pattern is duplicated
 		for i := 0; i < idx; i++ {
 			rt := routes[i]
 
