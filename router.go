@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-// urlchars is regex to validate characters in a URI paramter
+// urlchars is regex to validate characters in a URI parameter
 // const urlchars = `([a-zA-Z0-9\*\-+._~!$()=&',;:@%]+)`
 // Regex prepared based on http://stackoverflow.com/a/4669750/1359163,
 // https://tools.ietf.org/html/rfc3986
@@ -81,7 +81,7 @@ type Route struct {
 	FallThroughPostResponse bool
 
 	// Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
-	// subsquent writes from the following handlers will be ignored
+	// subsequent writes from the following handlers will be ignored
 	Handler []http.HandlerFunc
 	G       *Globals // App globals
 
@@ -102,13 +102,13 @@ type WC struct {
 
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
-	var patternString = r.Pattern
+	patternString := r.Pattern
 
 	if strings.Contains(r.Pattern, ":") {
 		// uriValues is a map of URI Key and it's respective value, this is calculated per request
-		var key = ""
-		var hasKey = false
-		var hasWildcard = false
+		key := ""
+		hasKey := false
+		hasWildcard := false
 
 		for i := 0; i < len(r.Pattern); i++ {
 			char := string(r.Pattern[i])

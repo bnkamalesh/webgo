@@ -1,3 +1,5 @@
+[![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
+
 # Go web framework/boilerplate.
 
 A lightweight & simple web framework for Go.
