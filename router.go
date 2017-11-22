@@ -181,16 +181,15 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 	// Getting URI parameters
 	values := r.uriPattern.FindStringSubmatch(requestURI)
-
-	var uriValues map[string]string
 	if len(values) > 0 {
-		uriValues = make(map[string]string, len(values)-1)
-		for j := 1; j < len(values); j++ {
-			uriValues[r.uriKeys[j-1]] = values[j]
+		uriValues := make(map[string]string, len(values)-1)
+		for i := 1; i < len(values); i++ {
+			uriValues[r.uriKeys[i-1]] = values[i]
 		}
+		return true, uriValues
 	}
 
-	return true, uriValues
+	return true, nil
 }
 
 // Router is the HTTP router
