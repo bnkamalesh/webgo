@@ -171,7 +171,7 @@ func (r *Route) init() error {
 
 // matchAndGet will match the given requestURI with its pattern and set its URI params accordingly
 func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
-	if ok := r.uriPattern.Match([]byte(requestURI)); !ok {
+	if (r.Pattern != requestURI) && !r.uriPattern.Match([]byte(requestURI)) {
 		return false, nil
 	}
 
