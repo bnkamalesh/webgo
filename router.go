@@ -208,8 +208,7 @@ type Router struct {
 	NotFound      http.HandlerFunc
 }
 
-// ServeHTTP is the required `ServeHTTP` implementation to listen to requests HTTP requests
-// for the server
+// ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
 func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	startTime := time.Now()

@@ -48,11 +48,7 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 	w.WriteHeader(rCode)
 	_, err := fmt.Fprint(w, data)
 	if err != nil {
-		R500(w, struct {
-			errors []string
-		}{
-			[]string{ErrInternalServer},
-		})
+		R500(w, ErrInternalServer)
 	}
 }
 
@@ -69,11 +65,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 			logging the actual error
 		*/
 		Log.Println(err)
-		R500(w, struct {
-			errors []string
-		}{
-			[]string{ErrInternalServer},
-		})
+		R500(w, ErrInternalServer)
 	}
 }
 
@@ -89,11 +81,7 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 			logging the actual error
 		*/
 		Log.Println(err)
-		R500(w, struct {
-			errors []string
-		}{
-			[]string{ErrInternalServer},
-		})
+		R500(w, ErrInternalServer)
 	}
 }
 
