@@ -15,6 +15,11 @@ const baseapi = "http://127.0.0.1:9696"
 
 const baseapiHTTPS = "http://127.0.0.1:9696"
 
+var BenchAPIs = map[string]string{
+	"GETNOPARAM":    strings.Join([]string{baseapi, "nparams"}, "/"),
+	"GETWITHPARAM":  strings.Join([]string{baseapi, "wparams", p1, "goblin", p2}, "/"),
+	"POSTWITHPARAM": strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
+}
 var GETAPI = []string{
 	strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
 	strings.Join([]string{baseapiHTTPS, "hello", p1, "goblin", p2}, "/"),
@@ -228,6 +233,44 @@ func TestOptions(t *testing.T) {
 		if resp.Data["payload"] != string(payload) {
 			t.Log("payload:", resp.Data["payload"])
 			t.Fail()
+		}
+	}
+}
+
+func BenchmarkGetWithoutURIParams(b *testing.B) {
+	var err error
+	var url = BenchAPIs["GETNOPARAM"]
+	for i := 0; i < b.N; i++ {
+		_, err = GetAnyJSON(url)
+		if err != nil {
+			b.Error(err)
+			return
+		}
+	}
+}
+
+func BenchmarkGetWithURIParams(b *testing.B) {
+	var err error
+	var url = BenchAPIs["GETWITHPARAM"]
+	for i := 0; i < b.N; i++ {
+		_, err = GetAnyJSON(url)
+		if err != nil {
+			b.Error(err)
+			return
+		}
+	}
+}
+
+func BenchmarkPOSTWithURIParams(b *testing.B) {
+	var err error
+	var url = BenchAPIs["POSTWITHPARAM"]
+	var payload = []byte(`{"payload": "nothing"}`)
+
+	for i := 0; i < b.N; i++ {
+		_, err = Post(url, payload)
+		if err != nil {
+			b.Error(err)
+			return
 		}
 	}
 }

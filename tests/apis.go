@@ -13,25 +13,28 @@ type response struct {
 	Status int               `json:"status"`
 }
 
-type newstruct struct {
-	Hey   string
-	World string
-}
-
-var httpClient *http.Client
-
 func dialTimeout(network, addr string) (net.Conn, error) {
 	//time.Duration, is the duration the app will wait for opening a TCP connection to the respective host
-	return net.DialTimeout(network, addr, time.Duration(15*time.Second))
+	return net.DialTimeout(network, addr, time.Duration(1*time.Second))
 }
 
-func init() {
-	httpClient = &http.Client{
-		Timeout: time.Second * time.Duration(10),
-		Transport: &http.Transport{
-			Dial: dialTimeout,
-		},
+var httpClient = &http.Client{
+	Timeout: time.Second * time.Duration(10),
+	Transport: &http.Transport{
+		Dial: dialTimeout,
+	},
+}
+
+// GetAnyJSON does an HTTP get request and unmarshal result to a generic map[string]interface{}
+func GetAnyJSON(url string) (interface{}, error) {
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		return nil, err
 	}
+
+	result := make(map[string]interface{}, 2)
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	return &result, err
 }
 
 // Get does an HTTP get request
@@ -40,9 +43,8 @@ func Get(url string) (*response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var result = response{}
+	result := response{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	return &result, err
 }
@@ -53,9 +55,8 @@ func Post(url string, payload []byte) (*response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var result = response{}
+	result := response{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err
@@ -68,9 +69,8 @@ func Put(url string, payload []byte) (*response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var result = response{}
+	result := response{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err
@@ -83,9 +83,8 @@ func Patch(url string, payload []byte) (*response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var result = response{}
+	result := response{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err
@@ -98,9 +97,8 @@ func Delete(url string, payload []byte) (*response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var result = response{}
+	result := response{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err
@@ -113,9 +111,8 @@ func Options(url string, payload []byte) (*response, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	var result = response{}
+	result := response{}
 	err = json.NewDecoder(resp.Body).Decode(&result)
 
 	return &result, err
