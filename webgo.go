@@ -13,6 +13,7 @@ e.g.
 package webgo
 
 import (
+	"crypto/tls"
 	"net/http"
 	"time"
 )
@@ -46,6 +47,9 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 			Handler:      router,
 			ReadTimeout:  readTimeout,
 			WriteTimeout: writeTimeout,
+			TLSConfig: &tls.Config{
+				InsecureSkipVerify: cfg.Env == "development",
+			},
 		}
 
 		println("\nStarting HTTPS server, listening on '" + httpshost + "'")
@@ -79,6 +83,9 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 				Handler:      router,
 				ReadTimeout:  readTimeout,
 				WriteTimeout: writeTimeout,
+				TLSConfig: &tls.Config{
+					InsecureSkipVerify: cfg.Env == "development",
+				},
 			}
 
 			println("Starting HTTPS server, listening on '" + httpshost + "'")

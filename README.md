@@ -175,3 +175,19 @@ Percentage of the requests served within a certain time (ms)
   99%     55
  100%     66 (longest request)
  ```
+
+## How to run the tests?
+
+You need to first start the HTTP server, you need to do the following:
+
+```
+$ cd /path/to/webgo/tests
+$ go run main.go
+```
+
+After starting the server, you can run the tests by:
+
+```
+$ cd /path/to/webgo/tests
+$ go test
+```
