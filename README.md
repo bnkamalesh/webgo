@@ -1,6 +1,6 @@
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 
-# Go web framework/boilerplate.
+# WebGo v1.5.5
 
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)

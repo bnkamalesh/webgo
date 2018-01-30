@@ -20,7 +20,7 @@ const (
 
 // Cors is a basic Cors middleware definition.
 func (m *Middlewares) Cors(rw http.ResponseWriter, req *http.Request) {
-	// Set response appropriate headers required for CORS
+	// Set appropriate response headers required for CORS
 	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
 	rw.Header().Set(headerMethods, allowMethods)
 	rw.Header().Set(headerCreds, "true")
@@ -29,9 +29,10 @@ func (m *Middlewares) Cors(rw http.ResponseWriter, req *http.Request) {
 	rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
 }
 
-// CorsOptions is a cors middleware just for Options request - adding this helped remove the request method check (an `if` block to check the request type) from Cors middleware
+// CorsOptions is a cors middleware just for Options request - adding this helped remove the request
+// method check (an `if` block to check the request type) from Cors middleware
 func (m *Middlewares) CorsOptions(rw http.ResponseWriter, req *http.Request) {
-	// Set response appropriate headers required for CORS
+	// Set appropriate response headers required for CORS
 	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
 	rw.Header().Set(headerMethods, allowMethods)
 	rw.Header().Set(headerCreds, "true")
