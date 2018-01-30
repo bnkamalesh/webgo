@@ -28,7 +28,15 @@ type ctxkey string
 const wgoCtxKey = ctxkey("webgocontext")
 
 var l *log.Logger
-var validHTTPMethods = []string{http.MethodOptions, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
+var validHTTPMethods = []string{
+	http.MethodOptions,
+	http.MethodHead,
+	http.MethodGet,
+	http.MethodPost,
+	http.MethodPut,
+	http.MethodPatch,
+	http.MethodDelete,
+}
 
 // customResponseWriter is a custom HTTP response writer
 type customResponseWriter struct {
@@ -37,15 +45,16 @@ type customResponseWriter struct {
 	written    bool
 }
 
-//WriteHeader is the interface implementation to get HTTP response code and add it to the custom response writer
+// WriteHeader is the interface implementation to get HTTP response code and add
+// it to the custom response writer
 func (crw *customResponseWriter) WriteHeader(code int) {
-	if crw.written == false {
-		crw.statusCode = code
-		crw.ResponseWriter.WriteHeader(code)
+	if crw.written {
+		l.Println(errMultiHeaderWrite)
 		return
 	}
 
-	l.Println(errMultiHeaderWrite)
+	crw.statusCode = code
+	crw.ResponseWriter.WriteHeader(code)
 }
 
 // Write is the interface implementation to respond to the HTTP request,
@@ -181,15 +190,16 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 	// Getting URI parameters
 	values := r.uriPattern.FindStringSubmatch(requestURI)
-	if len(values) > 0 {
-		uriValues := make(map[string]string, len(values)-1)
-		for i := 1; i < len(values); i++ {
-			uriValues[r.uriKeys[i-1]] = values[i]
-		}
-		return true, uriValues
+	if len(values) == 0 {
+		return true, nil
 	}
 
-	return true, nil
+	uriValues := make(map[string]string, len(values)-1)
+	for i := 1; i < len(values); i++ {
+		uriValues[r.uriKeys[i-1]] = values[i]
+	}
+	return true, uriValues
+
 }
 
 // Router is the HTTP router
@@ -210,12 +220,7 @@ type Router struct {
 
 // ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
 func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-
 	startTime := time.Now()
-
-	crw := &customResponseWriter{
-		ResponseWriter: rw,
-	}
 
 	var handlers []*Route
 
@@ -236,8 +241,11 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		handlers = rtr.deleteHandlers
 	}
 
-	var params map[string]string
+	crw := &customResponseWriter{
+		ResponseWriter: rw,
+	}
 
+	params := make(map[string]string)
 	ok := false
 
 	path := req.URL.EscapedPath()
@@ -300,7 +308,7 @@ func Context(r *http.Request) *WC {
 
 // InitRouter initializes Router settings
 func InitRouter(routes []*Route) *Router {
-	var handlers = make(map[string][]*Route, len(validHTTPMethods))
+	handlers := make(map[string][]*Route, len(validHTTPMethods))
 
 	for _, validMethod := range validHTTPMethods {
 		handlers[validMethod] = []*Route{}
