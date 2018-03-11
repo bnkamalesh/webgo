@@ -147,7 +147,7 @@ func main() {
 
 	// Initializing router with all the required routes
 	router := webgo.InitRouter(getRoutes(&g))
-	router.HideAccessLog = (cfg.Env == "production")
+	router.HideAccessLog = false
 
 	webgo.Start(
 		&cfg,

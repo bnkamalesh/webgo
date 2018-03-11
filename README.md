@@ -76,15 +76,16 @@ Middlewares and HTTP handlers have the same function signature (same as HTTP sta
 All HTTP responses are in [JSON](https://en.wikipedia.org/wiki/JSON) (if not rendering HTML templates and not using `Send`).
 
 
-### [Configuration](https://github.com/bnkamalesh/webgo-sample/blob/master/config.json)
+### Configuration
 
-The app starts with configuration set in `config.json`. Configuration path(relative or absolute) can be provided as follows:
-
+WebGo configuration can be loaded directly from a JSON file using the helper `Load("/path/to/json")` 
+of the struct `Config`.
 ```
 var cfg webgo.Config
 cfg.Load("path/to/config.json")
 ```
 
+Following options can be provided in the JSON file
 ```
 {
 	"environment":  "", // running mode, it can be "production" or "development"
