@@ -243,7 +243,6 @@ type Router struct {
 // ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
 func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	startTime := time.Now()
-
 	var handlers []*Route
 
 	switch req.Method {
@@ -263,62 +262,63 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		handlers = rtr.deleteHandlers
 	}
 
-	crw := &customResponseWriter{
-		ResponseWriter: rw,
+	var route *Route
+	ok := false
+	params := make(map[string]string)
+	path := req.URL.EscapedPath()
+	for _, h := range handlers {
+		if ok, params = h.matchAndGet(path); ok {
+			route = h
+			break
+		}
 	}
 
-	params := make(map[string]string)
-	ok := false
-
-	path := req.URL.EscapedPath()
-	for _, route := range handlers {
-		if ok, params = route.matchAndGet(path); !ok {
-			continue
-		}
-
-		// webgo context object created and is injected to the request context
-		reqwc := req.WithContext(
-			context.WithValue(
-				req.Context(),
-				wgoCtxKey,
-				&WC{
-					Params: params,
-					Route:  route,
-				},
-			),
-		)
-
-		for _, handler := range route.Handler {
-			if crw.written == false {
-				// If there has been no write to response writer yet
-				handler(crw, reqwc)
-			} else if route.FallThroughPostResponse {
-				// run a handler post response write, only if fall through is enabled
-				handler(crw, reqwc)
-			} else {
-				// Do not run any more handlers if already responded and no fall through enabled
-				break
-			}
-		}
-
-		if rtr.HideAccessLog == false && route.HideAccessLog == false {
+	if route == nil || len(route.Handler) == 0 {
+		// serve 404 when there are no matching routes
+		rtr.NotFound(rw, req)
+		if rtr.HideAccessLog == false {
 			endTime := time.Now()
 			l.Println(
-				endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.RequestURI+" "+endTime.Sub(startTime).String(),
-				crw.statusCode,
+				endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.String()+" "+endTime.Sub(startTime).String(),
+				http.StatusNotFound,
 			)
 		}
-
 		return
 	}
 
-	// serve 404 when there are no matching routes
-	rtr.NotFound(rw, req)
-	if rtr.HideAccessLog == false {
+	crw := &customResponseWriter{
+		ResponseWriter: rw,
+	}
+	// webgo context object created and is injected to the request context
+	reqwc := req.WithContext(
+		context.WithValue(
+			req.Context(),
+			wgoCtxKey,
+			&WC{
+				Params: params,
+				Route:  route,
+			},
+		),
+	)
+
+	for _, handler := range route.Handler {
+		if crw.written == false {
+			// If there has been no write to response writer yet
+			handler(crw, reqwc)
+		} else if route.FallThroughPostResponse {
+			// run a handler post response write, only if fall through is enabled
+			handler(crw, reqwc)
+		} else {
+			// Do not run any more handlers if already responded and no fall through enabled
+			break
+		}
+	}
+
+	if rtr.HideAccessLog == false && route.HideAccessLog == false {
 		endTime := time.Now()
 		l.Println(
-			endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.String()+" "+endTime.Sub(startTime).String(),
-			http.StatusNotFound,
+			endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.RequestURI+" "+endTime.Sub(startTime).String(),
+			crw.statusCode,
 		)
 	}
 }

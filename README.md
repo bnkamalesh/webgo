@@ -9,23 +9,26 @@
  This is a clean implementation, to avoid unnecessary complexity and 
  computation from ServeHTTP()
  
- 2. No more capability of enabling access log on selected routes. Access log
+2. No more capability of enabling access log on selected routes. Access log
  can either be turned on for all or not.
 
-# WebGo v1.6.0
+3. All middlewares will be moved to a nested folder `middlewares` rather than
+being the methods of the type middlewares.
+
+These changes would cause backward incompatibility
+
+# WebGo v1.6.1
 
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
 
-### Update 18 March 2018 (v1.6.0)
+### Update 18 March 2018 (v1.6.1)
  - Added Trailing slash feature. Added a new option `TrailingSlash` boolean
  to `Route` definition. If true, the provided URI pattern will be matched
  with or without the trailing slash. Default is false.
 
-2. All middlewares will be moved to a nested folder `middlewares` rather than
-being the methods of the type middlewares.
+ - Minor improvement in `ServeHTTP` method
 
-These changes would cause backward incompatibility
 
 ### Requirements
 
