@@ -1,21 +1,23 @@
 [![Build Status](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 
-# WebGo v2.0
+# WebGo v2.0 (planned)
 
 1. Current implementation of logging middleware will be deprecated
  - Logging middleware will be converted to wrapper
  e.g. middlewares.Log(Handler)
  This is a clean implementation, to avoid unnecessary complexity and 
  computation from ServeHTTP()
+ 
+ 2. No more capability of enabling access log on selected routes. Access log
+ can either be turned on for all or not.
 
-
-# WebGo v1.5.5 (current)
+# WebGo v1.6.0
 
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
 
-### Update 18 March 2018
+### Update 18 March 2018 (v1.6.0)
  - Added Trailing slash feature. Added a new option `TrailingSlash` boolean
  to `Route` definition. If true, the provided URI pattern will be matched
  with or without the trailing slash. Default is false.
