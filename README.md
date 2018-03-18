@@ -1,11 +1,29 @@
 [![Build Status](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 
-# WebGo v1.5.5
+# WebGo v2.0
+
+1. Current implementation of logging middleware will be deprecated
+ - Logging middleware will be converted to wrapper
+ e.g. middlewares.Log(Handler)
+ This is a clean implementation, to avoid unnecessary complexity and 
+ computation from ServeHTTP()
+
+
+# WebGo v1.5.5 (current)
 
 A lightweight & simple web framework for Go.
 [GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
 
+### Update 18 March 2018
+ - Added Trailing slash feature. Added a new option `TrailingSlash` boolean
+ to `Route` definition. If true, the provided URI pattern will be matched
+ with or without the trailing slash. Default is false.
+
+2. All middlewares will be moved to a nested folder `middlewares` rather than
+being the methods of the type middlewares.
+
+These changes would cause backward incompatibility
 
 ### Requirements
 
@@ -35,6 +53,16 @@ While using any of the default HTTP response function available, for any status 
 	status: <status code, integer>
 }
 ```
+### URI patterns
+While defining the path of an HTTP route; you can choose from the following 
+4 different options:
+
+1. Static path e.g. `/v1/api/users`
+2. Path with named parameters e.g. `/v1/api/users/:userID/photos/:photoID`
+ - Here `userID` and `photoID` are the parameter names.
+3. Path with wildcard e.g. `/v2/*`
+4. Path with named wildcard parameter. e.g. `/v2/:param*`
+
 
 ### [Middlewares](https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
 
@@ -95,7 +123,6 @@ Following options can be provided in the JSON file
 	"httpsPort":  "", // Port on which the HTTPS server should listen to
 	"certFile": "", // Certificate file path for HTTPS
 	"keyFile": "", // Private key file path of the certificate
-
 	"templatePath": "" // Folder containing all the templates
 }
 ```

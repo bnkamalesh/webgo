@@ -18,6 +18,7 @@ import (
 const (
 	urlchars            = `([^/]+)`
 	urlwildcard         = `(.*)`
+	trailingSlash       = `[\/]?`
 	errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
 	errMultiWrite       = `http: multiple response.Write calls`
 	errDuplicateKey     = `Error: Duplicate URI keys found`
@@ -82,6 +83,9 @@ type Route struct {
 	Method string
 	// Pattern is the URI pattern to match
 	Pattern string
+	// TrailingSlash if set to true, the URI will be matched with or without
+	// a trailing slash. Note: It does not *do* a redirect.
+	TrailingSlash bool
 
 	// HideAccessLog if enabled will not print the basic access log to console
 	HideAccessLog bool
@@ -114,7 +118,8 @@ func (r *Route) init() error {
 	patternString := r.Pattern
 
 	if strings.Contains(r.Pattern, ":") {
-		// uriValues is a map of URI Key and it's respective value, this is calculated per request
+		// uriValues is a map of URI Key and it's respective value,
+		// this is calculated per request
 		key := ""
 		hasKey := false
 		hasWildcard := false
@@ -129,11 +134,17 @@ func (r *Route) init() error {
 			} else if hasKey && char != "/" {
 				key += char
 			} else if hasKey && len(key) > 0 {
+				regexPattern := ""
+				patternKey := ""
 				if hasWildcard {
-					patternString = strings.Replace(patternString, ":"+key+"*", urlwildcard, 1)
+					patternKey = ":" + key + "*"
+					regexPattern = urlwildcard
 				} else {
-					patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+					patternKey = ":" + key
+					regexPattern = urlchars
 				}
+
+				patternString = strings.Replace(patternString, patternKey, regexPattern, 1)
 
 				for idx, k := range r.uriKeys {
 					if key == k {
@@ -149,11 +160,17 @@ func (r *Route) init() error {
 		}
 
 		if hasKey && len(key) > 0 {
+			regexPattern := ""
+			patternKey := ""
 			if hasWildcard {
-				patternString = strings.Replace(patternString, ":"+key+"*", urlwildcard, 1)
+				patternKey = ":" + key + "*"
+				regexPattern = urlwildcard
 			} else {
-				patternString = strings.Replace(patternString, ":"+key, urlchars, 1)
+				patternKey = ":" + key
+				regexPattern = urlchars
 			}
+
+			patternString = strings.Replace(patternString, patternKey, regexPattern, 1)
 
 			for idx, k := range r.uriKeys {
 				if key == k {
@@ -165,7 +182,12 @@ func (r *Route) init() error {
 
 	}
 
-	patternString = "^" + patternString + "$"
+	if r.TrailingSlash {
+		patternString = "^" + patternString + trailingSlash + "$"
+	} else {
+
+		patternString = "^" + patternString + "$"
+	}
 
 	// compile the regex for the pattern string calculated
 	reg, err := regexp.Compile(patternString)

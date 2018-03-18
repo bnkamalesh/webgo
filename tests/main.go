@@ -78,11 +78,12 @@ func getRoutes(g *webgo.Globals) []*webgo.Route {
 			G:       g,
 		},
 		&webgo.Route{
-			Name:    "hw-withparams",                // A label for the API/URI, this is not used anywhere.
-			Method:  http.MethodGet,                 // request type
-			Pattern: "/wparams/:p1/goblin/:p2",      // Pattern for the route
-			Handler: []http.HandlerFunc{helloWorld}, // route handler
-			G:       g,
+			Name:          "hw-withparams", // A label for the API/URI, this is not used anywhere.
+			Method:        http.MethodGet,
+			TrailingSlash: true,                           // request type
+			Pattern:       "/wparams/:p1/goblin/:p2",      // Pattern for the route
+			Handler:       []http.HandlerFunc{helloWorld}, // route handler
+			G:             g,
 		},
 		&webgo.Route{
 			Name:    "params-get",              // A label for the API/URI, this is not used anywhere.
