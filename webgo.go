@@ -33,13 +33,11 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 
 	if cfg.HTTPSOnly {
 		if cfg.CertFile == "" {
-			println("No certificate provided for HTTPS")
-			return
+			errLogger.Fatalln("No certificate provided for HTTPS")
 		}
 
 		if cfg.KeyFile == "" {
-			println("No key file provided for HTTPS")
-			return
+			errLogger.Fatalln("No key file provided for HTTPS")
 		}
 
 		httpsServer := &http.Server{
@@ -52,28 +50,25 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 			},
 		}
 
-		println("\nStarting HTTPS server, listening on '" + httpshost + "'")
+		infoLogger.Println("\nStarting HTTPS server, listening on '" + httpshost + "'")
 		err := httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
 		if err != nil {
-			println("HTTPS Server exited with error:", err.Error())
+			infoLogger.Println("HTTPS Server exited with error:", err.Error())
 		}
 		return
 	}
 
 	if len(cfg.HTTPSPort) > 0 {
 		if cfg.CertFile == "" {
-			println("No certificate provided for HTTPS")
-			return
+			errLogger.Fatalln("No certificate provided for HTTPS")
 		}
 
 		if cfg.KeyFile == "" {
-			println("No key file provided for HTTPS")
-			return
+			errLogger.Fatalln("No key file provided for HTTPS")
 		}
 
 		if cfg.Port == cfg.HTTPSPort {
-			println("HTTP & HTTPS cannot listen on the same port. [" + cfg.Port + "]")
-			return
+			errLogger.Fatalln("HTTP & HTTPS cannot listen on the same port. [" + cfg.Port + "]")
 		}
 
 		//Starting HTTPS server
@@ -88,10 +83,10 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 				},
 			}
 
-			println("Starting HTTPS server, listening on '" + httpshost + "'")
+			infoLogger.Println("Starting HTTPS server, listening on '" + httpshost + "'")
 			err := httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
 			if err != nil {
-				println("HTTPS Server exited with error:", err.Error())
+				infoLogger.Println("HTTPS Server exited with error:", err.Error())
 			}
 			return
 		}()
@@ -104,10 +99,10 @@ func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration)
 		WriteTimeout: writeTimeout,
 	}
 
-	println("Starting HTTP server, listening on '" + host + "'")
+	infoLogger.Println("Starting HTTP server, listening on '" + host + "'")
 	err := httpServer.ListenAndServe()
 	if err != nil {
-		println("HTTP Server exited with error:", err.Error())
+		infoLogger.Println("HTTP Server exited with error:", err.Error())
 	}
 
 }

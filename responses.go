@@ -64,7 +64,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error
 		*/
-		Log.Println(err)
+		errLogger.Println(err)
 		R500(w, ErrInternalServer)
 	}
 }
@@ -80,7 +80,7 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error
 		*/
-		Log.Println(err)
+		errLogger.Println(err)
 		R500(w, ErrInternalServer)
 	}
 }

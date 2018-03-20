@@ -27,63 +27,52 @@ type Config struct {
 
 	// TemplatesBasePath is the base path where all the HTML templates are located
 	TemplatesBasePath string `json:"templatePath,omitempty"`
-
-	// Data holds the full json config file data as bytes
-	Data []byte `json:"-"`
 }
 
-// Load config file from the provided filepath
+// Load config file from the provided filepath and validate
 func (cfg *Config) Load(filepath string) {
 	file, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		Log.Fatal(err)
+		errLogger.Fatal(err)
 	}
 
 	err = json.Unmarshal(file, cfg)
 	if err != nil {
-		Log.Fatal(err)
+		errLogger.Fatal(err)
 	}
-
-	cfg.Data = file
 
 	cfg.Validate()
 }
 
 // Validate the config parsed into the Config struct
 func (cfg *Config) Validate() {
-
 	i, err := strconv.Atoi(cfg.Port)
 	if err != nil {
-		Log.Fatal(C004)
+		errLogger.Fatal(ErrInvalidPort)
 	}
 	if i <= 0 || i > 65535 {
-		Log.Fatal(C004)
+		errLogger.Fatal(ErrInvalidPort)
 	}
 }
 
 // Globals struct to hold configurations which are shared with all the request handlers via context.
 type Globals struct {
-
-	// All the app configurations
+	// Cfg has all the webgo configurations
 	Cfg *Config
 
-	// All templates, which can be accessed anywhere from the app
+	// Templates stores all the templates pre-compiled and accessible.
 	Templates map[string]*htpl.Template
 
-	// This can be used to add any app specifc data, which needs to be shared
-	// E.g. This can be used to plug in a new DB driver, if someone does not want to use MongoDb
+	// App stores any key value configuration. This can be app specific (i.e. any app using WebGo)
 	App map[string]interface{}
 }
 
-// Add a custom global config
-func (g *Globals) Add(key string, data interface{}) {
-	g.App[key] = data
-}
-
-// Init initializes the Context and set appropriate values
-func (g *Globals) Init(cfg *Config, tpls map[string]*htpl.Template) {
-	g.App = make(map[string]interface{})
-	g.Templates = make(map[string]*htpl.Template)
-	g.Cfg = cfg
-	g.Templates = tpls
+// NewGlobals returns a new Globals instance pointer with the provided configurations
+func NewGlobals(cfg *Config, app map[string]interface{}, tpls map[string]*htpl.Template) (*Globals, error) {
+	g := Globals{
+		App:       app,
+		Templates: tpls,
+		Cfg:       cfg,
+	}
+	return &g, nil
 }

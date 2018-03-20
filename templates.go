@@ -18,14 +18,14 @@ func (t *Templates) Load(files map[string]string) {
 	for key, filePath := range files {
 		content, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			Log.Fatal(err)
+			errLogger.Fatal(err)
 			return
 		}
 
 		// Parsing the file into html template.
 		c, err := template.New(key).Parse(string(content))
 		if err != nil {
-			Log.Fatal(err)
+			errLogger.Fatal(err)
 		}
 		t.Tpls[key] = c
 	}
