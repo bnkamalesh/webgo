@@ -84,11 +84,9 @@ type Route struct {
 	// Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
 	// subsequent writes from the following handlers will be ignored
 	Handler []http.HandlerFunc
-	Globals *Globals // App globals
 
-	// uriKeys is the list of URI params
+	// uriKeys is the list of URI parameter variables available for this route
 	uriKeys []string
-
 	// uriPatternString is the pattern string which is compiled to regex object
 	uriPatternString string
 	// uriPattern is the compiled regex to match the URI pattern
@@ -97,8 +95,9 @@ type Route struct {
 
 // WC is the webgocontext
 type WC struct {
-	Params map[string]string
-	Route  *Route
+	Params     map[string]string
+	Route      *Route
+	AppContext map[string]interface{}
 }
 
 // init prepares the URIKeys, compile regex for the provided pattern
@@ -136,7 +135,7 @@ func (r *Route) init() error {
 
 				for idx, k := range r.uriKeys {
 					if key == k {
-						errLogger.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+						errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
 					}
 				}
 
@@ -162,7 +161,7 @@ func (r *Route) init() error {
 
 			for idx, k := range r.uriKeys {
 				if key == k {
-					errLogger.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+					errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
 				}
 			}
 			r.uriKeys = append(r.uriKeys, key)
@@ -224,8 +223,11 @@ type Router struct {
 	patchHandlers  []*Route
 	deleteHandlers []*Route
 
-	AccessLog bool
-	NotFound  http.HandlerFunc
+	NotFound http.HandlerFunc
+
+	// config has all the app config
+	config     *Config
+	appContext map[string]interface{}
 }
 
 // ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
@@ -275,8 +277,9 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req.Context(),
 			wgoCtxKey,
 			&WC{
-				Params: params,
-				Route:  route,
+				Params:     params,
+				Route:      route,
+				AppContext: rtr.appContext,
 			},
 		),
 	)
@@ -297,11 +300,12 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 // Context returns the WebgoContext injected inside the HTTP request context
 func Context(r *http.Request) *WC {
-	return r.Context().Value(wgoCtxKey).(*WC)
+	wc, _ := r.Context().Value(wgoCtxKey).(*WC)
+	return wc
 }
 
-// InitRouter initializes Router settings
-func InitRouter(routes []*Route) *Router {
+// NewRouter initializes returns a new router instance with all the configurations and routes set
+func NewRouter(cfg *Config, routes []*Route) *Router {
 	handlers := make(map[string][]*Route, len(validHTTPMethods))
 
 	for _, validMethod := range validHTTPMethods {
@@ -316,17 +320,17 @@ func InitRouter(routes []*Route) *Router {
 			}
 		}
 
-		if found == false {
-			errLogger.Fatal("Unsupported HTTP request method provided. Method:", route.Method)
+		if !found {
+			errLogger.Fatalln("Unsupported HTTP request method provided. Method:", route.Method)
 		}
 
 		if route.Handler == nil || len(route.Handler) == 0 {
-			errLogger.Fatal("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
+			errLogger.Fatalln("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
 		}
 
 		err := route.init()
 		if err != nil {
-			errLogger.Fatal("Unsupported URI pattern.", route.Pattern, err)
+			errLogger.Fatalln("Unsupported URI pattern.", route.Pattern, err)
 		}
 
 		// checking if the URI pattern is duplicated
@@ -361,5 +365,7 @@ func InitRouter(routes []*Route) *Router {
 		deleteHandlers: handlers[http.MethodDelete],
 
 		NotFound: http.NotFound,
+
+		config: cfg,
 	}
 }

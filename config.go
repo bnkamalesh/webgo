@@ -2,19 +2,17 @@ package webgo
 
 import (
 	"encoding/json"
-	htpl "html/template"
 	"io/ioutil"
 	"strconv"
+	"time"
 )
 
 // Config is used for reading app's configuration from json file
 type Config struct {
-	// Env is the deployment environment
-	Env string `json:"environment"`
 	// Host is the host on which the server is listening
 	Host string `json:"host,omitempty"`
 	// Port is the port number where the server has to listen for the HTTP requests
-	Port string `json:"port"`
+	Port string `json:"port,omitempty"`
 
 	// CertFile is the TLS/SSL certificate file path, required for HTTPS
 	CertFile string `json:"certFile,omitempty"`
@@ -22,11 +20,14 @@ type Config struct {
 	KeyFile string `json:"keyFile,omitempty"`
 	// HTTPSPort is the port number where the server has to listen for the HTTP requests
 	HTTPSPort string `json:"httpsPort,omitempty"`
-	// HTTPSOnly if true will enable HTTPS server alone
-	HTTPSOnly bool `json:"httpsOnly,omitempty"`
 
-	// TemplatesBasePath is the base path where all the HTML templates are located
-	TemplatesBasePath string `json:"templatePath,omitempty"`
+	// readTimeout is the maximum duration for which the server would read a request
+	ReadTimeout time.Duration `json:"readTimeout,omitempty"`
+	// writeTimeout is the maximum duration for which the server would try to respond
+	WriteTimeout time.Duration `json:"writeTimeout,omitempty"`
+
+	// InsecureSkipVerify is the HTTP certificate verification
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 // Load config file from the provided filepath and validate
@@ -53,26 +54,4 @@ func (cfg *Config) Validate() {
 	if i <= 0 || i > 65535 {
 		errLogger.Fatal(ErrInvalidPort)
 	}
-}
-
-// Globals struct to hold configurations which are shared with all the request handlers via context.
-type Globals struct {
-	// Cfg has all the webgo configurations
-	Cfg *Config
-
-	// Templates stores all the templates pre-compiled and accessible.
-	Templates map[string]*htpl.Template
-
-	// App stores any key value configuration. This can be app specific (i.e. any app using WebGo)
-	App map[string]interface{}
-}
-
-// NewGlobals returns a new Globals instance pointer with the provided configurations
-func NewGlobals(cfg *Config, app map[string]interface{}, tpls map[string]*htpl.Template) (*Globals, error) {
-	g := Globals{
-		App:       app,
-		Templates: tpls,
-		Cfg:       cfg,
-	}
-	return &g, nil
 }

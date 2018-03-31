@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/bnkamalesh/webgo"
 )
@@ -59,7 +58,7 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 
 var l = log.New(os.Stdout, "", 0)
 
-func getRoutes(g *webgo.Globals) []*webgo.Route {
+func getRoutes() []*webgo.Route {
 	// var mws webgo.Middlewares
 
 	return []*webgo.Route{
@@ -68,14 +67,12 @@ func getRoutes(g *webgo.Globals) []*webgo.Route {
 			Method:  http.MethodGet,            // request type
 			Pattern: "/",                       // Pattern for the route
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 		&webgo.Route{
 			Name:    "hw-noparams",                  // A label for the API/URI, this is not used anywhere.
 			Method:  http.MethodGet,                 // request type
 			Pattern: "/nparams",                     // Pattern for the route
 			Handler: []http.HandlerFunc{helloWorld}, // route handler
-			Globals: g,
 		},
 		&webgo.Route{
 			Name:          "hw-withparams", // A label for the API/URI, this is not used anywhere.
@@ -83,14 +80,12 @@ func getRoutes(g *webgo.Globals) []*webgo.Route {
 			TrailingSlash: true,                           // request type
 			Pattern:       "/wparams/:p1/goblin/:p2",      // Pattern for the route
 			Handler:       []http.HandlerFunc{helloWorld}, // route handler
-			Globals:       g,
 		},
 		&webgo.Route{
 			Name:    "params-get",              // A label for the API/URI, this is not used anywhere.
 			Method:  http.MethodGet,            // request type
 			Pattern: "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 
 		&webgo.Route{
@@ -98,28 +93,24 @@ func getRoutes(g *webgo.Globals) []*webgo.Route {
 			Method:  http.MethodPost,           // request type
 			Pattern: "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 		&webgo.Route{
 			Name:    "params-put-sameuri",      // A label for the API/URI, this is not used anywhere.
 			Method:  http.MethodPut,            // request type
 			Pattern: "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 		&webgo.Route{
 			Name:    "params-patch-sameuri",    // A label for the API/URI, this is not used anywhere.
 			Method:  http.MethodPatch,          // request type
 			Pattern: "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 		&webgo.Route{
 			Name:    "params-delete-sameuri",   // A label for the API/URI, this is not used anywhere.
 			Method:  http.MethodDelete,         // request type
 			Pattern: "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 		&webgo.Route{
 			Name:    "params-options-sameuri", // A label for the API/URI, this is not used anywhere.
@@ -127,7 +118,6 @@ func getRoutes(g *webgo.Globals) []*webgo.Route {
 			Pattern: "/hello/:p1/goblin/:p2",  // Pattern for the route
 			// Handler: []http.HandlerFunc{dummy}, // route handler
 			Handler: []http.HandlerFunc{dummy}, // route handler
-			Globals: g,
 		},
 	}
 }
@@ -137,21 +127,13 @@ func main() {
 	var cfg webgo.Config
 	cfg.Load("config.json")
 
-	cfg.HTTPSPort = "8443"
-	cfg.CertFile = "./ssl/server.crt"
-	cfg.KeyFile = "./ssl/server.key"
-
-	// Initializing context for the app
-	g, _ := webgo.NewGlobals(&cfg, nil, nil)
-
 	// Initializing router with all the required routes
-	router := webgo.InitRouter(getRoutes(g))
-	router.AccessLog = false
+	router := webgo.NewRouter(&cfg, getRoutes())
+
+	// go webgo.StartHTTPS(&cfg, router)
 
 	webgo.Start(
 		&cfg,
 		router,
-		time.Second*5,
-		time.Second*5,
 	)
 }
