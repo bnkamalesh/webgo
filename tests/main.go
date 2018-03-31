@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/bnkamalesh/webgo"
+	"github.com/bnkamalesh/webgo/middlewares"
 )
 
 var payload = struct {
@@ -130,10 +131,7 @@ func main() {
 	// Initializing router with all the required routes
 	router := webgo.NewRouter(&cfg, getRoutes())
 
-	// go webgo.StartHTTPS(&cfg, router)
-
-	webgo.Start(
-		&cfg,
-		router,
-	)
+	// go router.StartHTTPS(&cfg, router)
+	router.Use(middlewares.AccessLog)
+	router.Start()
 }

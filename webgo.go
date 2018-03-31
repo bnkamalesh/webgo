@@ -18,8 +18,22 @@ import (
 	"time"
 )
 
+// WC is the webgocontext
+type WC struct {
+	Params     map[string]string
+	Route      *Route
+	AppContext map[string]interface{}
+}
+
+// Context returns the WebgoContext injected inside the HTTP request context
+func Context(r *http.Request) *WC {
+	wc, _ := r.Context().Value(wgoCtxKey).(*WC)
+	return wc
+}
+
 // StartHTTPS starts the server with HTTPS enabled
-func StartHTTPS(cfg *Config, router *Router) {
+func (router *Router) StartHTTPS() {
+	cfg := router.config
 	if cfg.CertFile == "" {
 		errLogger.Fatalln("No certificate provided for HTTPS")
 	}
@@ -50,8 +64,9 @@ func StartHTTPS(cfg *Config, router *Router) {
 	}
 }
 
-// Start starts the server with the appropriate configurations
-func Start(cfg *Config, router *Router) {
+// Start starts the HTTP server with the appropriate configurations
+func (router *Router) Start() {
+	cfg := router.config
 	host := cfg.Host
 
 	if len(cfg.Port) > 0 {
@@ -70,5 +85,4 @@ func Start(cfg *Config, router *Router) {
 	if err != nil {
 		errLogger.Fatalln("HTTP server exited with error:", err.Error())
 	}
-
 }

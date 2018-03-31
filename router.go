@@ -93,13 +93,6 @@ type Route struct {
 	uriPattern *regexp.Regexp
 }
 
-// WC is the webgocontext
-type WC struct {
-	Params     map[string]string
-	Route      *Route
-	AppContext map[string]interface{}
-}
-
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
 	patternString := r.Pattern
@@ -226,12 +219,12 @@ type Router struct {
 	NotFound http.HandlerFunc
 
 	// config has all the app config
-	config     *Config
-	appContext map[string]interface{}
+	config       *Config
+	appContext   map[string]interface{}
+	serveHandler http.HandlerFunc
 }
 
-// ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
-func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
 	var handlers []*Route
 
 	switch req.Method {
@@ -253,7 +246,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	var route *Route
 	ok := false
-	params := make(map[string]string)
+	params := make(map[string]string, 0)
 	path := req.URL.EscapedPath()
 	for _, h := range handlers {
 		if ok, params = h.matchAndGet(path); ok {
@@ -298,10 +291,17 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Context returns the WebgoContext injected inside the HTTP request context
-func Context(r *http.Request) *WC {
-	wc, _ := r.Context().Value(wgoCtxKey).(*WC)
-	return wc
+// ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
+func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	rtr.serveHandler(rw, req)
+}
+
+// Use adds a middleware layer
+func (rtr *Router) Use(f func(http.ResponseWriter, *http.Request, http.HandlerFunc)) {
+	srv := rtr.serveHandler
+	rtr.serveHandler = func(rw http.ResponseWriter, req *http.Request) {
+		f(rw, req, srv)
+	}
 }
 
 // NewRouter initializes returns a new router instance with all the configurations and routes set
@@ -353,7 +353,7 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		handlers[route.Method] = append(handlers[route.Method], route)
 	}
 
-	return &Router{
+	r := &Router{
 		handlers: handlers,
 
 		optHandlers:    handlers[http.MethodOptions],
@@ -368,4 +368,6 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 
 		config: cfg,
 	}
+	r.serveHandler = r.serve
+	return r
 }
