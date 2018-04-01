@@ -10,6 +10,7 @@ WebGo is a minimalistic framework for Go. It primarily gives you the following a
 3. Middlewares
 4. Webgo context
 5. Helper functions
+6. HTTPS ready
 
 WebGo's route handlers have the same signature as the standard libraries HTTP handler.
 i.e. `http.HandlerFunc`
@@ -128,7 +129,25 @@ response wrapped in error struct
 15. R451(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 451
 16. R500(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 500
 
+### HTTPS ready
 
+HTTPS server can be started easily, just by providing the key & cert file required.
+You can also have both HTTP & HTTPS servers running side by side.
+
+Start HTTPS server
+
+```
+router := webgo.NewRouter(*webgo.Config, []*Route)
+router.StartHTTPS()
+```
+
+Starting both HTTP & HTTPS server
+
+```
+router := webgo.NewRouter(*webgo.Config, []*Route)
+go router.StartHTTPS()
+router.StartHTTP()
+```
 ## Full sample
 
 ```
