@@ -13,11 +13,13 @@ type ErrorData struct {
 	ErrDescription string
 }
 
+// dOutput is the standard/valid output wrapped in `{data: <payload>, status: <http response status>}`
 type dOutput struct {
 	Data   interface{} `json:"data"`
 	Status int         `json:"status"`
 }
 
+// errOutput is the error output wrapped in `{errors:<errors>, status: <http response status>}`
 type errOutput struct {
 	Errors interface{} `json:"errors"`
 	Status int         `json:"status"`
@@ -55,16 +57,14 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 // SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)
-
 	w.WriteHeader(rCode)
-
 	// Encode data to json and send response
 	if err := json.NewEncoder(w).Encode(&dOutput{data, rCode}); err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
-			logging the actual error
+			logging the actual error.
 		*/
-		Log.Println(err)
+		errLogger.Println(err)
 		R500(w, ErrInternalServer)
 	}
 }
@@ -80,7 +80,7 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error
 		*/
-		Log.Println(err)
+		errLogger.Println(err)
 		R500(w, ErrInternalServer)
 	}
 }

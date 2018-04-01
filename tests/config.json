@@ -1,4 +1,9 @@
 {
-	"environment": "development",
-	"port": "9696"
+	"port": "9696",
+	"httpsPort": "8443",
+	"certFile": "./ssl/server.crt",
+	"keyFile": "./ssl/server.key",
+	"readTimeout": 15,
+	"writeTimeout": 60,
+	"insecureSkipVerify": true
 }

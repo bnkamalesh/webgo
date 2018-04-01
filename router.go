@@ -2,12 +2,10 @@ package webgo
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
-	"time"
 )
 
 // urlchars is regex to validate characters in a URI parameter
@@ -24,11 +22,6 @@ const (
 	errDuplicateKey     = `Error: Duplicate URI keys found`
 )
 
-type ctxkey string
-
-const wgoCtxKey = ctxkey("webgocontext")
-
-var l *log.Logger
 var validHTTPMethods = []string{
 	http.MethodOptions,
 	http.MethodHead,
@@ -38,6 +31,10 @@ var validHTTPMethods = []string{
 	http.MethodPatch,
 	http.MethodDelete,
 }
+
+type ctxkey string
+
+const wgoCtxKey = ctxkey("webgocontext")
 
 // customResponseWriter is a custom HTTP response writer
 type customResponseWriter struct {
@@ -50,7 +47,7 @@ type customResponseWriter struct {
 // it to the custom response writer
 func (crw *customResponseWriter) WriteHeader(code int) {
 	if crw.written {
-		l.Println(errMultiHeaderWrite)
+		warnLogger.Println(errMultiHeaderWrite)
 		return
 	}
 
@@ -62,17 +59,12 @@ func (crw *customResponseWriter) WriteHeader(code int) {
 // but check if a response was already sent.
 func (crw *customResponseWriter) Write(body []byte) (int, error) {
 	if crw.written {
-		l.Println(errMultiWrite)
+		warnLogger.Println(errMultiWrite)
 		return 0, nil
 	}
 
 	crw.written = true
 	return crw.ResponseWriter.Write(body)
-}
-
-// init initializes the logging variable
-func init() {
-	l = log.New(os.Stdout, "", 0)
 }
 
 // Route defines a route for each API
@@ -87,30 +79,19 @@ type Route struct {
 	// a trailing slash. Note: It does not *do* a redirect.
 	TrailingSlash bool
 
-	// HideAccessLog if enabled will not print the basic access log to console
-	HideAccessLog bool
-
 	// FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
 	FallThroughPostResponse bool
 
-	// Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
+	// Handlers is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
 	// subsequent writes from the following handlers will be ignored
-	Handler []http.HandlerFunc
-	G       *Globals // App globals
+	Handlers []http.HandlerFunc
 
-	// uriKeys is the list of URI params
+	// uriKeys is the list of URI parameter variables available for this route
 	uriKeys []string
-
 	// uriPatternString is the pattern string which is compiled to regex object
 	uriPatternString string
 	// uriPattern is the compiled regex to match the URI pattern
 	uriPattern *regexp.Regexp
-}
-
-// WC is the webgocontext
-type WC struct {
-	Params map[string]string
-	Route  *Route
 }
 
 // init prepares the URIKeys, compile regex for the provided pattern
@@ -137,10 +118,10 @@ func (r *Route) init() error {
 				regexPattern := ""
 				patternKey := ""
 				if hasWildcard {
-					patternKey = ":" + key + "*"
+					patternKey = fmt.Sprintf(":%s*", key)
 					regexPattern = urlwildcard
 				} else {
-					patternKey = ":" + key
+					patternKey = fmt.Sprintf(":%s", key)
 					regexPattern = urlchars
 				}
 
@@ -148,7 +129,7 @@ func (r *Route) init() error {
 
 				for idx, k := range r.uriKeys {
 					if key == k {
-						l.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+						errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
 					}
 				}
 
@@ -163,10 +144,10 @@ func (r *Route) init() error {
 			regexPattern := ""
 			patternKey := ""
 			if hasWildcard {
-				patternKey = ":" + key + "*"
+				patternKey = fmt.Sprintf(":%s*", key)
 				regexPattern = urlwildcard
 			} else {
-				patternKey = ":" + key
+				patternKey = fmt.Sprintf(":%s", key)
 				regexPattern = urlchars
 			}
 
@@ -174,7 +155,7 @@ func (r *Route) init() error {
 
 			for idx, k := range r.uriKeys {
 				if key == k {
-					l.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+					errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
 				}
 			}
 			r.uriKeys = append(r.uriKeys, key)
@@ -183,10 +164,9 @@ func (r *Route) init() error {
 	}
 
 	if r.TrailingSlash {
-		patternString = "^" + patternString + trailingSlash + "$"
+		patternString = fmt.Sprintf("^%s%s$", patternString, trailingSlash)
 	} else {
-
-		patternString = "^" + patternString + "$"
+		patternString = fmt.Sprintf("^%s$", patternString)
 	}
 
 	// compile the regex for the pattern string calculated
@@ -200,7 +180,8 @@ func (r *Route) init() error {
 	return nil
 }
 
-// matchAndGet will match the given requestURI with its pattern and set its URI params accordingly
+// matchAndGet returns if the request URI matches the pattern defined in a Route as well as
+// all the URI parameters configured for the route.
 func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 	if r.Pattern == requestURI {
 		return true, nil
@@ -226,8 +207,6 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 // Router is the HTTP router
 type Router struct {
-	handlers map[string][]*Route
-
 	optHandlers    []*Route
 	headHandlers   []*Route
 	getHandlers    []*Route
@@ -236,53 +215,51 @@ type Router struct {
 	patchHandlers  []*Route
 	deleteHandlers []*Route
 
-	HideAccessLog bool
-	NotFound      http.HandlerFunc
+	// NotFound is the generic handler for 404 resource not found response
+	NotFound http.HandlerFunc
+	// AppContext holds all the app specific context which is to be injected into all HTTP
+	// request context
+	AppContext map[string]interface{}
+
+	// config has all the app config
+	config       *Config
+	serveHandler http.HandlerFunc
 }
 
-// ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
-func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	startTime := time.Now()
-	var handlers []*Route
+func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
+	var rr []*Route
 
 	switch req.Method {
 	case http.MethodOptions:
-		handlers = rtr.optHandlers
+		rr = rtr.optHandlers
 	case http.MethodHead:
-		handlers = rtr.headHandlers
+		rr = rtr.headHandlers
 	case http.MethodGet:
-		handlers = rtr.getHandlers
+		rr = rtr.getHandlers
 	case http.MethodPost:
-		handlers = rtr.postHandlers
+		rr = rtr.postHandlers
 	case http.MethodPut:
-		handlers = rtr.putHandlers
+		rr = rtr.putHandlers
 	case http.MethodPatch:
-		handlers = rtr.patchHandlers
+		rr = rtr.patchHandlers
 	case http.MethodDelete:
-		handlers = rtr.deleteHandlers
+		rr = rtr.deleteHandlers
 	}
 
 	var route *Route
 	ok := false
-	params := make(map[string]string)
+	params := make(map[string]string, 0)
 	path := req.URL.EscapedPath()
-	for _, h := range handlers {
-		if ok, params = h.matchAndGet(path); ok {
-			route = h
+	for _, r := range rr {
+		if ok, params = r.matchAndGet(path); ok {
+			route = r
 			break
 		}
 	}
 
-	if route == nil || len(route.Handler) == 0 {
+	if !ok {
 		// serve 404 when there are no matching routes
 		rtr.NotFound(rw, req)
-		if rtr.HideAccessLog == false {
-			endTime := time.Now()
-			l.Println(
-				endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.URL.String()+" "+endTime.Sub(startTime).String(),
-				http.StatusNotFound,
-			)
-		}
 		return
 	}
 
@@ -295,13 +272,14 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			req.Context(),
 			wgoCtxKey,
 			&WC{
-				Params: params,
-				Route:  route,
+				Params:     params,
+				Route:      route,
+				AppContext: rtr.AppContext,
 			},
 		),
 	)
 
-	for _, handler := range route.Handler {
+	for _, handler := range route.Handlers {
 		if crw.written == false {
 			// If there has been no write to response writer yet
 			handler(crw, reqwc)
@@ -313,23 +291,23 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			break
 		}
 	}
+}
 
-	if rtr.HideAccessLog == false && route.HideAccessLog == false {
-		endTime := time.Now()
-		l.Println(
-			endTime.Format("2006-01-02 15:04:05 -0700 MST")+" "+req.Method+" "+req.RequestURI+" "+endTime.Sub(startTime).String(),
-			crw.statusCode,
-		)
+// ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
+func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	rtr.serveHandler(rw, req)
+}
+
+// Use adds a middleware layer
+func (rtr *Router) Use(f func(http.ResponseWriter, *http.Request, http.HandlerFunc)) {
+	srv := rtr.serveHandler
+	rtr.serveHandler = func(rw http.ResponseWriter, req *http.Request) {
+		f(rw, req, srv)
 	}
 }
 
-// Context returns the WebgoContext injected inside the HTTP request context
-func Context(r *http.Request) *WC {
-	return r.Context().Value(wgoCtxKey).(*WC)
-}
-
-// InitRouter initializes Router settings
-func InitRouter(routes []*Route) *Router {
+// NewRouter initializes returns a new router instance with all the configurations and routes set
+func NewRouter(cfg *Config, routes []*Route) *Router {
 	handlers := make(map[string][]*Route, len(validHTTPMethods))
 
 	for _, validMethod := range validHTTPMethods {
@@ -344,17 +322,17 @@ func InitRouter(routes []*Route) *Router {
 			}
 		}
 
-		if found == false {
-			l.Fatal("Unsupported HTTP request method provided. Method:", route.Method)
+		if !found {
+			errLogger.Fatalln("Unsupported HTTP request method provided. Method:", route.Method)
 		}
 
-		if route.Handler == nil || len(route.Handler) == 0 {
-			l.Fatal("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
+		if route.Handlers == nil || len(route.Handlers) == 0 {
+			errLogger.Fatalln("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
 		}
 
 		err := route.init()
 		if err != nil {
-			l.Fatal("Unsupported URI pattern.", route.Pattern, err)
+			errLogger.Fatalln("Unsupported URI pattern.", route.Pattern, err)
 		}
 
 		// checking if the URI pattern is duplicated
@@ -362,14 +340,14 @@ func InitRouter(routes []*Route) *Router {
 			rt := routes[i]
 
 			if rt.Name == route.Name {
-				l.Println("Warning: Duplicate route name(\"" + rt.Name + "\") detected. Route name should be unique.")
+				warnLogger.Println("Duplicate route name(\"" + rt.Name + "\") detected. Route name should be unique.")
 			}
 
 			if rt.Method == route.Method {
 				// regex pattern match
 				if ok, _ := rt.matchAndGet(route.Pattern); ok {
-					l.Println("Warning: Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
-					l.Println("Note: Only the first route to match the URI pattern would handle the request")
+					warnLogger.Println("Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
+					infoLogger.Println("Only the first route to match the URI pattern would handle the request")
 				}
 			}
 		}
@@ -377,9 +355,7 @@ func InitRouter(routes []*Route) *Router {
 		handlers[route.Method] = append(handlers[route.Method], route)
 	}
 
-	return &Router{
-		handlers: handlers,
-
+	r := &Router{
 		optHandlers:    handlers[http.MethodOptions],
 		headHandlers:   handlers[http.MethodHead],
 		getHandlers:    handlers[http.MethodGet],
@@ -389,5 +365,11 @@ func InitRouter(routes []*Route) *Router {
 		deleteHandlers: handlers[http.MethodDelete],
 
 		NotFound: http.NotFound,
+
+		config: cfg,
 	}
+	// setting the default serve handler
+	r.serveHandler = r.serve
+
+	return r
 }

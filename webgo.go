@@ -18,96 +18,71 @@ import (
 	"time"
 )
 
-// Start starts the server with the appropriate configurations
-func Start(cfg *Config, router *Router, readTimeout, writeTimeout time.Duration) {
+// WC is the webgocontext
+type WC struct {
+	Params     map[string]string
+	Route      *Route
+	AppContext map[string]interface{}
+}
+
+// Context returns the WebgoContext injected inside the HTTP request context
+func Context(r *http.Request) *WC {
+	wc, _ := r.Context().Value(wgoCtxKey).(*WC)
+	return wc
+}
+
+// StartHTTPS starts the server with HTTPS enabled
+func (router *Router) StartHTTPS() {
+	cfg := router.config
+	if cfg.CertFile == "" {
+		errLogger.Fatalln("No certificate provided for HTTPS")
+	}
+
+	if cfg.KeyFile == "" {
+		errLogger.Fatalln("No key file provided for HTTPS")
+	}
+
 	host := cfg.Host
-	httpshost := cfg.Host
+	if len(cfg.HTTPSPort) > 0 {
+		host += ":" + cfg.HTTPSPort
+	}
+
+	httpsServer := &http.Server{
+		Addr:         host,
+		Handler:      router,
+		ReadTimeout:  cfg.ReadTimeout * time.Second,
+		WriteTimeout: cfg.WriteTimeout * time.Second,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: cfg.InsecureSkipVerify,
+		},
+	}
+
+	infoLogger.Println("HTTPS server, listening on", host)
+	err := httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
+	if err != nil {
+		errLogger.Fatalln("HTTPS server exited with error:", err.Error())
+	}
+}
+
+// Start starts the HTTP server with the appropriate configurations
+func (router *Router) Start() {
+	cfg := router.config
+	host := cfg.Host
 
 	if len(cfg.Port) > 0 {
 		host += ":" + cfg.Port
 	}
 
-	if len(cfg.HTTPSPort) > 0 {
-		httpshost += ":" + cfg.HTTPSPort
-	}
-
-	if cfg.HTTPSOnly {
-		if cfg.CertFile == "" {
-			println("No certificate provided for HTTPS")
-			return
-		}
-
-		if cfg.KeyFile == "" {
-			println("No key file provided for HTTPS")
-			return
-		}
-
-		httpsServer := &http.Server{
-			Addr:         httpshost,
-			Handler:      router,
-			ReadTimeout:  readTimeout,
-			WriteTimeout: writeTimeout,
-			TLSConfig: &tls.Config{
-				InsecureSkipVerify: cfg.Env == "development",
-			},
-		}
-
-		println("\nStarting HTTPS server, listening on '" + httpshost + "'")
-		err := httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
-		if err != nil {
-			println("HTTPS Server exited with error:", err.Error())
-		}
-		return
-	}
-
-	if len(cfg.HTTPSPort) > 0 {
-		if cfg.CertFile == "" {
-			println("No certificate provided for HTTPS")
-			return
-		}
-
-		if cfg.KeyFile == "" {
-			println("No key file provided for HTTPS")
-			return
-		}
-
-		if cfg.Port == cfg.HTTPSPort {
-			println("HTTP & HTTPS cannot listen on the same port. [" + cfg.Port + "]")
-			return
-		}
-
-		//Starting HTTPS server
-		go func() {
-			httpsServer := &http.Server{
-				Addr:         httpshost,
-				Handler:      router,
-				ReadTimeout:  readTimeout,
-				WriteTimeout: writeTimeout,
-				TLSConfig: &tls.Config{
-					InsecureSkipVerify: cfg.Env == "development",
-				},
-			}
-
-			println("Starting HTTPS server, listening on '" + httpshost + "'")
-			err := httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
-			if err != nil {
-				println("HTTPS Server exited with error:", err.Error())
-			}
-			return
-		}()
-	}
-
 	httpServer := &http.Server{
 		Addr:         host,
 		Handler:      router,
-		ReadTimeout:  readTimeout,
-		WriteTimeout: writeTimeout,
+		ReadTimeout:  cfg.ReadTimeout * time.Second,
+		WriteTimeout: cfg.WriteTimeout * time.Second,
 	}
 
-	println("Starting HTTP server, listening on '" + host + "'")
+	infoLogger.Println("HTTP server, listening on '" + host + "'")
 	err := httpServer.ListenAndServe()
 	if err != nil {
-		println("HTTP Server exited with error:", err.Error())
+		errLogger.Fatalln("HTTP server exited with error:", err.Error())
 	}
-
 }

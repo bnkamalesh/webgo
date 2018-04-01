@@ -1,227 +1,184 @@
 [![Build Status](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 
-# WebGo v2.0 (planned)
+# WebGo v2.0
 
-1. Current implementation of logging middleware will be deprecated
- - Logging middleware will be converted to wrapper
- e.g. middlewares.Log(Handler)
- This is a clean implementation, to avoid unnecessary complexity and 
- computation from ServeHTTP()
- 
-2. No more capability of enabling access log on selected routes. Access log
- can either be turned on for all or not.
+WebGo is a minimalistic framework for Go. It primarily gives you the following abilities.
 
-3. All middlewares will be moved to a nested folder `middlewares` rather than
-being the methods of the type middlewares.
+1. Multiplexer
+2. Chaining handlers
+3. Middlewares
+4. Webgo context
+5. Helper functions
 
-These changes would cause backward incompatibility
+WebGo's route handlers have the same signature as the standard libraries HTTP handler.
+i.e. `http.HandlerFunc`
 
-# WebGo v1.6.1
+### Multiplexer
 
-A lightweight & simple web framework for Go.
-[GoDoc webgo](https://godoc.org/github.com/bnkamalesh/webgo)
+WebGo multiplexer lets you define URIs with or without parameters. Following are the ways you can 
+define a URI for a route
 
-### Update 18 March 2018 (v1.6.1)
- - Added Trailing slash feature. Added a new option `TrailingSlash` boolean
- to `Route` definition. If true, the provided URI pattern will be matched
- with or without the trailing slash. Default is false.
+1. `api/users` - no URI parameters
+2. `api/users/:userID` - named URI parameter; the value would be available in the parameter `userID`
+3. `api/:wildcard*` - wildcard URIs; every router confirming to `/api/path/to/anything` would be
+matched by this route, and the path would be available inside the named URI parameter `wildcard`
 
- - Minor improvement in `ServeHTTP` method
+### Chaining
 
+Chaining lets you hanlde a route with multiple handlers, and they will be executed in sequence.
+All handlers in the chain are `http.HandlerFunc`s.
 
-### Requirements
+### Middlewares
 
-1. `Go 1.8` or higher
-
-
-### Usage
-
-Please refer to the Sample app built using webgo: [webgo-sample](https://github.com/bnkamalesh/webgo-sample) to see how webgo's capabilities can be used.
-
-Supported HTTP methods are: `OPTIONS, HEAD, GET, POST, PUT, PATCH, DELETE`.
-
-This framework does not force you to follow any architecture (e.g. MVC), instead is more of a configuration over convention based framework. While using any of the default HTTP response function available, for any status less than 400, the JSON response is wrapped as follows:
+Webgo's middleware signature is `func(http.ResponseWriter, *http.Request, http.HandlerFunc)`.
+Its `router` exposes a method `Use` to add middlewares to the app. e.g.
 
 ```
-{
-	data: <payload, any valid JSON data>,
-	status: <status code, integer>
+func accessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	start := time.Now()
+	next(rw, req)
+	end := time.Now()
+	log := end.Format("2006-01-02 15:04:05 -0700 MST") + " " + req.Method + " " + req.URL.String() + " " + end.Sub(start).String()
+	fmt.Println(log)
+}
+
+router := webgo.NewRouter(*webgo.Config, []*Route)
+router.Use(accessLog)
+```
+
+### Context
+
+Any app specific context can be be set inside the router, and is made available inside every request
+handler via HTTP request context. The webgo Context also provides the route configuration itself 
+as well as the URI parameters.
+
+```
+router := webgo.NewRouter(*webgo.Config, []*Route)
+router.AppContext = map[string]interface{}{
+	"dbHandler": <db handler>
+}
+
+func API1(rw http.ResponseWriter, req *http.Request) {
+	wctx := webgo.Context(req)
+	wctx.Params // URI paramters
+	wctx.Route // is the route configurate itself for which the handler matched
+	wctx.AppContext // is the app context configured in `router.AppContext`
 }
 ```
 
-While using any of the default HTTP response function available, for any status greater than 400, the JSON response is wrapped as follows:
+### Helper functions
 
+WebGo has certain helper functions for which the responses are wrapped in a struct according to 
+error or successful response. All success responses are wrapped in the struct
 ```
-{
-	errors: <payload, any valid JSON data>,
-	status: <status code, integer>
+type dOutput struct {
+	Data   interface{} `json:"data"`
+	Status int         `json:"status"`
 }
 ```
-### URI patterns
-While defining the path of an HTTP route; you can choose from the following 
-4 different options:
-
-1. Static path e.g. `/v1/api/users`
-2. Path with named parameters e.g. `/v1/api/users/:userID/photos/:photoID`
- - Here `userID` and `photoID` are the parameter names.
-3. Path with wildcard e.g. `/v2/*`
-4. Path with named wildcard parameter. e.g. `/v2/:param*`
-
-
-### [Middlewares](https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
-
-Middlewares and HTTP handlers have the same function signature (same as HTTP standard library's handler function). An execution chain (1 request passing through a set of middlewares and handler function) is stopped immediately after a response is sent. If you'd like the execution to continue even after a response is sent. Each `Route` specified has a property `FallThroughPostResponse` which if set to true will continue executing the chain, but no further responses will be written. You can see a sample [here](https://github.com/bnkamalesh/webgo-sample/blob/master/routes.go).
-	
-### [Available HTTP response functions (JSON)](https://github.com/bnkamalesh/webgo/blob/master/responses.go)
-
-1. `R200(http.ResponseWriter, payload)` to send a JSON response with status 200
-
-2. `R201(http.ResponseWriter, payload)` to send a JSON response with status 201
-
-3. `R204(http.ResponseWriter)` to send a response header with status 204
-
-4. `R302(http.ResponseWriter, payload)` to send a JSON response with status 302
-
-5. `R400(http.ResponseWriter, payload)` to send a JSON response with status 400
-
-6. `R403(http.ResponseWriter, payload)` to send a JSON response with status 403
-
-7. `R404(http.ResponseWriter, payload)` to send a JSON response with status 404
-
-7. `R406(http.ResponseWriter, payload)` to send a JSON response with status 406
-
-8. `R451(http.ResponseWriter, payload)` to send a JSON response with status 451
-
-
-### [Functions to send customized responses](https://github.com/bnkamalesh/webgo/blob/master/responses.go)
-
-1. `SendResponse(http.ResponseWriter, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the `data` struct, with any status code required. 
-
-2. `SendError(http.ResponseWriter, payload, errorCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a payload wrapped in the `errors` struct, with any status code required. 
-
-3. `SendHeader(http.ResponseWriter, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a response header alone, with any HTTP status code required.
-
-4. `Send(http.ResponseWriter, contentType, payload, responseCode)` function in [responses.go](https://github.com/bnkamalesh/webgo/blob/master/responses.go) can be used to send a completely custom response.
-
-5. `Render(http.ResponseWriter, payload, responseCode, *template.Template)` can be used to render any template.
-
-All HTTP responses are in [JSON](https://en.wikipedia.org/wiki/JSON) (if not rendering HTML templates and not using `Send`).
-
-
-### Configuration
-
-WebGo configuration can be loaded directly from a JSON file using the helper `Load("/path/to/json")` 
-of the struct `Config`.
-```
-var cfg webgo.Config
-cfg.Load("path/to/config.json")
-```
-
-Following options can be provided in the JSON file
+JSON output would look like
 ```
 {
-	"environment":  "", // running mode, it can be "production" or "development"
-	"host": "", // Host on which the app should run
-	"port": "", // Port on which the app should listen to
-	"httpsOnly": false, // If true, only HTTPS server is started
-	"httpsPort":  "", // Port on which the HTTPS server should listen to
-	"certFile": "", // Certificate file path for HTTPS
-	"keyFile": "", // Private key file path of the certificate
-	"templatePath": "" // Folder containing all the templates
+	"data": <any data>,
+	"status: <HTTP response status code, integer>
 }
 ```
 
-### Bencmark
-
-Simple hello world, JSON response `{data: "Hello world", status: 200}`.
-
-Middlewares: [CORS](https://github.com/bnkamalesh/webgo/blob/master/middlewares.go)
-
-Options    : Logging turned *off*.
-
-Source     : [WebGo Sample](https://github.com/bnkamalesh/webgo-sample)
-
-#### Specs: 
-
-Machine   : MacBook Pro (Retina, 13-inch, Early 2015)
-
-Processor : 2.7 GHz Intel Core i5
-
-Memory    : 8 GB 1867 MHz DDR3
-
-[Ulimit](http://wiki.linuxquestions.org/wiki/Ulimit)    : 50,000
+All the error responses are wrapped in the struct
 
 ```
-$ ab -k -n 25000 -c 500 http://127.0.0.1:8000/
-This is ApacheBench, Version 2.3 <$Revision: 1757674 $>
-Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
-Licensed to The Apache Software Foundation, http://www.apache.org/
-
-Benchmarking 127.0.0.1 (be patient)
-Completed 2500 requests
-Completed 5000 requests
-Completed 7500 requests
-Completed 10000 requests
-Completed 12500 requests
-Completed 15000 requests
-Completed 17500 requests
-Completed 20000 requests
-Completed 22500 requests
-Completed 25000 requests
-Finished 25000 requests
-
-
-Server Software:        
-Server Hostname:        127.0.0.1
-Server Port:            8000
-
-Document Path:          /nparams
-Document Length:        36 bytes
-
-Concurrency Level:      500
-Time taken for tests:   0.873 seconds
-Complete requests:      25000
-Failed requests:        0
-Keep-Alive requests:    25000
-Total transferred:      4200000 bytes
-HTML transferred:       900000 bytes
-Requests per second:    28621.57 [#/sec] (mean)
-Time per request:       17.469 [ms] (mean)
-Time per request:       0.035 [ms] (mean, across all concurrent requests)
-Transfer rate:          4695.73 [Kbytes/sec] received
-
-Connection Times (ms)
-              min  mean[+/-sd] median   max
-Connect:        0    1   3.9      0      37
-Processing:     4   17   5.8     15      43
-Waiting:        4   16   5.8     15      43
-Total:          4   17   7.8     15      66
-
-Percentage of the requests served within a certain time (ms)
-  50%     15
-  66%     17
-  75%     19
-  80%     21
-  90%     25
-  95%     29
-  98%     47
-  99%     55
- 100%     66 (longest request)
- ```
-
-## How to run the tests?
-
-You need to first start the HTTP server, you need to do the following:
-
-```
-$ cd /path/to/webgo/tests
-$ go run main.go
+type errOutput struct {
+	Errors interface{} `json:"errors"`
+	Status int         `json:"status"`
+}
 ```
 
-After starting the server, you can run the tests by:
+JSON output for error response would like
 
 ```
-$ cd /path/to/webgo/tests
-$ go test
+{
+	"errors": <any data>,
+	"status": <HTTP response status code, integer>
+}
+```
+
+It provides the following helper functions.
+
+1. SendHeader(w http.ResponseWriter, rCode int) - Send only an HTTP response header with the required
+response code.
+2. Send(w http.ResponseWriter, contentType string, data interface{}, rCode int) - Send any response
+3. SendResponse(w http.ResponseWriter, data interface{}, rCode int) - Send response wrapped in
+WebGo's default response struct
+4. SendError(w http.ResponseWriter, data interface{}, rCode int) - Send an error wrapped in WebGo's
+default error response struct
+5. Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template) - Render renders
+a Go template, with the requierd data & response code.
+6. Render404(w http.ResponseWriter, tpl *template.Template) - Renders a static 404 message
+7. R200(w http.ResponseWriter, data interface{}) - Responds with the provided data, with HTTP 200
+status code
+8. R201(w http.ResponseWriter, data interface{}) - Same as R200, but status code 201
+9. R204(w http.ResponseWriter) - Sends a reponse header with status code 201 and no response body.
+10. R302(w http.ResponseWriter, data interface{}) - Same as R200, but with status code 302
+11. R400(w http.ResponseWriter, data interface{}) - Same as R200, but with status code 400 and 
+response wrapped in error struct
+12. R403(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 403
+13. R404(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 404
+14. R406(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 406
+15. R451(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 451
+16. R500(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 500
+
+
+## Full sample
+
+```
+package main
+
+import (
+	"net/http"
+
+	"github.com/bnkamalesh/webgo/middlewares"
+
+	"github.com/bnkamalesh/webgo"
+)
+
+func helloWorld(w http.ResponseWriter, r *http.Request) {
+	wctx := webgo.Context(r)
+	webgo.R200(
+		w,
+		wctx.Params,
+	)
+}
+
+func getRoutes() []*webgo.Route {
+	// var mws webgo.Middlewares
+
+	return []*webgo.Route{
+		&webgo.Route{
+			Name:     "helloworld",                   // A label for the API/URI, this is not used anywhere.
+			Method:   http.MethodGet,                 // request type
+			Pattern:  "/",                            // Pattern for the route
+			Handlers: []http.HandlerFunc{helloWorld}, // route handler
+		},
+		&webgo.Route{
+			Name:     "helloworld",                                     // A label for the API/URI, this is not used anywhere.
+			Method:   http.MethodGet,                                   // request type
+			Pattern:  "/api/:param",                                    // Pattern for the route
+			Handlers: []http.HandlerFunc{middlewares.Cors, helloWorld}, // route handler
+		},
+	}
+}
+
+func main() {
+	cfg := webgo.Config{
+		Host:         "",
+		Port:         "8080",
+		ReadTimeout:  15, // in seconds
+		WriteTimeout: 60, // in seconds
+	}
+	router := webgo.NewRouter(&cfg, getRoutes())
+	router.Use(middlewares.AccessLog)
+	router.Start()
+}
+
 ```
