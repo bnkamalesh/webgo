@@ -1,5 +1,4 @@
 {
-	"environment": "development",
 	"port": "9696",
 	"httpsPort": "8443",
 	"certFile": "./ssl/server.crt",
