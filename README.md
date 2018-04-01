@@ -137,7 +137,12 @@ You can also have both HTTP & HTTPS servers running side by side.
 Start HTTPS server
 
 ```
-router := webgo.NewRouter(*webgo.Config, []*Route)
+cfg := webgo.Config{
+	HTTPSPort: "443",
+	CertFile: "/path/to/certfile",
+	KeyFile: "/path/to/keyfile",
+}
+router := webgo.NewRouter(&cfg, []*Route)
 router.StartHTTPS()
 ```
 
