@@ -1,7 +1,6 @@
-// Package middlewares implements the middleware interface which wraps around the whole request.
-// i.e. Starting of request till end of execution of the request (after all the chained handlers
-// are processed)
-// This package also provides 2 chainable middlewares to handle CORS
+// Package middlewares defines the signature/type which can be added as a middleware to Webgo.
+// It also has a 2 default middlewares access logs & CORS handling.
+// This package also provides 2 chainable to handlers to handle CORS in individual routes
 package middlewares
 
 import (
@@ -11,6 +10,8 @@ import (
 
 	"github.com/bnkamalesh/webgo"
 )
+
+type middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
 
 // responseWriter is a custom HTTP response writer
 type responseWriter struct {

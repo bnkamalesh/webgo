@@ -2,6 +2,7 @@ package webgo
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -81,9 +82,9 @@ type Route struct {
 	// FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
 	FallThroughPostResponse bool
 
-	// Handler is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
+	// Handlers is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
 	// subsequent writes from the following handlers will be ignored
-	Handler []http.HandlerFunc
+	Handlers []http.HandlerFunc
 
 	// uriKeys is the list of URI parameter variables available for this route
 	uriKeys []string
@@ -117,10 +118,10 @@ func (r *Route) init() error {
 				regexPattern := ""
 				patternKey := ""
 				if hasWildcard {
-					patternKey = ":" + key + "*"
+					patternKey = fmt.Sprintf(":%s*", key)
 					regexPattern = urlwildcard
 				} else {
-					patternKey = ":" + key
+					patternKey = fmt.Sprintf(":%s", key)
 					regexPattern = urlchars
 				}
 
@@ -143,10 +144,10 @@ func (r *Route) init() error {
 			regexPattern := ""
 			patternKey := ""
 			if hasWildcard {
-				patternKey = ":" + key + "*"
+				patternKey = fmt.Sprintf(":%s*", key)
 				regexPattern = urlwildcard
 			} else {
-				patternKey = ":" + key
+				patternKey = fmt.Sprintf(":%s", key)
 				regexPattern = urlchars
 			}
 
@@ -163,10 +164,9 @@ func (r *Route) init() error {
 	}
 
 	if r.TrailingSlash {
-		patternString = "^" + patternString + trailingSlash + "$"
+		patternString = fmt.Sprintf("^%s%s$", patternString, trailingSlash)
 	} else {
-
-		patternString = "^" + patternString + "$"
+		patternString = fmt.Sprintf("^%s$", patternString)
 	}
 
 	// compile the regex for the pattern string calculated
@@ -180,7 +180,8 @@ func (r *Route) init() error {
 	return nil
 }
 
-// matchAndGet will match the given requestURI with its pattern and set its URI params accordingly
+// matchAndGet returns if the request URI matches the pattern defined in a Route as well as
+// all the URI parameters configured for the route.
 func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 	if r.Pattern == requestURI {
 		return true, nil
@@ -206,8 +207,6 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 // Router is the HTTP router
 type Router struct {
-	handlers map[string][]*Route
-
 	optHandlers    []*Route
 	headHandlers   []*Route
 	getHandlers    []*Route
@@ -216,46 +215,49 @@ type Router struct {
 	patchHandlers  []*Route
 	deleteHandlers []*Route
 
+	// NotFound is the generic handler for 404 resource not found response
 	NotFound http.HandlerFunc
+	// AppContext holds all the app specific context which is to be injected into all HTTP
+	// request context
+	AppContext map[string]interface{}
 
 	// config has all the app config
 	config       *Config
-	appContext   map[string]interface{}
 	serveHandler http.HandlerFunc
 }
 
 func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
-	var handlers []*Route
+	var rr []*Route
 
 	switch req.Method {
 	case http.MethodOptions:
-		handlers = rtr.optHandlers
+		rr = rtr.optHandlers
 	case http.MethodHead:
-		handlers = rtr.headHandlers
+		rr = rtr.headHandlers
 	case http.MethodGet:
-		handlers = rtr.getHandlers
+		rr = rtr.getHandlers
 	case http.MethodPost:
-		handlers = rtr.postHandlers
+		rr = rtr.postHandlers
 	case http.MethodPut:
-		handlers = rtr.putHandlers
+		rr = rtr.putHandlers
 	case http.MethodPatch:
-		handlers = rtr.patchHandlers
+		rr = rtr.patchHandlers
 	case http.MethodDelete:
-		handlers = rtr.deleteHandlers
+		rr = rtr.deleteHandlers
 	}
 
 	var route *Route
 	ok := false
 	params := make(map[string]string, 0)
 	path := req.URL.EscapedPath()
-	for _, h := range handlers {
-		if ok, params = h.matchAndGet(path); ok {
-			route = h
+	for _, r := range rr {
+		if ok, params = r.matchAndGet(path); ok {
+			route = r
 			break
 		}
 	}
 
-	if route == nil || len(route.Handler) == 0 {
+	if !ok {
 		// serve 404 when there are no matching routes
 		rtr.NotFound(rw, req)
 		return
@@ -272,12 +274,12 @@ func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
 			&WC{
 				Params:     params,
 				Route:      route,
-				AppContext: rtr.appContext,
+				AppContext: rtr.AppContext,
 			},
 		),
 	)
 
-	for _, handler := range route.Handler {
+	for _, handler := range route.Handlers {
 		if crw.written == false {
 			// If there has been no write to response writer yet
 			handler(crw, reqwc)
@@ -324,7 +326,7 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 			errLogger.Fatalln("Unsupported HTTP request method provided. Method:", route.Method)
 		}
 
-		if route.Handler == nil || len(route.Handler) == 0 {
+		if route.Handlers == nil || len(route.Handlers) == 0 {
 			errLogger.Fatalln("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
 		}
 
@@ -354,8 +356,6 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 	}
 
 	r := &Router{
-		handlers: handlers,
-
 		optHandlers:    handlers[http.MethodOptions],
 		headHandlers:   handlers[http.MethodHead],
 		getHandlers:    handlers[http.MethodGet],
@@ -368,6 +368,8 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 
 		config: cfg,
 	}
+	// setting the default serve handler
 	r.serveHandler = r.serve
+
 	return r
 }

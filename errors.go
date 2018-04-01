@@ -17,19 +17,3 @@ var (
 	infoLogger = log.New(os.Stdout, "Info ", log.LstdFlags)
 	warnLogger = log.New(os.Stdout, "Warning ", log.LstdFlags)
 )
-
-// Errors is the custom error for webgo error handling
-type Errors struct {
-	msg string
-}
-
-func (e *Errors) Error() string {
-	return e.msg
-}
-
-// New returns a new instance of Errors struct
-func New(str string) *Errors {
-	return &Errors{
-		msg: str,
-	}
-}
