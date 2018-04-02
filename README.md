@@ -8,7 +8,7 @@ WebGo is a minimalistic framework for Go. It primarily gives you the following a
 
 1. Multiplexer
 2. Chaining handlers
-3. Middlewares
+3. Middleware
 4. Webgo context
 5. Helper functions
 6. HTTPS ready
@@ -31,10 +31,10 @@ matched by this route, and the path would be available inside the named URI para
 Chaining lets you hanlde a route with multiple handlers, and they will be executed in sequence.
 All handlers in the chain are `http.HandlerFunc`s.
 
-### Middlewares
+### Middleware
 
 Webgo's middleware signature is `func(http.ResponseWriter, *http.Request, http.HandlerFunc)`.
-Its `router` exposes a method `Use` to add middlewares to the app. e.g.
+Its `router` exposes a method `Use` to add a middleware to the app. e.g.
 
 ```
 func accessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
@@ -162,7 +162,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/bnkamalesh/webgo/middlewares"
+	"github.com/bnkamalesh/webgo/middleware"
 
 	"github.com/bnkamalesh/webgo"
 )
@@ -176,8 +176,6 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRoutes() []*webgo.Route {
-	// var mws webgo.Middlewares
-
 	return []*webgo.Route{
 		&webgo.Route{
 			Name:     "helloworld",                   // A label for the API/URI, this is not used anywhere.
@@ -189,7 +187,7 @@ func getRoutes() []*webgo.Route {
 			Name:     "helloworld",                                     // A label for the API/URI, this is not used anywhere.
 			Method:   http.MethodGet,                                   // request type
 			Pattern:  "/api/:param",                                    // Pattern for the route
-			Handlers: []http.HandlerFunc{middlewares.Cors, helloWorld}, // route handler
+			Handlers: []http.HandlerFunc{middleware.Cors, helloWorld}, // route handler
 		},
 	}
 }
@@ -202,7 +200,7 @@ func main() {
 		WriteTimeout: 60, // in seconds
 	}
 	router := webgo.NewRouter(&cfg, getRoutes())
-	router.Use(middlewares.AccessLog)
+	router.Use(middleware.AccessLog)
 	router.Start()
 }
 
