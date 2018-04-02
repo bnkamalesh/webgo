@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/bnkamalesh/webgo/middlewares"
+	"github.com/bnkamalesh/webgo/middleware"
 
 	"github.com/bnkamalesh/webgo"
 )
@@ -61,8 +61,6 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 var l = log.New(os.Stdout, "", 0)
 
 func getRoutes() []*webgo.Route {
-	// var mws webgo.Middlewares
-
 	return []*webgo.Route{
 		&webgo.Route{
 			Name:     "root",                    // A label for the API/URI, this is not used anywhere.
@@ -71,10 +69,10 @@ func getRoutes() []*webgo.Route {
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
 		&webgo.Route{
-			Name:     "hw-noparams",                                    // A label for the API/URI, this is not used anywhere.
-			Method:   http.MethodGet,                                   // request type
-			Pattern:  "/nparams",                                       // Pattern for the route
-			Handlers: []http.HandlerFunc{middlewares.Cors, helloWorld}, // route handler
+			Name:     "hw-noparams",                                   // A label for the API/URI, this is not used anywhere.
+			Method:   http.MethodGet,                                  // request type
+			Pattern:  "/nparams",                                      // Pattern for the route
+			Handlers: []http.HandlerFunc{middleware.Cors, helloWorld}, // route handler
 		},
 		&webgo.Route{
 			Name:          "hw-withparams", // A label for the API/URI, this is not used anywhere.

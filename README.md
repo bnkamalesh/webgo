@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
+[![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 
 # WebGo v2.0
 
@@ -170,7 +171,7 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 	wctx := webgo.Context(r)
 	webgo.R200(
 		w,
-		wctx.Params,
+		wctx.Params, // URI parameters
 	)
 }
 
