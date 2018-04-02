@@ -2,7 +2,7 @@
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 
-# WebGo v2.0
+# WebGo v2.1
 
 WebGo is a minimalistic framework for Go. It primarily gives you the following abilities.
 

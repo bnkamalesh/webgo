@@ -1,4 +1,9 @@
-# Release v2.0.0
+# Release v2.1.0 - 02/04/2018
+
+1. Updated Readme to include godoc badge
+2. Renamed `middlewares` to `middleware`
+
+# Release v2.0.0 - 01/04/2018
 
 1. Log levels
 	1. Error logs are now printed to `os.Stderr` with a prefix `Error`
