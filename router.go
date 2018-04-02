@@ -364,9 +364,9 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		patchHandlers:  handlers[http.MethodPatch],
 		deleteHandlers: handlers[http.MethodDelete],
 
-		NotFound: http.NotFound,
-
-		config: cfg,
+		NotFound:   http.NotFound,
+		AppContext: make(map[string]interface{}, 0),
+		config:     cfg,
 	}
 	// setting the default serve handler
 	r.serveHandler = r.serve

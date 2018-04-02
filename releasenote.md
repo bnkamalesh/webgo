@@ -1,7 +1,11 @@
-# Release v2.1.0 - 02/04/2018
+# Release - 02/04/2018
+### v2.1.0
 
 1. Updated Readme to include godoc badge
 2. Renamed `middlewares` to `middleware`
+
+### v2.1.1
+1. Initializing `AppContext` in NewRouter to avoid nil pointer assignment
 
 # Release v2.0.0 - 01/04/2018
 
