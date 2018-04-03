@@ -152,7 +152,7 @@ Starting both HTTP & HTTPS server
 ```
 router := webgo.NewRouter(*webgo.Config, []*Route)
 go router.StartHTTPS()
-router.StartHTTP()
+router.Start()
 ```
 ## Full sample
 
