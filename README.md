@@ -22,13 +22,13 @@ WebGo multiplexer lets you define URIs with or without parameters. Following are
 define a URI for a route
 
 1. `api/users` - no URI parameters
-2. `api/users/:userID` - named URI parameter; the value would be available in the parameter `userID`
+2. `api/users/:userID` - named URI parameter; the value would be available in the key `userID`
 3. `api/:wildcard*` - wildcard URIs; every router confirming to `/api/path/to/anything` would be
 matched by this route, and the path would be available inside the named URI parameter `wildcard`
 
 ### Chaining
 
-Chaining lets you hanlde a route with multiple handlers, and they will be executed in sequence.
+Chaining lets you handle a route with multiple handlers, and are executed in sequence.
 All handlers in the chain are `http.HandlerFunc`s.
 
 ### Middleware
@@ -51,9 +51,8 @@ router.Use(accessLog)
 
 ### Context
 
-Any app specific context can be be set inside the router, and is made available inside every request
-handler via HTTP request context. The webgo Context also provides the route configuration itself 
-as well as the URI parameters.
+Any app specific context can be set inside the router, and is available inside every request
+handler via HTTP request context. The Webgo Context (injected into HTTP request context) also provides the route configuration itself as well as the URI parameters.
 
 ```
 router := webgo.NewRouter(*webgo.Config, []*Route)
@@ -79,7 +78,7 @@ type dOutput struct {
 	Status int         `json:"status"`
 }
 ```
-JSON output would look like
+JSON output looks like
 ```
 {
 	"data": <any data>,
@@ -96,7 +95,7 @@ type errOutput struct {
 }
 ```
 
-JSON output for error response would like
+JSON output for error response looks like
 
 ```
 {
@@ -139,6 +138,7 @@ Start HTTPS server
 
 ```
 cfg := webgo.Config{
+	Port: "80",
 	HTTPSPort: "443",
 	CertFile: "/path/to/certfile",
 	KeyFile: "/path/to/keyfile",
