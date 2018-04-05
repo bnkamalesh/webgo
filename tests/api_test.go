@@ -20,6 +20,11 @@ var BenchAPIs = map[string]string{
 	"GETWITHPARAM":  strings.Join([]string{baseapi, "wparams", p1, "goblin", p2}, "/"),
 	"POSTWITHPARAM": strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
 }
+var GETAppContextAPI = []string{
+	strings.Join([]string{baseapi, "appcontext"}, "/"),
+	strings.Join([]string{baseapiHTTPS, "appcontext"}, "/"),
+}
+
 var GETAPI = []string{
 	strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
 	strings.Join([]string{baseapiHTTPS, "hello", p1, "goblin", p2}, "/"),
@@ -235,6 +240,23 @@ func TestOptions(t *testing.T) {
 			t.Fail()
 		}
 	}
+}
+
+func TestAppContext(t *testing.T) {
+	for _, url := range GETAppContextAPI {
+		resp, err := Get(url)
+		if err != nil {
+			t.Log(err)
+			t.Fail()
+			return
+		}
+
+		if resp.Data["Name"] != "WebGo" {
+			t.Log("Invalid App context config received")
+			t.Fail()
+		}
+	}
+
 }
 
 func BenchmarkGetWithoutURIParams(b *testing.B) {
