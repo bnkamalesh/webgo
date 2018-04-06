@@ -1,5 +1,5 @@
-// Package middlewares defines the signature/type which can be added as a middleware to Webgo.
-// It also has a 2 default middlewares access logs & CORS handling.
+// Package middleware defines the signature/type which can be added as a middleware to Webgo.
+// It also has a 2 default middleware access logs & CORS handling.
 // This package also provides 2 chainable to handlers to handle CORS in individual routes
 package middleware
 
