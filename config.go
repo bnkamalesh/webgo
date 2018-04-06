@@ -42,16 +42,23 @@ func (cfg *Config) Load(filepath string) {
 		errLogger.Fatal(err)
 	}
 
-	cfg.Validate()
-}
-
-// Validate the config parsed into the Config struct
-func (cfg *Config) Validate() {
-	i, err := strconv.Atoi(cfg.Port)
+	err = cfg.Validate()
 	if err != nil {
 		errLogger.Fatal(ErrInvalidPort)
 	}
-	if i <= 0 || i > 65535 {
-		errLogger.Fatal(ErrInvalidPort)
+}
+
+// Validate the config parsed into the Config struct
+func (cfg *Config) Validate() error {
+	i, err := strconv.Atoi(cfg.Port)
+	if err != nil {
+		errLogger.Println(err)
+		return ErrInvalidPort
 	}
+
+	if i <= 0 || i > 65535 {
+		return ErrInvalidPort
+	}
+
+	return nil
 }

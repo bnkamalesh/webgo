@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
+![cover.run go](https://cover.run/go/github.com/bnkamalesh/webgo.svg?tag=golang-1.10)
 
 # WebGo v2.1.1
 
