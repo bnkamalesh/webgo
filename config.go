@@ -21,9 +21,9 @@ type Config struct {
 	// HTTPSPort is the port number where the server has to listen for the HTTP requests
 	HTTPSPort string `json:"httpsPort,omitempty"`
 
-	// readTimeout is the maximum duration for which the server would read a request
+	// ReadTimeout is the maximum duration for which the server would read a request
 	ReadTimeout time.Duration `json:"readTimeout,omitempty"`
-	// writeTimeout is the maximum duration for which the server would try to respond
+	// WriteTimeout is the maximum duration for which the server would try to respond
 	WriteTimeout time.Duration `json:"writeTimeout,omitempty"`
 
 	// InsecureSkipVerify is the HTTP certificate verification
