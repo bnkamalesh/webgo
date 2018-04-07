@@ -210,11 +210,9 @@ func main() {
 
 ### Testing
 
-URI parameters, route matching, and context fetching are tested in the tests provided. You can run the tests
-by starting the web server and then running the test.
+URI parameters, route matching, and context fetching are tested in the tests provided.
 
 ```
-$ cd $GOPATH/src/github.com/bnkamalesh/webgo/tests
-$ go run main.go &
+$ cd $GOPATH/src/github.com/bnkamalesh/webgo
 $ go test
 ```
