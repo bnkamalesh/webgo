@@ -55,33 +55,48 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 
 // SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
-	w.Header().Set(HeaderContentType, JSONContentType)
-	w.WriteHeader(rCode)
-	// Encode data to json and send response
-	if err := json.NewEncoder(w).Encode(&dOutput{data, rCode}); err != nil {
+
+	//Marshal returns the JSON encoding of dOutput{data, rCode}
+	jsonData, err := json.Marshal(dOutput{data, rCode})
+	if err != nil {
+
 		/*
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
 		errLogger.Println(err)
 		R500(w, ErrInternalServer)
+		return
 	}
-}
 
-// SendError is used to respond to any request with an error
-func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)
 
 	w.WriteHeader(rCode)
 
-	if err := json.NewEncoder(w).Encode(&errOutput{data, rCode}); err != nil {
+	w.Write(jsonData)
+}
+
+// SendError is used to respond to any request with an error
+func SendError(w http.ResponseWriter, data interface{}, rCode int) {
+
+	//Marshal returns the JSON encoding of errOutput{data, rCode}
+	jsonData, err := json.Marshal(errOutput{data, rCode})
+	if err != nil {
+
 		/*
 			In case of encoding error, send "internal server error" after
-			logging the actual error
+			logging the actual error.
 		*/
 		errLogger.Println(err)
 		R500(w, ErrInternalServer)
+		return
 	}
+
+	w.Header().Set(HeaderContentType, JSONContentType)
+
+	w.WriteHeader(rCode)
+
+	w.Write(jsonData)
 }
 
 // Render is used for rendering templates (HTML)
