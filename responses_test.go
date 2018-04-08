@@ -129,3 +129,12 @@ func TestRender404(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestSendHeader(t *testing.T) {
+	_, respResc := setup()
+	SendHeader(respResc, 202)
+	if respResc.Code != 202 {
+		t.Log("Expected response code 202, got:", respResc.Code)
+		t.Fail()
+	}
+}
