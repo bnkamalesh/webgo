@@ -570,7 +570,7 @@ func postResp(w http.ResponseWriter, r *http.Request) {
 
 func getRoutes() []*Route {
 	return []*Route{
-		&Route{
+		{
 			Name:                    "root",         // A label for the API/URI
 			Method:                  http.MethodGet, // request type
 			Pattern:                 "/",
@@ -578,63 +578,63 @@ func getRoutes() []*Route {
 			TrailingSlash:           true,
 			Handlers:                []http.HandlerFunc{dummy, postResp}, // route handler
 		},
-		&Route{
+		{
 			Name:     "appcontext",                     // A label for the API/URI
 			Method:   http.MethodGet,                   // request type
 			Pattern:  "/appcontext",                    // Pattern for the route
 			Handlers: []http.HandlerFunc{getAppConfig}, // route handler
 		},
-		&Route{
+		{
 			Name:     "hw-noparams",                  // A label for the API/URI
 			Method:   http.MethodGet,                 // request type
 			Pattern:  "/nparams",                     // Pattern for the route
 			Handlers: []http.HandlerFunc{helloWorld}, // route handler
 		},
-		&Route{
+		{
 			Name:          "hw-withparams", // A label for the API/URI
 			Method:        http.MethodGet,
 			TrailingSlash: true,                           // request type
 			Pattern:       "/wparams/:p1/goblin/:p2",      // Pattern for the route
 			Handlers:      []http.HandlerFunc{helloWorld}, // route handler
 		},
-		&Route{
+		{
 			Name:     "params-get",              // A label for the API/URI
 			Method:   http.MethodGet,            // request type
 			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
-		&Route{
+		{
 			Name:     "params-head",             // A label for the API/URI
 			Method:   http.MethodHead,           // request type
 			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
 
-		&Route{
+		{
 			Name:     "params-post-sameuri",     // A label for the API/URI
 			Method:   http.MethodPost,           // request type
 			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
-		&Route{
+		{
 			Name:     "params-put-sameuri",      // A label for the API/URI
 			Method:   http.MethodPut,            // request type
 			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
-		&Route{
+		{
 			Name:     "params-patch-sameuri",    // A label for the API/URI
 			Method:   http.MethodPatch,          // request type
 			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
-		&Route{
+		{
 			Name:     "params-delete-sameuri",   // A label for the API/URI
 			Method:   http.MethodDelete,         // request type
 			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
 			Handlers: []http.HandlerFunc{dummy}, // route handler
 		},
-		&Route{
+		{
 			Name:    "params-options-sameuri", // A label for the API/URI
 			Method:  http.MethodOptions,       // request type
 			Pattern: "/hello/:p1/goblin/:p2",  // Pattern for the route
