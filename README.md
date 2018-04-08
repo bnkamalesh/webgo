@@ -41,7 +41,7 @@ All handlers in the chain are `http.HandlerFunc`s.
 WebGo middleware signature is `func(http.ResponseWriter, *http.Request, http.HandlerFunc)`.
 Its `router` exposes a method `Use` to add a middleware to the app. e.g.
 
-```
+```go
 func accessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	start := time.Now()
 	next(rw, req)
@@ -62,7 +62,7 @@ they were added. Execution of the middlware is stopped if you do not call `next(
 Any app specific context can be set inside the router, and is available inside every request
 handler via HTTP request context. The Webgo Context (injected into HTTP request context) also provides the route configuration itself as well as the URI parameters.
 
-```
+```go
 router := webgo.NewRouter(*webgo.Config, []*Route)
 router.AppContext = map[string]interface{}{
 	"dbHandler": <db handler>
@@ -81,7 +81,7 @@ func API1(rw http.ResponseWriter, req *http.Request) {
 WebGo has certain helper functions for which the responses are wrapped in a struct according to 
 error or successful response. All success responses are wrapped in the struct
 
-```
+```go
 type dOutput struct {
 	Data   interface{} `json:"data"`
 	Status int         `json:"status"`
@@ -89,7 +89,7 @@ type dOutput struct {
 ```
 
 JSON output looks like
-```
+```go
 {
 	"data": <any data>,
 	"status: <HTTP response status code, integer>
@@ -98,7 +98,7 @@ JSON output looks like
 
 All the error responses are wrapped in the struct
 
-```
+```go
 type errOutput struct {
 	Errors interface{} `json:"errors"`
 	Status int         `json:"status"`
@@ -107,7 +107,7 @@ type errOutput struct {
 
 JSON output for error response looks like
 
-```
+```go
 {
 	"errors": <any data>,
 	"status": <HTTP response status code, integer>
@@ -146,7 +146,7 @@ You can also have both HTTP & HTTPS servers running side by side.
 
 Start HTTPS server
 
-```
+```go
 cfg := webgo.Config{
 	Port: "80",
 	HTTPSPort: "443",
@@ -159,7 +159,7 @@ router.StartHTTPS()
 
 Starting both HTTP & HTTPS server
 
-```
+```go
 router := webgo.NewRouter(*webgo.Config, []*Route)
 go router.StartHTTPS()
 router.Start()
@@ -169,7 +169,7 @@ router.Start()
 Graceful shutdown lets you shutdown your server without affecting any live connections/clients
 connected to your server.
 
-```
+```go
 func main() {
 	osSig := make(chan os.Signal, 1)
 	cfg := webgo.Config{
@@ -199,7 +199,7 @@ func main() {
 
 ## Full sample
 
-```
+```go
 package main
 
 import (
@@ -253,7 +253,7 @@ func main() {
 
 URI parameters, route matching, HTTP server, HTTPS server, graceful shutdown and context fetching are tested in the tests provided.
 
-```
+```bash
 $ cd $GOPATH/src/github.com/bnkamalesh/webgo
 $ go test
 ```
