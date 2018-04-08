@@ -6,7 +6,7 @@
 
 # WebGo v2.2.0
 
-WebGo is a minimalistic framework for Go. It primarily gives you the following abilities.
+WebGo is a minimalistic web framework for Go. It gives you the following features.
 
 1. Multiplexer
 2. Chaining handlers
@@ -16,18 +16,20 @@ WebGo is a minimalistic framework for Go. It primarily gives you the following a
 6. HTTPS ready
 7. Graceful shutdown
 
-WebGo's route handlers have the same signature as the standard libraries HTTP handler.
+WebGo's route handlers have the same signature as the standard libraries' HTTP handler.
 i.e. `http.HandlerFunc`
 
 ### Multiplexer
 
 WebGo multiplexer lets you define URIs with or without parameters. Following are the ways you can 
-define a URI for a route
+define a URI for a route.
 
 1. `api/users` - no URI parameters
 2. `api/users/:userID` - named URI parameter; the value would be available in the key `userID`
 3. `api/:wildcard*` - wildcard URIs; every router confirming to `/api/path/to/anything` would be
 matched by this route, and the path would be available inside the named URI parameter `wildcard`
+
+If there are multiple routes which have matching path patterns, the first one defined in the list of routes takes precedence and is executed.
 
 ### Chaining
 
@@ -36,7 +38,7 @@ All handlers in the chain are `http.HandlerFunc`s.
 
 ### Middleware
 
-Webgo's middleware signature is `func(http.ResponseWriter, *http.Request, http.HandlerFunc)`.
+WebGo middleware signature is `func(http.ResponseWriter, *http.Request, http.HandlerFunc)`.
 Its `router` exposes a method `Use` to add a middleware to the app. e.g.
 
 ```
@@ -52,6 +54,9 @@ router := webgo.NewRouter(*webgo.Config, []*Route)
 router.Use(accessLog)
 ```
 
+You can add as many middleware as you want, middleware execution order is in the same order as
+they were added. Execution of the middlware is stopped if you do not call `next()`.
+
 ### Context
 
 Any app specific context can be set inside the router, and is available inside every request
@@ -65,8 +70,8 @@ router.AppContext = map[string]interface{}{
 
 func API1(rw http.ResponseWriter, req *http.Request) {
 	wctx := webgo.Context(req)
-	wctx.Params // URI paramters
-	wctx.Route // is the route configurate itself for which the handler matched
+	wctx.Params // URI paramters, a map of string of string, where the keys are the named URI parameters
+	wctx.Route // is the route configuration itself for which the handler matched
 	wctx.AppContext // is the app context configured in `router.AppContext`
 }
 ```
@@ -75,12 +80,14 @@ func API1(rw http.ResponseWriter, req *http.Request) {
 
 WebGo has certain helper functions for which the responses are wrapped in a struct according to 
 error or successful response. All success responses are wrapped in the struct
+
 ```
 type dOutput struct {
 	Data   interface{} `json:"data"`
 	Status int         `json:"status"`
 }
 ```
+
 JSON output looks like
 ```
 {
@@ -182,6 +189,11 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+	
+	err = router.ShutdownHTTPS()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 ```
 
@@ -239,7 +251,7 @@ func main() {
 
 ### Testing
 
-URI parameters, route matching, and context fetching are tested in the tests provided.
+URI parameters, route matching, HTTP server, HTTPS server, graceful shutdown and context fetching are tested in the tests provided.
 
 ```
 $ cd $GOPATH/src/github.com/bnkamalesh/webgo
