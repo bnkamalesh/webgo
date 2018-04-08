@@ -40,7 +40,6 @@ const (
 // SendHeader is used to send only a response header, i.e no response body
 func SendHeader(w http.ResponseWriter, rCode int) {
 	w.WriteHeader(rCode)
-	fmt.Fprint(w)
 }
 
 // Send sends a completely custom response without wrapping in the
