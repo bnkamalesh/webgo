@@ -4,7 +4,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 
 
-# WebGo v2.1.1
+# WebGo v2.2.0
 
 WebGo is a minimalistic framework for Go. It primarily gives you the following abilities.
 
