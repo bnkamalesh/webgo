@@ -58,7 +58,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w.Header().Set(HeaderContentType, JSONContentType)
 	w.WriteHeader(rCode)
 
-	err := json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(dOutput{Data: data, Status: rCode})
 	if err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
