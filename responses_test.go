@@ -1,6 +1,7 @@
 package webgo
 
 import (
+	"encoding/json"
 	"html/template"
 	"testing"
 )
@@ -75,7 +76,40 @@ func TestResponses(t *testing.T) {
 		t.Log("Expected response status 500, got", respRec.Code)
 		t.Fail()
 	}
+}
 
+func TestInvalidResponses(t *testing.T) {
+	_, respRec := setup()
+
+	R200(respRec, make(chan int))
+	resp := response{}
+	err := json.NewDecoder(respRec.Body).Decode(&resp)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+		return
+	}
+
+	if resp.Status != 500 {
+		t.Log("Expected status 500, got:", resp.Status)
+		t.Fail()
+	}
+
+	_, respRec = setup()
+
+	R400(respRec, make(chan int))
+	resp = response{}
+	err = json.NewDecoder(respRec.Body).Decode(&resp)
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+		return
+	}
+
+	if resp.Status != 500 {
+		t.Log("Expected status 500, got:", resp.Status)
+		t.Fail()
+	}
 }
 
 func TestSend(t *testing.T) {
@@ -86,6 +120,7 @@ func TestSend(t *testing.T) {
 		t.Log("Expected status 200, got", respRec.Code)
 		t.Fail()
 	}
+
 	str := respRec.Body.String()
 	if str != "hello" {
 		t.Log("Expected hello, got", str)
