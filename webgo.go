@@ -13,6 +13,7 @@ e.g.
 package webgo
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"time"
@@ -47,7 +48,7 @@ func (router *Router) StartHTTPS() {
 		host += ":" + cfg.HTTPSPort
 	}
 
-	httpsServer := &http.Server{
+	router.httpsServer = &http.Server{
 		Addr:         host,
 		Handler:      router,
 		ReadTimeout:  cfg.ReadTimeout * time.Second,
@@ -58,9 +59,9 @@ func (router *Router) StartHTTPS() {
 	}
 
 	infoLogger.Println("HTTPS server, listening on", host)
-	err := httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
-	if err != nil {
-		errLogger.Fatalln("HTTPS server exited with error:", err.Error())
+	err := router.httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
+	if err != nil && err != http.ErrServerClosed {
+		errLogger.Println("HTTPS server exited with error:", err.Error())
 	}
 }
 
@@ -73,16 +74,49 @@ func (router *Router) Start() {
 		host += ":" + cfg.Port
 	}
 
-	httpServer := &http.Server{
+	router.httpServer = &http.Server{
 		Addr:         host,
 		Handler:      router,
 		ReadTimeout:  cfg.ReadTimeout * time.Second,
 		WriteTimeout: cfg.WriteTimeout * time.Second,
 	}
-
 	infoLogger.Println("HTTP server, listening on '" + host + "'")
-	err := httpServer.ListenAndServe()
-	if err != nil {
-		errLogger.Fatalln("HTTP server exited with error:", err.Error())
+	err := router.httpServer.ListenAndServe()
+	if err != nil && err != http.ErrServerClosed {
+		errLogger.Println("HTTP server exited with error:", err.Error())
 	}
+}
+
+// Shutdown gracefully shuts down HTTP server
+func (router *Router) Shutdown() error {
+	if router.httpServer == nil {
+		return nil
+	}
+	timer := router.config.ShutdownTimeout * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), timer)
+	defer cancel()
+
+	err := router.httpServer.Shutdown(ctx)
+	if err != nil {
+		errLogger.Println(err)
+	}
+	return err
+}
+
+// ShutdownHTTPS gracefully shuts down HTTPS server
+func (router *Router) ShutdownHTTPS() error {
+	if router.httpsServer == nil {
+		return nil
+	}
+	timer := router.config.ShutdownTimeout * time.Second
+
+	ctx, cancel := context.WithTimeout(context.Background(), timer)
+	defer cancel()
+
+	err := router.httpsServer.Shutdown(ctx)
+	if err != nil && err != http.ErrServerClosed {
+		errLogger.Println(err)
+	}
+	return err
 }

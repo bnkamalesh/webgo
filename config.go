@@ -28,6 +28,9 @@ type Config struct {
 
 	// InsecureSkipVerify is the HTTP certificate verification
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
+
+	// ShutdownTimeout is the duration in which graceful shutdown is completed, in seconds
+	ShutdownTimeout time.Duration
 }
 
 // Load config file from the provided filepath and validate
@@ -52,7 +55,6 @@ func (cfg *Config) Load(filepath string) {
 func (cfg *Config) Validate() error {
 	i, err := strconv.Atoi(cfg.Port)
 	if err != nil {
-		errLogger.Println(err)
 		return ErrInvalidPort
 	}
 

@@ -1,3 +1,9 @@
+# Release - 08/04/2018
+### v2.2.0
+
+1. Graceful shutdown added
+2. Updated readme with details of how to use the shutdown
+
 # Release - 02/04/2018
 ### v2.1.0
 

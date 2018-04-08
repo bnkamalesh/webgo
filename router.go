@@ -224,6 +224,10 @@ type Router struct {
 	// config has all the app config
 	config       *Config
 	serveHandler http.HandlerFunc
+	// httpServer is the server handler for the active HTTP server
+	httpServer *http.Server
+	// httpsServer is the server handler for the active HTTPS server
+	httpsServer *http.Server
 }
 
 func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {

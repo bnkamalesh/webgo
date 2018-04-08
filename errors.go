@@ -8,7 +8,7 @@ import (
 
 var (
 	// ErrInvalidPort is the error returned when the port number provided in the config file is invalid
-	ErrInvalidPort = errors.New("Port number not provided or is invalid")
+	ErrInvalidPort = errors.New("Port number not provided or is invalid (should be between 0 - 65535)")
 )
 
 var (

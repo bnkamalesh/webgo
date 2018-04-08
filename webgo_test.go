@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 type response struct {
@@ -458,6 +459,27 @@ func TestAppContext(t *testing.T) {
 		}
 	}
 
+}
+
+func TestStart(t *testing.T) {
+	router, _ := setup()
+	go router.Start()
+	time.Sleep(time.Second * 5)
+	err := router.Shutdown()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
+}
+func TestStartHTTPS(t *testing.T) {
+	router, _ := setup()
+	go router.StartHTTPS()
+	time.Sleep(time.Second * 5)
+	err := router.ShutdownHTTPS()
+	if err != nil {
+		t.Log(err)
+		t.Fail()
+	}
 }
 
 /*
