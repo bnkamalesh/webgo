@@ -1,6 +1,6 @@
 language: go
 go:
-  - "1.8.0"
+  - "1.8"
   - master
 
 # before_script:
