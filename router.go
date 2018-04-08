@@ -94,6 +94,31 @@ type Route struct {
 	uriPattern *regexp.Regexp
 }
 
+// computerPatternStr computes the pattern string required for the route's regex.
+// It also adds the URI parameter key to the route's `keys` field
+func (r *Route) computerPatternStr(patternString string, hasWildcard bool, key string) string {
+	regexPattern := ""
+	patternKey := ""
+	if hasWildcard {
+		patternKey = fmt.Sprintf(":%s*", key)
+		regexPattern = urlwildcard
+	} else {
+		patternKey = fmt.Sprintf(":%s", key)
+		regexPattern = urlchars
+	}
+
+	patternString = strings.Replace(patternString, patternKey, regexPattern, 1)
+
+	for idx, k := range r.uriKeys {
+		if key == k {
+			errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+		}
+	}
+
+	r.uriKeys = append(r.uriKeys, key)
+	return patternString
+}
+
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
 	patternString := r.Pattern
@@ -115,50 +140,14 @@ func (r *Route) init() error {
 			} else if hasKey && char != "/" {
 				key += char
 			} else if hasKey && len(key) > 0 {
-				regexPattern := ""
-				patternKey := ""
-				if hasWildcard {
-					patternKey = fmt.Sprintf(":%s*", key)
-					regexPattern = urlwildcard
-				} else {
-					patternKey = fmt.Sprintf(":%s", key)
-					regexPattern = urlchars
-				}
-
-				patternString = strings.Replace(patternString, patternKey, regexPattern, 1)
-
-				for idx, k := range r.uriKeys {
-					if key == k {
-						errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
-					}
-				}
-
-				r.uriKeys = append(r.uriKeys, key)
-
+				patternString = r.computerPatternStr(patternString, hasWildcard, key)
 				hasWildcard, hasKey = false, false
 				key = ""
 			}
 		}
 
 		if hasKey && len(key) > 0 {
-			regexPattern := ""
-			patternKey := ""
-			if hasWildcard {
-				patternKey = fmt.Sprintf(":%s*", key)
-				regexPattern = urlwildcard
-			} else {
-				patternKey = fmt.Sprintf(":%s", key)
-				regexPattern = urlchars
-			}
-
-			patternString = strings.Replace(patternString, patternKey, regexPattern, 1)
-
-			for idx, k := range r.uriKeys {
-				if key == k {
-					errLogger.Fatalln(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
-				}
-			}
-			r.uriKeys = append(r.uriKeys, key)
+			patternString = r.computerPatternStr(patternString, hasWildcard, key)
 		}
 
 	}
