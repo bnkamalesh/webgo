@@ -2,6 +2,7 @@
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 [![](https://cover.run/go/github.com/bnkamalesh/webgo.svg?tag=golang-1.10)](https://cover.run/go/github.com/bnkamalesh/webgo)
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
+[![](https://raw.githubusercontent.com/istio/fortio/master/docs/mentioned-badge.svg?sanitize=true)](https://github.com/avelino/awesome-go)
 
 
 # WebGo v2.2.0
