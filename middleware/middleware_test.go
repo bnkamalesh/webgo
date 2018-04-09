@@ -54,7 +54,7 @@ func setup() (*webgo.Router, *httptest.ResponseRecorder) {
 
 func getRoutes() []*webgo.Route {
 	return []*webgo.Route{
-		&webgo.Route{
+		{
 			Name:                    "root",         // A label for the API/URI
 			Method:                  http.MethodGet, // request type
 			Pattern:                 "/",
