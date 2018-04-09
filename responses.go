@@ -66,7 +66,6 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 		*/
 		errLogger.Println(err)
 		R500(w, ErrInternalServer)
-		return
 	}
 }
 
@@ -83,7 +82,6 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 		*/
 		errLogger.Println(err)
 		R500(w, ErrInternalServer)
-		return
 	}
 }
 
@@ -91,7 +89,6 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template) {
 	// In case of HTML response, setting appropriate header type for text/HTML response
 	w.Header().Set(HeaderContentType, HTMLContentType)
-
 	w.WriteHeader(rCode)
 
 	// Rendering an HTML template with appropriate data
