@@ -19,7 +19,13 @@ import (
 	"time"
 )
 
-// WC is the webgocontext
+// ctxkey is a custom string type to store the WebGo context inside HTTP request context
+type ctxkey string
+
+const wgoCtxKey = ctxkey("webgocontext")
+
+// WC is the WebgoContext. A new instance of WC is injected inside every request's context object
+// Note: This name will be deperecated and renamed to `WebgoContext` in the next major release
 type WC struct {
 	Params     map[string]string
 	Route      *Route
@@ -80,7 +86,7 @@ func (router *Router) Start() {
 		ReadTimeout:  cfg.ReadTimeout * time.Second,
 		WriteTimeout: cfg.WriteTimeout * time.Second,
 	}
-	infoLogger.Println("HTTP server, listening on '" + host + "'")
+	infoLogger.Println("HTTPS server, listening on", host)
 	err := router.httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		errLogger.Println("HTTP server exited with error:", err.Error())

@@ -32,10 +32,6 @@ var validHTTPMethods = []string{
 	http.MethodDelete,
 }
 
-type ctxkey string
-
-const wgoCtxKey = ctxkey("webgocontext")
-
 // customResponseWriter is a custom HTTP response writer
 type customResponseWriter struct {
 	http.ResponseWriter

@@ -171,30 +171,49 @@ connected to your server.
 
 ```go
 func main() {
-	osSig := make(chan os.Signal, 1)
+	osSig := make(chan os.Signal, 5)
+
 	cfg := webgo.Config{
-		Host:         "",
-		Port:         "8080",
-		ReadTimeout:  15, // in seconds
-		WriteTimeout: 60, // in seconds
+		Host:            "",
+		Port:            "8080",
+		ReadTimeout:     15, // in seconds
+		WriteTimeout:    60, // in seconds
+		ShutdownTimeout: 15, // in seconds
 	}
 	router := webgo.NewRouter(&cfg, getRoutes())
-	router.Use(middleware.AccessLog)
-	go router.Start()
 
-	// Wait to receive an OS signal
-	<-osSig
-	// Initiate graceful shutdown
-	err := router.Shutdown()
-	if err != nil {
-		fmt.Println(err)
-	}
-	
-	err = router.ShutdownHTTPS()
-	if err != nil {
-		fmt.Println(err)
+	go func() {
+		<-osSig
+		// Initiate HTTP server shutdown
+		err := router.Shutdown()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		} else {
+			fmt.Println("shutdown complete")
+			os.Exit(0)
+		}
+
+		// err := router.ShutdownHTTPS()
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	os.Exit(1)
+		// } else {
+		// 	fmt.Println("shutdown complete")
+		// 	os.Exit(0)
+		// }
+	}()
+
+	signal.Notify(osSig, os.Interrupt, syscall.SIGTERM)
+
+	router.Start()
+
+	for {
+		// Prevent main thread from exiting, and wait for shutdown to complete
+		time.Sleep(time.Second * 1)
 	}
 }
+
 ```
 
 ## Full sample
