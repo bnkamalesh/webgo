@@ -25,6 +25,22 @@ type errOutput struct {
 	Status int         `json:"status"`
 }
 
+// responseWriter is a custom HTTP response writer for JSON response
+type responseWriter struct {
+	http.ResponseWriter
+	code int
+}
+
+func (rw responseWriter) Write(data []byte) (int, error) {
+	rw.WriteHeader(rw.code)
+	return rw.ResponseWriter.Write(data)
+}
+
+func (rw responseWriter) WriteHeader(code int) {
+	rw.ResponseWriter.Header().Set(HeaderContentType, JSONContentType)
+	rw.ResponseWriter.WriteHeader(code)
+}
+
 const (
 	// HeaderContentType is the key for mentioning the response header content type
 	HeaderContentType = "Content-Type"
@@ -55,10 +71,12 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 
 // SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
-	w.Header().Set(HeaderContentType, JSONContentType)
-	w.WriteHeader(rCode)
+	rw := responseWriter{
+		ResponseWriter: w,
+		code:           rCode,
+	}
 
-	err := json.NewEncoder(w).Encode(dOutput{Data: data, Status: rCode})
+	err := json.NewEncoder(rw).Encode(dOutput{Data: data, Status: rCode})
 	if err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
@@ -72,10 +90,12 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 
 // SendError is used to respond to any request with an error
 func SendError(w http.ResponseWriter, data interface{}, rCode int) {
-	w.Header().Set(HeaderContentType, JSONContentType)
-	w.WriteHeader(rCode)
+	rw := responseWriter{
+		ResponseWriter: w,
+		code:           rCode,
+	}
 
-	err := json.NewEncoder(w).Encode(errOutput{data, rCode})
+	err := json.NewEncoder(rw).Encode(errOutput{data, rCode})
 	if err != nil {
 		/*
 			In case of encoding error, send "internal server error" after
