@@ -90,9 +90,9 @@ type Route struct {
 	uriPattern *regexp.Regexp
 }
 
-// computerPatternStr computes the pattern string required for the route's regex.
+// computePatternStr computes the pattern string required for generating the route's regex.
 // It also adds the URI parameter key to the route's `keys` field
-func (r *Route) computerPatternStr(patternString string, hasWildcard bool, key string) string {
+func (r *Route) computePatternStr(patternString string, hasWildcard bool, key string) string {
 	regexPattern := ""
 	patternKey := ""
 	if hasWildcard {
@@ -136,14 +136,14 @@ func (r *Route) init() error {
 			} else if hasKey && char != "/" {
 				key += char
 			} else if hasKey && len(key) > 0 {
-				patternString = r.computerPatternStr(patternString, hasWildcard, key)
+				patternString = r.computePatternStr(patternString, hasWildcard, key)
 				hasWildcard, hasKey = false, false
 				key = ""
 			}
 		}
 
 		if hasKey && len(key) > 0 {
-			patternString = r.computerPatternStr(patternString, hasWildcard, key)
+			patternString = r.computePatternStr(patternString, hasWildcard, key)
 		}
 
 	}
