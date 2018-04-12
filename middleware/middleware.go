@@ -21,6 +21,7 @@ type responseWriter struct {
 
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.code = code
+	rw.ResponseWriter.WriteHeader(code)
 }
 
 // AccessLog is a middleware which prints access log
