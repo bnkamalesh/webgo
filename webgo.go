@@ -16,7 +16,6 @@ import (
 	"context"
 	"crypto/tls"
 	"net/http"
-	"time"
 )
 
 // ctxkey is a custom string type to store the WebGo context inside HTTP request context
@@ -57,8 +56,8 @@ func (router *Router) StartHTTPS() {
 	router.httpsServer = &http.Server{
 		Addr:         host,
 		Handler:      router,
-		ReadTimeout:  cfg.ReadTimeout * time.Second,
-		WriteTimeout: cfg.WriteTimeout * time.Second,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
 		TLSConfig: &tls.Config{
 			InsecureSkipVerify: cfg.InsecureSkipVerify,
 		},
@@ -83,8 +82,8 @@ func (router *Router) Start() {
 	router.httpServer = &http.Server{
 		Addr:         host,
 		Handler:      router,
-		ReadTimeout:  cfg.ReadTimeout * time.Second,
-		WriteTimeout: cfg.WriteTimeout * time.Second,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
 	}
 	infoLogger.Println("HTTPS server, listening on", host)
 	err := router.httpServer.ListenAndServe()
@@ -98,7 +97,7 @@ func (router *Router) Shutdown() error {
 	if router.httpServer == nil {
 		return nil
 	}
-	timer := router.config.ShutdownTimeout * time.Second
+	timer := router.config.ShutdownTimeout
 
 	ctx, cancel := context.WithTimeout(context.Background(), timer)
 	defer cancel()
@@ -115,7 +114,7 @@ func (router *Router) ShutdownHTTPS() error {
 	if router.httpsServer == nil {
 		return nil
 	}
-	timer := router.config.ShutdownTimeout * time.Second
+	timer := router.config.ShutdownTimeout
 
 	ctx, cancel := context.WithTimeout(context.Background(), timer)
 	defer cancel()
