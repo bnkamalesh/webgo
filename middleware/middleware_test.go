@@ -9,7 +9,7 @@ import (
 	"github.com/bnkamalesh/webgo"
 )
 
-const baseapi = "http://127.0.0.1:9696"
+const baseapi = "http://127.0.0.1:9696/"
 
 func TestMiddleware(t *testing.T) {
 	router, respRec := setup()
