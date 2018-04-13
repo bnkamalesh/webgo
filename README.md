@@ -5,7 +5,7 @@
 [![](https://raw.githubusercontent.com/istio/fortio/master/docs/mentioned-badge.svg?sanitize=true)](https://github.com/avelino/awesome-go)
 
 
-# WebGo v2.2.0
+# WebGo v2.2.3
 
 WebGo is a minimalistic web framework for Go. It gives you the following features.
 

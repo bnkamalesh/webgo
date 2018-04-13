@@ -1,3 +1,10 @@
+# Release - 12/04/2018
+### v2.2.3
+
+1. Fixed the long standing invalid http status code [bug](https://github.com/bnkamalesh/webgo/issues/7)
+2. Fixed bug in access-log middleware which caused invalid HTTP status code
+3. Updated docs with all latest updates
+
 # Release - 08/04/2018
 ### v2.2.0
 
