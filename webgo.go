@@ -85,7 +85,7 @@ func (router *Router) Start() {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 	}
-	infoLogger.Println("HTTPS server, listening on", host)
+	infoLogger.Println("HTTP server, listening on", host)
 	err := router.httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		errLogger.Println("HTTP server exited with error:", err.Error())
