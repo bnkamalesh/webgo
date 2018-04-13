@@ -177,9 +177,9 @@ func main() {
 	cfg := webgo.Config{
 		Host:            "",
 		Port:            "8080",
-		ReadTimeout:     15, // in seconds
-		WriteTimeout:    60, // in seconds
-		ShutdownTimeout: 15, // in seconds
+		ReadTimeout:     15 * time.Second,
+		WriteTimeout:    60 * time.Second,
+		ShutdownTimeout: 15 * time.Second,
 	}
 	router := webgo.NewRouter(&cfg, getRoutes())
 
