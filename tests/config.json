@@ -4,7 +4,7 @@
 	"httpsPort": "8443",
 	"certFile": "./ssl/server.crt",
 	"keyFile": "./ssl/server.key",
-	"readTimeout": 15,
-	"writeTimeout": 60,
+	"readTimeout": 15000000000,
+	"writeTimeout": 60000000000,
 	"insecureSkipVerify": true
 }
