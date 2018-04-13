@@ -22,7 +22,7 @@ i.e. `http.HandlerFunc`
 
 ### Multiplexer
 
-WebGo multiplexer lets you define URIs with or without parameters. Following are the ways you can 
+WebGo multiplexer lets you define URIs with or without parameters. Following are the ways you can
 define a URI for a route.
 
 1. `api/users` - no URI parameters
@@ -79,7 +79,7 @@ func API1(rw http.ResponseWriter, req *http.Request) {
 
 ### Helper functions
 
-WebGo has certain helper functions for which the responses are wrapped in a struct according to 
+WebGo has certain helper functions for which the responses are wrapped in a struct according to
 error or successful response. All success responses are wrapped in the struct
 
 ```go
@@ -132,7 +132,7 @@ status code
 8. R201(w http.ResponseWriter, data interface{}) - Same as R200, but status code 201
 9. R204(w http.ResponseWriter) - Sends a reponse header with status code 201 and no response body.
 10. R302(w http.ResponseWriter, data interface{}) - Same as R200, but with status code 302
-11. R400(w http.ResponseWriter, data interface{}) - Same as R200, but with status code 400 and 
+11. R400(w http.ResponseWriter, data interface{}) - Same as R200, but with status code 400 and
 response wrapped in error struct
 12. R403(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 403
 13. R404(w http.ResponseWriter, data interface{}) - Same as R400, but with status code 404
@@ -224,6 +224,7 @@ package main
 
 import (
 	"net/http"
+    "time"
 
 	"github.com/bnkamalesh/webgo/middleware"
 
@@ -259,8 +260,8 @@ func main() {
 	cfg := webgo.Config{
 		Host:         "",
 		Port:         "8080",
-		ReadTimeout:  15, // in seconds
-		WriteTimeout: 60, // in seconds
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 60 * time.Second,
 	}
 	router := webgo.NewRouter(&cfg, getRoutes())
 	router.Use(middleware.AccessLog)
