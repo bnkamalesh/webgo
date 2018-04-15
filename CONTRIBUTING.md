@@ -7,7 +7,7 @@ Please follow the guidelines provided for contribution
 3. Every PR should be accompanied by its test wherever applicable
 4. Any changes to the HTTP handling, routing etc. should be accompanied by benchmark
 5. While creating an issue
-	1. Mention the steps to reproduce the issue.
+	1. Mention the steps to reproduce the issue
 	2. Mention the environment in which it was run
-	3. Include your 1st level of troubleshooting if you have identified anything.
-6. Provide meaningful commit messages.
+	3. Include your 1st level of troubleshooting if you have identified anything
+6. Provide meaningful commit messages
