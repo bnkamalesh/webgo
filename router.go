@@ -233,6 +233,9 @@ func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
 		rr = rtr.patchHandlers
 	case http.MethodDelete:
 		rr = rtr.deleteHandlers
+	default:
+		Send(rw, "", "501 Not Implemented", http.StatusNotImplemented)
+		return
 	}
 
 	var route *Route
