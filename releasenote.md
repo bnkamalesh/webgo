@@ -1,3 +1,8 @@
+# Release - 03/05/2018
+### v2.2.4
+
+1. 501 response for unsupported HTTP methods
+
 # Release - 12/04/2018
 ### v2.2.3
 
