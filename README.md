@@ -1,5 +1,5 @@
 [![](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
-[![](https://cover.run/go/github.com/bnkamalesh/webgo.svg?tag=golang-1.10)](https://cover.run/go/github.com/bnkamalesh/webgo)
+[![](https://gocover.run/go/github.com/bnkamalesh/webgo.svg?tag=golang-1.10&style=flat)](https://gocover.run/go/github.com/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 [![](https://api.codeclimate.com/v1/badges/85b3a55c3fa6b4c5338d/maintainability)](https://codeclimate.com/github/bnkamalesh/webgo/maintainability)
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
