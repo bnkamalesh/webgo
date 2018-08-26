@@ -69,6 +69,7 @@ func CorsOptions(rw http.ResponseWriter, req *http.Request) {
 }
 
 // CorsWrap is a single Cors middleware which can be applied to the whole app at once
+// instead of chaining to each handler
 func CorsWrap(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
 	rw.Header().Set(headerMethods, allowMethods)
