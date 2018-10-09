@@ -89,6 +89,67 @@ func TestCorsOptionsChain(t *testing.T) {
 	if h != allowHeaders {
 		t.Fatal("Expected ", allowHeaders, "\ngot", h)
 	}
+
+	req, err = http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Log(err, url)
+		t.Fail()
+	}
+
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != 200 {
+		t.Log(err, respRec.Code, url)
+		t.Fail()
+	}
+
+	h = respRec.Header().Get(headerAllowHeaders)
+	if h != allowHeaders {
+		t.Log("Expected ", allowHeaders, "\ngot", h)
+		t.Fail()
+	}
+}
+
+func TestChain(t *testing.T) {
+	router, respRec := setup(getChainedRoutes())
+	url := baseapi
+	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Log(err, url)
+		t.Fail()
+	}
+
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != 200 {
+		t.Log(err, respRec.Code, url)
+		t.Fail()
+	}
+
+	h := respRec.Header().Get(headerAllowHeaders)
+	if h != allowHeaders {
+		t.Log("Expected ", allowHeaders, "\ngot", h)
+		t.Fail()
+	}
+
+	req, err = http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Log(err, url)
+		t.Fail()
+	}
+
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != 200 {
+		t.Log(err, respRec.Code, url)
+		t.Fail()
+	}
+
+	h = respRec.Header().Get(headerAllowHeaders)
+	if h != allowHeaders {
+		t.Log("Expected ", allowHeaders, "\ngot", h)
+		t.Fail()
+	}
 }
 
 func setup(routes []*webgo.Route) (*webgo.Router, *httptest.ResponseRecorder) {
@@ -145,6 +206,26 @@ func getRoutesWithCorsChain() []*webgo.Route {
 			TrailingSlash:           true,
 			// route handler
 			Handlers: []http.HandlerFunc{Cors("*"), handler},
+		},
+	}
+}
+func getChainedRoutes() []*webgo.Route {
+	return []*webgo.Route{
+		{
+			Name:                    "root",             // A label for the API/URI
+			Method:                  http.MethodOptions, // request type
+			Pattern:                 "/:w*",
+			FallThroughPostResponse: true, // Pattern for the route
+			TrailingSlash:           true,
+			Handlers:                []http.HandlerFunc{CorsOptions("*")}, // route handler
+		},
+		{
+			Name:                    "root",         // A label for the API/URI
+			Method:                  http.MethodGet, // request type
+			Pattern:                 "/",
+			FallThroughPostResponse: true, // Pattern for the route
+			TrailingSlash:           true,
+			Handlers:                []http.HandlerFunc{Cors("*"), handler}, // route handler
 		},
 	}
 }
