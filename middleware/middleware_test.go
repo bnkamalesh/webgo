@@ -12,31 +12,86 @@ import (
 const baseapi = "http://127.0.0.1:9696/"
 
 func TestMiddleware(t *testing.T) {
-	router, respRec := setup()
-	router.Use(CorsWrap)
+	router, respRec := setup(getRoutes())
+	router.Use(CorsWrap("*"))
 	router.Use(AccessLog)
 	url := baseapi
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Fatal(err, url)
 	}
 
 	router.ServeHTTP(respRec, req)
 
 	if respRec.Code != 200 {
-		t.Log(err, respRec.Code, url)
-		t.Fail()
+		t.Fatal(err, respRec.Code, url)
 	}
 
 	h := respRec.Header().Get(headerAllowHeaders)
 	if h != allowHeaders {
-		t.Log("Expected ", allowHeaders, "\ngot", h)
-		t.Fail()
+		t.Fatal("Expected ", allowHeaders, "\ngot", h)
+	}
+
+	req, err = http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Fatal(err, url)
+	}
+
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != 200 {
+		t.Fatal(err, respRec.Code, url)
+	}
+
+	h = respRec.Header().Get(headerAllowHeaders)
+	if h != allowHeaders {
+		t.Fatal("Expected ", allowHeaders, "\ngot", h)
 	}
 }
 
-func setup() (*webgo.Router, *httptest.ResponseRecorder) {
+func TestCorsChainHandler(t *testing.T) {
+	router, respRec := setup(getRoutesWithCorsChain())
+	router.Use(AccessLog)
+	url := baseapi
+	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Fatal(err, url)
+	}
+
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != 200 {
+		t.Fatal(err, respRec.Code, url)
+	}
+
+	h := respRec.Header().Get(headerAllowHeaders)
+	if h != allowHeaders {
+		t.Fatal("Expected ", allowHeaders, "\ngot", h)
+	}
+}
+
+func TestCorsOptionsChain(t *testing.T) {
+	router, respRec := setup(getRoutesWithCorsChain())
+	router.Use(AccessLog)
+	url := baseapi
+	req, err := http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Fatal(err, url)
+	}
+
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != 200 {
+		t.Fatal(err, respRec.Code, url)
+	}
+
+	h := respRec.Header().Get(headerAllowHeaders)
+	if h != allowHeaders {
+		t.Fatal("Expected ", allowHeaders, "\ngot", h)
+	}
+}
+
+func setup(routes []*webgo.Route) (*webgo.Router, *httptest.ResponseRecorder) {
 	// Initializing router with all the required routes
 	router := webgo.NewRouter(&webgo.Config{
 		Host:               "127.0.0.1",
@@ -47,7 +102,7 @@ func setup() (*webgo.Router, *httptest.ResponseRecorder) {
 		ReadTimeout:        15,
 		WriteTimeout:       60,
 		InsecureSkipVerify: true,
-	}, getRoutes())
+	}, routes)
 
 	return router, httptest.NewRecorder()
 }
@@ -55,12 +110,41 @@ func setup() (*webgo.Router, *httptest.ResponseRecorder) {
 func getRoutes() []*webgo.Route {
 	return []*webgo.Route{
 		{
-			Name:                    "root",         // A label for the API/URI
-			Method:                  http.MethodGet, // request type
+			// A label for the API/URI
+			Name: "root",
+			// request type
+			Method:                  http.MethodGet,
 			Pattern:                 "/",
-			FallThroughPostResponse: true, // Pattern for the route
+			FallThroughPostResponse: true,
 			TrailingSlash:           true,
-			Handlers:                []http.HandlerFunc{handler}, // route handler
+			// route handler
+			Handlers: []http.HandlerFunc{handler},
+		},
+	}
+}
+func getRoutesWithCorsChain() []*webgo.Route {
+	return []*webgo.Route{
+		{
+			// A label for the API/URI
+			Name: "OPTIONS",
+			// request type
+			Method:                  http.MethodOptions,
+			Pattern:                 "/:w*",
+			FallThroughPostResponse: true,
+			TrailingSlash:           true,
+			// route handler
+			Handlers: []http.HandlerFunc{CorsOptions("*"), handler},
+		},
+		{
+			// A label for the API/URI
+			Name: "root",
+			// request type
+			Method:                  http.MethodGet,
+			Pattern:                 "/",
+			FallThroughPostResponse: true,
+			TrailingSlash:           true,
+			// route handler
+			Handlers: []http.HandlerFunc{Cors("*"), handler},
 		},
 	}
 }

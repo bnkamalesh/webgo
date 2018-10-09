@@ -11,8 +11,6 @@ import (
 	"github.com/bnkamalesh/webgo"
 )
 
-type middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
-
 // responseWriter is a custom HTTP response writer
 type responseWriter struct {
 	http.ResponseWriter
@@ -24,7 +22,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-// AccessLog is a middleware which prints access log
+// AccessLog is a middleware which prints access log to stdout
 func AccessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	start := time.Now()
 	w := &responseWriter{
@@ -48,36 +46,97 @@ const (
 )
 
 // Cors is a basic CORS middleware which can be added to individual handlers
-func Cors(rw http.ResponseWriter, req *http.Request) {
-	// Set appropriate response headers required for CORS
-	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
-	rw.Header().Set(headerMethods, allowMethods)
-	rw.Header().Set(headerCreds, "true")
+func Cors(allowedOrigins ...string) http.HandlerFunc {
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = append(allowedOrigins, "*")
+	}
+	return func(rw http.ResponseWriter, req *http.Request) {
+		allowed := false
+		// Set appropriate response headers required for CORS
+		reqOrigin := req.Header.Get(headerGetOrigin)
+		for _, o := range allowedOrigins {
+			// Set appropriate response headers required for CORS
+			if o == "*" || o == reqOrigin {
+				rw.Header().Set(headerOrigin, reqOrigin)
+				allowed = true
+				break
+			}
+		}
 
-	// Adding allowed headers
-	rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
+		if !allowed {
+			webgo.SendHeader(rw, http.StatusForbidden)
+			return
+		}
+
+		rw.Header().Set(headerMethods, allowMethods)
+		rw.Header().Set(headerCreds, "true")
+
+		// Adding allowed headers
+		rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
+	}
 }
 
 // CorsOptions is a CORS middleware only for OPTIONS request method
-func CorsOptions(rw http.ResponseWriter, req *http.Request) {
-	// Set appropriate response headers required for CORS
-	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
-	rw.Header().Set(headerMethods, allowMethods)
-	rw.Header().Set(headerCreds, "true")
-	rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
-	webgo.SendHeader(rw, 200)
+func CorsOptions(allowedOrigins ...string) http.HandlerFunc {
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = append(allowedOrigins, "*")
+	}
+	return func(rw http.ResponseWriter, req *http.Request) {
+		allowed := false
+		// Set appropriate response headers required for CORS
+		reqOrigin := req.Header.Get(headerGetOrigin)
+		for _, o := range allowedOrigins {
+			// Set appropriate response headers required for CORS
+			if o == "*" || o == reqOrigin {
+				rw.Header().Set(headerOrigin, reqOrigin)
+				allowed = true
+				break
+			}
+		}
+
+		if !allowed {
+			webgo.SendHeader(rw, http.StatusForbidden)
+			return
+		}
+
+		rw.Header().Set(headerMethods, allowMethods)
+		rw.Header().Set(headerCreds, "true")
+		rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
+		webgo.SendHeader(rw, http.StatusOK)
+	}
 }
 
 // CorsWrap is a single Cors middleware which can be applied to the whole app at once
-func CorsWrap(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	rw.Header().Set(headerOrigin, req.Header.Get(headerGetOrigin))
-	rw.Header().Set(headerMethods, allowMethods)
-	rw.Header().Set(headerCreds, "true")
-	rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
-	if req.Method == http.MethodOptions {
-		webgo.SendHeader(rw, 200)
-		return
+func CorsWrap(allowedOrigins ...string) func(http.ResponseWriter, *http.Request, http.HandlerFunc) {
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = append(allowedOrigins, "*")
 	}
+	return func(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+		allowed := false
+		// Set appropriate response headers required for CORS
+		reqOrigin := req.Header.Get(headerGetOrigin)
+		for _, o := range allowedOrigins {
+			// Set appropriate response headers required for CORS
+			if o == "*" || o == reqOrigin {
+				rw.Header().Set(headerOrigin, reqOrigin)
+				allowed = true
+				break
+			}
+		}
 
-	next(rw, req)
+		if !allowed {
+			webgo.SendHeader(rw, http.StatusForbidden)
+			return
+		}
+
+		rw.Header().Set(headerMethods, allowMethods)
+		rw.Header().Set(headerCreds, "true")
+		rw.Header().Set(headerAllowHeaders, allowHeaders+req.Header.Get(headerReqHeaders))
+		if req.Method == http.MethodOptions {
+			webgo.SendHeader(rw, http.StatusOK)
+			return
+		}
+
+		next(rw, req)
+	}
 }
