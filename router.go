@@ -300,53 +300,7 @@ func (rtr *Router) Use(f func(http.ResponseWriter, *http.Request, http.HandlerFu
 
 // NewRouter initializes returns a new router instance with all the configurations and routes set
 func NewRouter(cfg *Config, routes []*Route) *Router {
-	handlers := make(map[string][]*Route, len(validHTTPMethods))
-
-	for _, validMethod := range validHTTPMethods {
-		handlers[validMethod] = []*Route{}
-	}
-
-	for idx, route := range routes {
-		found := false
-		for _, validMethod := range validHTTPMethods {
-			if route.Method == validMethod {
-				found = true
-			}
-		}
-
-		if !found {
-			errLogger.Fatalln("Unsupported HTTP request method provided. Method:", route.Method)
-		}
-
-		if route.Handlers == nil || len(route.Handlers) == 0 {
-			errLogger.Fatalln("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
-		}
-
-		err := route.init()
-		if err != nil {
-			errLogger.Fatalln("Unsupported URI pattern.", route.Pattern, err)
-		}
-
-		// checking if the URI pattern is duplicated
-		for i := 0; i < idx; i++ {
-			rt := routes[i]
-
-			if rt.Name == route.Name {
-				warnLogger.Println("Duplicate route name(\"" + rt.Name + "\") detected. Route name should be unique.")
-			}
-
-			if rt.Method == route.Method {
-				// regex pattern match
-				if ok, _ := rt.matchAndGet(route.Pattern); ok {
-					warnLogger.Println("Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
-					infoLogger.Println("Only the first route to match the URI pattern would handle the request")
-				}
-			}
-		}
-
-		handlers[route.Method] = append(handlers[route.Method], route)
-	}
-
+	handlers := httpHandlers(routes)
 	r := &Router{
 		optHandlers:    handlers[http.MethodOptions],
 		headHandlers:   handlers[http.MethodHead],
@@ -364,4 +318,65 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 	r.serveHandler = r.serve
 
 	return r
+}
+
+// checkDuplicateRoutes checks if any of the routes have duplicate name or URI pattern
+func checkDuplicateRoutes(idx int, route *Route, routes []*Route) {
+	// checking if the URI pattern is duplicated
+	for i := 0; i < idx; i++ {
+		rt := routes[i]
+
+		if rt.Name == route.Name {
+			warnLogger.Println("Duplicate route name(\"" + rt.Name + "\") detected. Route name should be unique.")
+		}
+
+		if rt.Method == route.Method {
+			// regex pattern match
+			if ok, _ := rt.matchAndGet(route.Pattern); ok {
+				warnLogger.Println("Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
+				infoLogger.Println("Only the first route to match the URI pattern would handle the request")
+			}
+		}
+	}
+}
+
+// httpHandlers returns all the handlers in a map, for each HTTP method
+func httpHandlers(routes []*Route) map[string][]*Route {
+	handlers := make(map[string][]*Route, len(validHTTPMethods))
+
+	for _, validMethod := range validHTTPMethods {
+		handlers[validMethod] = []*Route{}
+	}
+
+	for idx, route := range routes {
+		found := false
+		for _, validMethod := range validHTTPMethods {
+			if route.Method == validMethod {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			errLogger.Fatalln("Unsupported HTTP request method provided. Method:", route.Method)
+			return nil
+		}
+
+		if route.Handlers == nil || len(route.Handlers) == 0 {
+			errLogger.Fatalln("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
+			return nil
+		}
+
+		err := route.init()
+		if err != nil {
+			errLogger.Fatalln("Unsupported URI pattern.", route.Pattern, err)
+			return nil
+		}
+
+		checkDuplicateRoutes(idx, route, routes)
+
+		handlers[route.Method] = append(handlers[route.Method], route)
+	}
+
+	return handlers
 }
