@@ -1,3 +1,11 @@
+# Release - 09/10/2018
+### v2.3.2
+1. Updated Readme
+2. Updated Middleware
+	- Backward incompatible updates
+	- CORS middleware functions are updated and now accepts list of supported/allowed domains
+	- The middleware functions will default to "*" if no domains are passed to the functions
+
 # Release - 03/05/2018
 ### v2.2.4
 

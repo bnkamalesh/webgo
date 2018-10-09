@@ -38,6 +38,24 @@ If there are multiple routes which have matching path patterns, the first one de
 Chaining lets you handle a route with multiple handlers, and are executed in sequence.
 All handlers in the chain are `http.HandlerFunc`s.
 
+```go
+
+ routes := []*webgo.Route{
+	{
+		// A label for the API/URI
+		Name: "OPTIONS",
+		// request type
+		Method:                  http.MethodOptions,
+		Pattern:                 "/:w*",
+		FallThroughPostResponse: true,
+		TrailingSlash:           true,
+		// route handler
+		Handlers: []http.HandlerFunc{CorsOptions("*"), handler},
+	},
+ }
+router := webgo.NewRouter(*webgo.Config, routes)
+```
+
 ### Middleware
 
 WebGo middleware signature is `func(http.ResponseWriter, *http.Request, http.HandlerFunc)`.
