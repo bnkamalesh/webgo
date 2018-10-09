@@ -270,7 +270,7 @@ func getRoutes() []*webgo.Route {
 			Name:     "helloworld",                                     // A label for the API/URI, this is not used anywhere.
 			Method:   http.MethodGet,                                   // request type
 			Pattern:  "/api/:param",                                    // Pattern for the route
-			Handlers: []http.HandlerFunc{middleware.Cors, helloWorld}, // route handler
+			Handlers: []http.HandlerFunc{middleware.Cors(), helloWorld}, // route handler
 		},
 	}
 }
