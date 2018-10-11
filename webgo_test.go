@@ -92,14 +92,30 @@ func setup() (*Router, *httptest.ResponseRecorder) {
 	return router, httptest.NewRecorder()
 }
 
+func TestInvalidHTTPMethod(t *testing.T) {
+	router, respRec := setup()
+
+	for _, url := range GETAPI {
+		req, err := http.NewRequest("ABC", url, bytes.NewBuffer(nil))
+		if err != nil {
+			t.Fatal(err, url)
+			continue
+		}
+
+		router.ServeHTTP(respRec, req)
+		if respRec.Code != http.StatusNotImplemented {
+			t.Fatalf(`Expected response HTTP status code %d, received %d`, http.StatusNotImplemented, respRec.Code)
+		}
+	}
+}
+
 func TestGet(t *testing.T) {
 	router, respRec := setup()
 
 	for _, url := range GETAPI {
 		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
 			continue
 		}
 
@@ -109,24 +125,20 @@ func TestGet(t *testing.T) {
 
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodGet {
-			t.Log("URL:", url, "response method:", resp.Data["method"], " required method:", http.MethodGet)
-			t.Fail()
+			t.Fatal("URL:", url, "response method:", resp.Data["method"], " required method:", http.MethodGet)
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
 		}
 	}
 }
@@ -137,20 +149,20 @@ func TestMiddleware(t *testing.T) {
 	url := baseapi + "/"
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Fatal(err, url)
+
 	}
 	router.ServeHTTP(respRec, req)
 
-	if respRec.Code != 200 {
-		t.Log(err, respRec.Code, url)
-		t.Fail()
+	if respRec.Code != http.StatusOK {
+		t.Fatal(err, respRec.Code, url)
+
 	}
 
 	v := respRec.Header().Get("k1")
 	if respRec.Header().Get("k1") != "v1" {
-		t.Log("Expected response header value `v1` for key `k1`, received", v)
-		t.Fail()
+		t.Fatal("Expected response header value `v1` for key `k1`, received", v)
+
 	}
 }
 func TestGetPostResponse(t *testing.T) {
@@ -158,14 +170,14 @@ func TestGetPostResponse(t *testing.T) {
 	url := baseapi + "/"
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Fatal(err, url)
+
 	}
 	router.ServeHTTP(respRec, req)
 
-	if respRec.Code != 200 {
-		t.Log(err, respRec.Code, url)
-		t.Fail()
+	if respRec.Code != http.StatusOK {
+		t.Fatal(err, respRec.Code, url)
+
 	}
 }
 func TestGet404(t *testing.T) {
@@ -173,15 +185,15 @@ func TestGet404(t *testing.T) {
 	url := baseapi + "/random"
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Fatal(err, url)
+
 	}
 
 	router.ServeHTTP(respRec, req)
 
 	if respRec.Code != 404 {
-		t.Log(err)
-		t.Fail()
+		t.Fatal(err)
+
 	}
 }
 func TestHead(t *testing.T) {
@@ -190,8 +202,8 @@ func TestHead(t *testing.T) {
 	for _, url := range GETAPI {
 		req, err := http.NewRequest(http.MethodHead, url, bytes.NewBuffer(nil))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 
@@ -201,24 +213,24 @@ func TestHead(t *testing.T) {
 
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodHead {
-			t.Log("URL:", url, "response method:", resp.Data["method"], " required method:", http.MethodGet)
-			t.Fail()
+			t.Fatal("URL:", url, "response method:", resp.Data["method"], " required method:", http.MethodGet)
+
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
+
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
+
 		}
 	}
 }
@@ -230,37 +242,37 @@ func TestPost(t *testing.T) {
 	for _, url := range POSTAPI {
 		req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(payload))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 		router.ServeHTTP(respRec, req)
 		resp := response{}
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodPost {
-			t.Log("response method:", resp.Data["method"], " required method:", http.MethodPost)
-			t.Fail()
+			t.Fatal("response method:", resp.Data["method"], " required method:", http.MethodPost)
+
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
+
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
+
 		}
 
 		if resp.Data["payload"] != string(payload) {
-			t.Log("payload:", resp.Data["payload"])
-			t.Fail()
+			t.Fatal("payload:", resp.Data["payload"])
+
 		}
 	}
 }
@@ -272,37 +284,37 @@ func TestPut(t *testing.T) {
 
 		req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(payload))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 		router.ServeHTTP(respRec, req)
 		resp := response{}
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodPut {
-			t.Log("response method:", resp.Data["method"], " required method:", http.MethodPut)
-			t.Fail()
+			t.Fatal("response method:", resp.Data["method"], " required method:", http.MethodPut)
+
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
+
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
+
 		}
 
 		if resp.Data["payload"] != string(payload) {
-			t.Log("payload:", resp.Data["payload"])
-			t.Fail()
+			t.Fatal("payload:", resp.Data["payload"])
+
 		}
 	}
 }
@@ -313,8 +325,8 @@ func TestPatch(t *testing.T) {
 	for _, url := range PATCHAPI {
 		req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payload))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 
@@ -322,29 +334,29 @@ func TestPatch(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodPatch {
-			t.Log("response method:", resp.Data["method"], " required method:", http.MethodPatch)
-			t.Fail()
+			t.Fatal("response method:", resp.Data["method"], " required method:", http.MethodPatch)
+
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
+
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
+
 		}
 
 		if resp.Data["payload"] != string(payload) {
-			t.Log("payload:", resp.Data["payload"])
-			t.Fail()
+			t.Fatal("payload:", resp.Data["payload"])
+
 		}
 	}
 }
@@ -355,8 +367,8 @@ func TestDelete(t *testing.T) {
 	for _, url := range DELETEAPI {
 		req, err := http.NewRequest(http.MethodDelete, url, bytes.NewBuffer(payload))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 
@@ -364,29 +376,29 @@ func TestDelete(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodDelete {
-			t.Log("response method:", resp.Data["method"], " required method:", http.MethodDelete)
-			t.Fail()
+			t.Fatal("response method:", resp.Data["method"], " required method:", http.MethodDelete)
+
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
+
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
+
 		}
 
 		if resp.Data["payload"] != string(payload) {
-			t.Log("payload:", resp.Data["payload"])
-			t.Fail()
+			t.Fatal("payload:", resp.Data["payload"])
+
 		}
 	}
 }
@@ -398,8 +410,8 @@ func TestOptions(t *testing.T) {
 	for _, url := range OPTIONSAPI {
 		req, err := http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(payload))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 
@@ -407,29 +419,29 @@ func TestOptions(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodOptions {
-			t.Log("response method:", resp.Data["method"], " required method:", http.MethodOptions)
-			t.Fail()
+			t.Fatal("response method:", resp.Data["method"], " required method:", http.MethodOptions)
+
 		}
 
 		if resp.Data["p1"] != p1 {
-			t.Log("p1:", resp.Data["p1"])
-			t.Fail()
+			t.Fatal("p1:", resp.Data["p1"])
+
 		}
 
 		if resp.Data["p2"] != p2 {
-			t.Log("p2:", resp.Data["p2"])
-			t.Fail()
+			t.Fatal("p2:", resp.Data["p2"])
+
 		}
 
 		if resp.Data["payload"] != string(payload) {
-			t.Log("payload:", resp.Data["payload"])
-			t.Fail()
+			t.Fatal("payload:", resp.Data["payload"])
+
 		}
 	}
 }
@@ -439,8 +451,8 @@ func TestAppContext(t *testing.T) {
 	for _, url := range GETAppContextAPI {
 		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 		if err != nil {
-			t.Log(err, url)
-			t.Fail()
+			t.Fatal(err, url)
+
 			continue
 		}
 
@@ -448,14 +460,14 @@ func TestAppContext(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
-			t.Log(err)
-			t.Fail()
+			t.Fatal(err)
+
 			continue
 		}
 
 		if resp.Data["Name"] != "WebGo" {
-			t.Log("Invalid App context config received")
-			t.Fail()
+			t.Fatal("Invalid App context config received")
+
 		}
 	}
 
@@ -467,8 +479,8 @@ func TestStart(t *testing.T) {
 	time.Sleep(time.Second * 5)
 	err := router.Shutdown()
 	if err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Fatal(err)
+
 	}
 }
 func TestStartHTTPS(t *testing.T) {
@@ -477,50 +489,10 @@ func TestStartHTTPS(t *testing.T) {
 	time.Sleep(time.Second * 5)
 	err := router.ShutdownHTTPS()
 	if err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Fatal(err)
+
 	}
 }
-
-/*
-func BenchmarkGetWithoutURIParams(b *testing.B) {
-	var err error
-	var url = BenchAPIs["GETNOPARAM"]
-	for i := 0; i < b.N; i++ {
-		_, err = GetAnyJSON(url)
-		if err != nil {
-			b.Error(err)
-			return
-		}
-	}
-}
-
-func BenchmarkGetWithURIParams(b *testing.B) {
-	var err error
-	var url = BenchAPIs["GETWITHPARAM"]
-	for i := 0; i < b.N; i++ {
-		_, err = GetAnyJSON(url)
-		if err != nil {
-			b.Error(err)
-			return
-		}
-	}
-}
-
-func BenchmarkPOSTWithURIParams(b *testing.B) {
-	var err error
-	var url = BenchAPIs["POSTWITHPARAM"]
-	var payload = []byte(`{"payload": "nothing"}`)
-
-	for i := 0; i < b.N; i++ {
-		_, err = Post(url, payload)
-		if err != nil {
-			b.Error(err)
-			return
-		}
-	}
-}
-*/
 
 func dummy(w http.ResponseWriter, r *http.Request) {
 

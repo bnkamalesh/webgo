@@ -37,17 +37,17 @@ type Config struct {
 func (cfg *Config) Load(filepath string) {
 	file, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		errLogger.Fatal(err)
+		LOGHANDLER.Fatal(err)
 	}
 
 	err = json.Unmarshal(file, cfg)
 	if err != nil {
-		errLogger.Fatal(err)
+		LOGHANDLER.Fatal(err)
 	}
 
 	err = cfg.Validate()
 	if err != nil {
-		errLogger.Fatal(ErrInvalidPort)
+		LOGHANDLER.Fatal(ErrInvalidPort)
 	}
 }
 

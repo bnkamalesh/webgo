@@ -6,7 +6,7 @@
 [![](https://raw.githubusercontent.com/istio/fortio/master/docs/mentioned-badge.svg?sanitize=true)](https://github.com/avelino/awesome-go)
 
 
-# WebGo v2.3.2
+# WebGo v2.4.0
 
 WebGo is a minimalistic web framework for Go. It gives you the following features.
 
@@ -17,6 +17,7 @@ WebGo is a minimalistic web framework for Go. It gives you the following feature
 5. Helper functions
 6. HTTPS ready
 7. Graceful shutdown
+8. Logging interface
 
 WebGo's route handlers have the same signature as the standard libraries' HTTP handler.
 i.e. `http.HandlerFunc`
@@ -234,6 +235,40 @@ func main() {
 	}
 }
 
+```
+
+### Logging interface
+
+Webgo has a singleton, global variable `LOGHANDLER` of type `Logger`. Logger is an interface which
+has the following methods:
+
+```go
+type Logger interface {
+	Debug(data ...interface{})
+	Info(data ...interface{})
+	Warn(data ...interface{})
+	Error(data ...interface{})
+	Fatal(data ...interface{})
+}
+```
+
+The singleton variable is initialized in the package's `init()` function. The default logger which
+is initialized in Webgo has uses Go's standard `log` library.
+
+A custom logger which implements the same interface can be assigned to the singleton to use your own 
+logger.
+
+```go
+
+package main
+
+import (
+	"github.com/bnkamalesh/webgo"
+)
+
+func main() {
+	webgo.LOGHANDLER = customLogger
+}
 ```
 
 ## Full sample

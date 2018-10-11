@@ -41,11 +41,11 @@ func Context(r *http.Request) *WC {
 func (router *Router) StartHTTPS() {
 	cfg := router.config
 	if cfg.CertFile == "" {
-		errLogger.Fatalln("No certificate provided for HTTPS")
+		LOGHANDLER.Fatal("No certificate provided for HTTPS")
 	}
 
 	if cfg.KeyFile == "" {
-		errLogger.Fatalln("No key file provided for HTTPS")
+		LOGHANDLER.Fatal("No key file provided for HTTPS")
 	}
 
 	host := cfg.Host
@@ -63,10 +63,10 @@ func (router *Router) StartHTTPS() {
 		},
 	}
 
-	infoLogger.Println("HTTPS server, listening on", host)
+	LOGHANDLER.Info("HTTPS server, listening on", host)
 	err := router.httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
 	if err != nil && err != http.ErrServerClosed {
-		errLogger.Println("HTTPS server exited with error:", err.Error())
+		LOGHANDLER.Error("HTTPS server exited with error:", err.Error())
 	}
 }
 
@@ -85,10 +85,10 @@ func (router *Router) Start() {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 	}
-	infoLogger.Println("HTTP server, listening on", host)
+	LOGHANDLER.Info("HTTP server, listening on", host)
 	err := router.httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
-		errLogger.Println("HTTP server exited with error:", err.Error())
+		LOGHANDLER.Error("HTTP server exited with error:", err.Error())
 	}
 }
 
@@ -104,7 +104,7 @@ func (router *Router) Shutdown() error {
 
 	err := router.httpServer.Shutdown(ctx)
 	if err != nil {
-		errLogger.Println(err)
+		LOGHANDLER.Error(err)
 	}
 	return err
 }
@@ -121,7 +121,7 @@ func (router *Router) ShutdownHTTPS() error {
 
 	err := router.httpsServer.Shutdown(ctx)
 	if err != nil && err != http.ErrServerClosed {
-		errLogger.Println(err)
+		LOGHANDLER.Error(err)
 	}
 	return err
 }

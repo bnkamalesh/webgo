@@ -82,7 +82,7 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
-		errLogger.Println(err)
+		LOGHANDLER.Error(err)
 		R500(w, ErrInternalServer)
 	}
 }
@@ -100,7 +100,7 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
-		errLogger.Println(err)
+		LOGHANDLER.Error(err)
 		R500(w, ErrInternalServer)
 	}
 }
@@ -112,66 +112,69 @@ func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Te
 	w.WriteHeader(rCode)
 
 	// Rendering an HTML template with appropriate data
-	tpl.Execute(w, data)
+	err := tpl.Execute(w, data)
+	if err != nil {
+		LOGHANDLER.Error(err.Error())
+	}
 }
 
 // Render404 - used to render a 404 page
 func Render404(w http.ResponseWriter, tpl *template.Template) {
 	Render(w, ErrorData{
-		404,
+		http.StatusNotFound,
 		"Sorry, the URL you requested was not found on this server... Or you're lost :-/",
 	},
-		404,
+		http.StatusNotFound,
 		tpl,
 	)
 }
 
 // R200 - Successful/OK response
 func R200(w http.ResponseWriter, data interface{}) {
-	SendResponse(w, data, 200)
+	SendResponse(w, data, http.StatusOK)
 }
 
 // R201 - New item created
 func R201(w http.ResponseWriter, data interface{}) {
-	SendResponse(w, data, 201)
+	SendResponse(w, data, http.StatusCreated)
 }
 
 // R204 - empty, no content
 func R204(w http.ResponseWriter) {
-	SendHeader(w, 204)
+	SendHeader(w, http.StatusNoContent)
 }
 
 // R302 - Temporary redirect
 func R302(w http.ResponseWriter, data interface{}) {
-	SendResponse(w, data, 302)
+	SendResponse(w, data, http.StatusFound)
 }
 
 // R400 - Invalid request, any incorrect/erraneous value in the request body
 func R400(w http.ResponseWriter, data interface{}) {
-	SendError(w, data, 400)
+	SendError(w, data, http.StatusBadRequest)
 }
 
 // R403 - Unauthorized access
 func R403(w http.ResponseWriter, data interface{}) {
-	SendError(w, data, 403)
+	SendError(w, data, http.StatusForbidden)
 }
 
 // R404 - Resource not found
 func R404(w http.ResponseWriter, data interface{}) {
-	SendError(w, data, 404)
+	SendError(w, data, http.StatusNotFound)
 }
 
 // R406 - Unacceptable header. For any error related to values set in header
 func R406(w http.ResponseWriter, data interface{}) {
-	SendError(w, data, 406)
+	SendError(w, data, http.StatusNotAcceptable)
 }
 
 // R451 - Resource taken down because of a legal request
 func R451(w http.ResponseWriter, data interface{}) {
-	SendError(w, data, 451)
+	SendError(w, data, http.StatusUnavailableForLegalReasons)
 }
 
 // R500 - Internal server error
 func R500(w http.ResponseWriter, data interface{}) {
-	SendError(w, data, 500)
+	SendError(w, data, http.StatusInternalServerError)
 }
