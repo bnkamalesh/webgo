@@ -2,6 +2,7 @@ package webgo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -92,7 +93,7 @@ type Route struct {
 
 // computePatternStr computes the pattern string required for generating the route's regex.
 // It also adds the URI parameter key to the route's `keys` field
-func (r *Route) computePatternStr(patternString string, hasWildcard bool, key string) string {
+func (r *Route) computePatternStr(patternString string, hasWildcard bool, key string) (string, error) {
 	regexPattern := ""
 	patternKey := ""
 	if hasWildcard {
@@ -107,18 +108,26 @@ func (r *Route) computePatternStr(patternString string, hasWildcard bool, key st
 
 	for idx, k := range r.uriKeys {
 		if key == k {
-			LOGHANDLER.Fatal(errDuplicateKey, "\nURI: ", r.Pattern, "\nKey:", k, ", Position:", idx+1)
+			return "", errors.New(
+				fmt.Sprintf(
+					"%s\nURI:%s\nKey:%s, Position: %d",
+					errDuplicateKey,
+					r.Pattern,
+					k,
+					idx+1,
+				),
+			)
 		}
 	}
 
 	r.uriKeys = append(r.uriKeys, key)
-	return patternString
+	return patternString, nil
 }
 
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
 	patternString := r.Pattern
-
+	var err error
 	if strings.Contains(r.Pattern, ":") {
 		// uriValues is a map of URI Key and it's respective value,
 		// this is calculated per request
@@ -136,16 +145,21 @@ func (r *Route) init() error {
 			} else if hasKey && char != "/" {
 				key += char
 			} else if hasKey && len(key) > 0 {
-				patternString = r.computePatternStr(patternString, hasWildcard, key)
+				patternString, err = r.computePatternStr(patternString, hasWildcard, key)
+				if err != nil {
+					return err
+				}
 				hasWildcard, hasKey = false, false
 				key = ""
 			}
 		}
 
 		if hasKey && len(key) > 0 {
-			patternString = r.computePatternStr(patternString, hasWildcard, key)
+			patternString, err = r.computePatternStr(patternString, hasWildcard, key)
+			if err != nil {
+				return err
+			}
 		}
-
 	}
 
 	if r.TrailingSlash {

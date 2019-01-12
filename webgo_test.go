@@ -26,9 +26,6 @@ const p1 = "world"
 const p2 = "spiderman"
 
 const baseapi = "http://127.0.0.1:9696"
-
-// const baseapiHTTPS = "https://127.0.0.1:8443"
-
 const baseapiHTTPS = "http://127.0.0.1:9696"
 
 var BenchAPIs = map[string]string{

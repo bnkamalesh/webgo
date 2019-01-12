@@ -30,8 +30,17 @@ func AccessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc)
 	}
 	next(w, req)
 	end := time.Now()
-	log := end.Format("2006-01-02 15:04:05 -0700 MST") + " " + req.Method + " " + req.URL.String() + " " + end.Sub(start).String()
-	fmt.Println(log, w.code)
+
+	webgo.LOGHANDLER.Info(
+		fmt.Sprintf(
+			"%s %s %s %s %d",
+			end.Format("2006-01-02 15:04:05 -0700 MST"),
+			req.Method,
+			req.URL.String(),
+			end.Sub(start).String(),
+			w.code,
+		),
+	)
 }
 
 const (
