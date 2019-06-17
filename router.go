@@ -57,11 +57,18 @@ func (crw *customResponseWriter) WriteHeader(code int) {
 func (crw *customResponseWriter) Write(body []byte) (int, error) {
 	if crw.written {
 		LOGHANDLER.Warn(errMultiWrite)
-		return 0, nil
 	}
 
 	crw.written = true
 	return crw.ResponseWriter.Write(body)
+}
+
+// Implement http Flusher interface,
+// Flush sends any buffered data to the client.
+func (crw *customResponseWriter) Flush() {
+	if rw, ok := crw.ResponseWriter.(http.Flusher); ok {
+		rw.Flush()
+	}
 }
 
 // Route defines a route for each API
