@@ -16,6 +16,7 @@ func TestMiddleware(t *testing.T) {
 	router.Use(CorsWrap("*"))
 	router.Use(AccessLog)
 	url := baseapi
+
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
 		t.Fatal(err, url)
@@ -29,7 +30,7 @@ func TestMiddleware(t *testing.T) {
 
 	h := respRec.Header().Get(headerAllowHeaders)
 	if h != allowHeaders {
-		t.Fatal("Expected ", allowHeaders, "\ngot", h)
+		t.Fatalf("\nExpected '%s'\ngot:'%s'", allowHeaders, h)
 	}
 
 	req, err = http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
@@ -45,7 +46,7 @@ func TestMiddleware(t *testing.T) {
 
 	h = respRec.Header().Get(headerAllowHeaders)
 	if h != allowHeaders {
-		t.Fatal("Expected ", allowHeaders, "\ngot", h)
+		t.Fatalf("\nExpected '%s'\ngot:'%s'", allowHeaders, h)
 	}
 }
 

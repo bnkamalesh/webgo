@@ -2,11 +2,7 @@ package webgo
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
-	"regexp"
-	"strings"
 )
 
 // urlchars is regex to validate characters in a URI parameter
@@ -64,146 +60,6 @@ func (crw *customResponseWriter) Write(body []byte) (int, error) {
 	return crw.ResponseWriter.Write(body)
 }
 
-// Route defines a route for each API
-type Route struct {
-	// Name is unique identifier for the route
-	Name string
-	// Method is the HTTP request method/type
-	Method string
-	// Pattern is the URI pattern to match
-	Pattern string
-	// TrailingSlash if set to true, the URI will be matched with or without
-	// a trailing slash. Note: It does not *do* a redirect.
-	TrailingSlash bool
-
-	// FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
-	FallThroughPostResponse bool
-
-	// Handlers is a slice of http.HandlerFunc which can be middlewares or anything else. Though only 1 of them will be allowed to respond to client.
-	// subsequent writes from the following handlers will be ignored
-	Handlers []http.HandlerFunc
-
-	// uriKeys is the list of URI parameter variables available for this route
-	uriKeys []string
-	// uriPatternString is the pattern string which is compiled to regex object
-	uriPatternString string
-	// uriPattern is the compiled regex to match the URI pattern
-	uriPattern *regexp.Regexp
-}
-
-// computePatternStr computes the pattern string required for generating the route's regex.
-// It also adds the URI parameter key to the route's `keys` field
-func (r *Route) computePatternStr(patternString string, hasWildcard bool, key string) (string, error) {
-	regexPattern := ""
-	patternKey := ""
-	if hasWildcard {
-		patternKey = fmt.Sprintf(":%s*", key)
-		regexPattern = urlwildcard
-	} else {
-		patternKey = fmt.Sprintf(":%s", key)
-		regexPattern = urlchars
-	}
-
-	patternString = strings.Replace(patternString, patternKey, regexPattern, 1)
-
-	for idx, k := range r.uriKeys {
-		if key == k {
-			return "", errors.New(
-				fmt.Sprintf(
-					"%s\nURI:%s\nKey:%s, Position: %d",
-					errDuplicateKey,
-					r.Pattern,
-					k,
-					idx+1,
-				),
-			)
-		}
-	}
-
-	r.uriKeys = append(r.uriKeys, key)
-	return patternString, nil
-}
-
-// init prepares the URIKeys, compile regex for the provided pattern
-func (r *Route) init() error {
-	patternString := r.Pattern
-	var err error
-	if strings.Contains(r.Pattern, ":") {
-		// uriValues is a map of URI Key and it's respective value,
-		// this is calculated per request
-		key := ""
-		hasKey := false
-		hasWildcard := false
-
-		for i := 0; i < len(r.Pattern); i++ {
-			char := string(r.Pattern[i])
-
-			if char == ":" {
-				hasKey = true
-			} else if char == "*" {
-				hasWildcard = true
-			} else if hasKey && char != "/" {
-				key += char
-			} else if hasKey && len(key) > 0 {
-				patternString, err = r.computePatternStr(patternString, hasWildcard, key)
-				if err != nil {
-					return err
-				}
-				hasWildcard, hasKey = false, false
-				key = ""
-			}
-		}
-
-		if hasKey && len(key) > 0 {
-			patternString, err = r.computePatternStr(patternString, hasWildcard, key)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if r.TrailingSlash {
-		patternString = fmt.Sprintf("^%s%s$", patternString, trailingSlash)
-	} else {
-		patternString = fmt.Sprintf("^%s$", patternString)
-	}
-
-	// compile the regex for the pattern string calculated
-	reg, err := regexp.Compile(patternString)
-	if err != nil {
-		return err
-	}
-
-	r.uriPattern = reg
-	r.uriPatternString = patternString
-	return nil
-}
-
-// matchAndGet returns if the request URI matches the pattern defined in a Route as well as
-// all the URI parameters configured for the route.
-func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
-	if r.Pattern == requestURI {
-		return true, nil
-	}
-
-	if !r.uriPattern.Match([]byte(requestURI)) {
-		return false, nil
-	}
-
-	// Getting URI parameters
-	values := r.uriPattern.FindStringSubmatch(requestURI)
-	if len(values) == 0 {
-		return true, nil
-	}
-
-	uriValues := make(map[string]string, len(values)-1)
-	for i := 1; i < len(values); i++ {
-		uriValues[r.uriKeys[i-1]] = values[i]
-	}
-	return true, uriValues
-
-}
-
 // Router is the HTTP router
 type Router struct {
 	optHandlers    []*Route
@@ -213,6 +69,7 @@ type Router struct {
 	putHandlers    []*Route
 	patchHandlers  []*Route
 	deleteHandlers []*Route
+	allHandlers    map[string][]*Route
 
 	// NotFound is the generic handler for 404 resource not found response
 	NotFound http.HandlerFunc
@@ -221,16 +78,16 @@ type Router struct {
 	AppContext map[string]interface{}
 
 	// config has all the app config
-	config       *Config
-	serveHandler http.HandlerFunc
+	config *Config
+
 	// httpServer is the server handler for the active HTTP server
 	httpServer *http.Server
 	// httpsServer is the server handler for the active HTTPS server
 	httpsServer *http.Server
 }
 
-func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
-	var rr []*Route
+func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	rr := []*Route(nil)
 
 	switch req.Method {
 	case http.MethodOptions:
@@ -252,7 +109,7 @@ func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var route *Route
+	route := new(Route)
 	ok := false
 	params := make(map[string]string)
 	path := req.URL.EscapedPath()
@@ -285,30 +142,18 @@ func (rtr *Router) serve(rw http.ResponseWriter, req *http.Request) {
 		),
 	)
 
-	for _, handler := range route.Handlers {
-		if !crw.written {
-			// If there has been no write to response writer yet
-			handler(crw, reqwc)
-		} else if route.FallThroughPostResponse {
-			// run a handler post response write, only if fall through is enabled
-			handler(crw, reqwc)
-		} else {
-			// Do not run any more handlers if already responded and no fall through enabled
-			break
-		}
-	}
-}
-
-// ServeHTTP is the required `ServeHTTP` implementation to listen to HTTP requests
-func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	rtr.serveHandler(rw, req)
+	route.serve(crw, reqwc)
 }
 
 // Use adds a middleware layer
 func (rtr *Router) Use(f func(http.ResponseWriter, *http.Request, http.HandlerFunc)) {
-	srv := rtr.serveHandler
-	rtr.serveHandler = func(rw http.ResponseWriter, req *http.Request) {
-		f(rw, req, srv)
+	for _, handlers := range rtr.allHandlers {
+		for _, route := range handlers {
+			srv := route.serve
+			route.serve = func(rw http.ResponseWriter, req *http.Request) {
+				f(rw, req, srv)
+			}
+		}
 	}
 }
 
@@ -323,14 +168,12 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		putHandlers:    handlers[http.MethodPut],
 		patchHandlers:  handlers[http.MethodPatch],
 		deleteHandlers: handlers[http.MethodDelete],
+		allHandlers:    handlers,
 
 		NotFound:   http.NotFound,
 		AppContext: make(map[string]interface{}),
 		config:     cfg,
 	}
-
-	// setting the default serve handler
-	r.serveHandler = r.serve
 
 	return r
 }
