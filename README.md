@@ -20,6 +20,7 @@ WebGo provides the following features/capabilities
 5. [HTTPS ready](https://github.com/bnkamalesh/webgo#https-ready)
 6. [Graceful shutdown](https://github.com/bnkamalesh/webgo#graceful-shutdown)
 7. [Logging](https://github.com/bnkamalesh/webgo#logging)
+8. [Sample](https://github.com/bnkamalesh/webgo#sample)
 
 ## Multiplexer
 
@@ -128,8 +129,8 @@ When using `Send` or `SendResponse`, the response is wrapped in WebGo's [respons
 
 ```json
 {
-	"data": <any valid JSON payload>,
-	"status": <HTTP status code>
+	"data": "<any valid JSON payload>",
+	"status": "<HTTP status code>"
 }
 ```
 
@@ -137,8 +138,8 @@ When using `SendError`, the response is wrapped in WebGo's [error response struc
 
 ```json
 {
-	"errors": <any valid JSON payload>,
-	"status": <HTTP status code>
+	"errors": "<any valid JSON payload>",
+	"status": "<HTTP status code>"
 }
 ```
 
@@ -291,4 +292,4 @@ Info 2019/07/09 18:35:54 HTTP server, listening on :8080
 
 ## The gopher
 
-The gopher I have used on top was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, and they can sitback and enjoy a cup of coffee just like this gopher while using WebGo.
+The gopher I have used on top was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, and they can sitback and enjoy a cup of coffee just like this gopher, while using WebGo.
