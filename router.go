@@ -60,6 +60,13 @@ func (crw *customResponseWriter) Write(body []byte) (int, error) {
 	return crw.ResponseWriter.Write(body)
 }
 
+// Flush calls the http.Flusher to clear/flush the buffer
+func (crw *customResponseWriter) Flush() {
+	if rw, ok := crw.ResponseWriter.(http.Flusher); ok {
+		rw.Flush()
+	}
+}
+
 // Router is the HTTP router
 type Router struct {
 	optHandlers    []*Route
@@ -145,8 +152,11 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	route.serve(crw, reqwc)
 }
 
+// Middleware is the signature of WebGo's middleware
+type Middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
+
 // Use adds a middleware layer
-func (rtr *Router) Use(f func(http.ResponseWriter, *http.Request, http.HandlerFunc)) {
+func (rtr *Router) Use(f Middleware) {
 	for _, handlers := range rtr.allHandlers {
 		for _, route := range handlers {
 			srv := route.serve
