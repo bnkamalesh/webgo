@@ -49,6 +49,27 @@ webgo.Route{
 }
 ```
 
+You can access the URI named parameters using the `Context` function.
+
+```golang
+func helloWorld(w http.ResponseWriter, r *http.Request) {
+	// WebGo context
+	wctx := webgo.Context(r)
+	// URI paramaters, map[string]string
+	params := wctx.Params
+	// route, the webgo.Route which is executing this request
+	route := wctx.Route
+	webgo.R200(
+		w,
+		fmt.Sprintf(
+			"Route name: '%s', params: '%s'", 
+			route.Name,
+			params, 
+			),
+	)
+}
+```
+
 ## Handler chaining
 
 Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a previous handler has responded. This is made possible by setting `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo#sample)).
@@ -72,7 +93,7 @@ webgo.Route{
 
 ## Middleware
 
-WebGo middleware let's you wrap all the routes with your middleware. Unlike handler chaining, this will give you more control on how to execute as well as applies to the whole router. All the middleware should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). Following code shows how a middleware can be used in WebGo.
+WebGo middleware let's you wrap all the routes with your middleware. Unlike handler chaining, this will give you more control on how to execute as well as applies to the whole router. All the middleware should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). It exposes a function [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) to add a Middleware the to router. Following code shows how a middleware can be used in WebGo.
 
 ```golang
 import (

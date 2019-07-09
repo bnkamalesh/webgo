@@ -11,10 +11,19 @@ import (
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
+	// WebGo context
 	wctx := webgo.Context(r)
+	// URI paramaters, map[string]string
+	params := wctx.Params
+	// route, the webgo.Route which is executing this request
+	route := wctx.Route
 	webgo.R200(
 		w,
-		fmt.Sprintf("Params: '%s'", wctx.Params), // URI parameters
+		fmt.Sprintf(
+			"Route name: '%s', params: '%s'",
+			route.Name,
+			params,
+		),
 	)
 }
 
