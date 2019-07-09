@@ -289,6 +289,6 @@ $ docker run \
 Info 2019/07/09 18:35:54 HTTP server, listening on :8080
 ```
 
-## Credits
+## The gopher
 
-The image I have used on top was created using [Gopherize.me](https://gopherize.me/).
+The gopher I have used on top was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, and they can sitback and enjoy a cup of coffee just like this gopher while using WebGo.
