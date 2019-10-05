@@ -9,7 +9,7 @@
 
 # WebGo v2.5.1
 
-WebGo is a minimalistic framework for Go to build web applications. Unlike full-fledged frameworks out there, tries to get out of the developers' way as soon as possible. It has always been and will always be Go standard library compliant. With the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
+WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side). Unlike full-fledged frameworks out there, it tries to get out of the developers' way as soon as possible. It has always been and will always be Go standard library compliant. With the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
 WebGo provides the following features/capabilities
 
@@ -72,7 +72,7 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 
 ## Handler chaining
 
-Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a previous handler has responded. This is made possible by setting `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo#sample)).
+Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a previous handler has written a response to the http response. This is made possible by setting `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo#sample)).
 
 ```golang
 webgo.Route{
@@ -80,7 +80,7 @@ webgo.Route{
 	Method: http.MethodGet,
 	Pattern: "/api",
 	TrailingSlash: false,
-	FallThroughPostResponse: false,
+	FallThroughPostResponse: true,
 	Handlers []http.HandlerFunc{
 		handler1,
 		handler2,
@@ -93,7 +93,7 @@ webgo.Route{
 
 ## Middleware
 
-WebGo middleware let's you wrap all the routes with your middleware. Unlike handler chaining, this will give you more control on how to execute as well as applies to the whole router. All the middleware should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). It exposes a function [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) to add a Middleware the to router. Following code shows how a middleware can be used in WebGo.
+WebGo middleware lets you wrap all the routes with a middleware. Unlike handler chaining, applies to the whole router. All middlewares should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) to add a Middleware the to the router. Following code shows how a middleware can be used in WebGo.
 
 ```golang
 import (
@@ -144,14 +144,14 @@ WebGo provides a few helper functions.
 4. [SendError(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendError) - Send a JSON response wrapped in WebGo's default error response struct
 5. [Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template)](https://godoc.org/github.com/bnkamalesh/webgo#Render) - Render renders a Go template, with the provided data & response code.
 
-Few more helper functions are available, you check [here](https://godoc.org/github.com/bnkamalesh/webgo#R200). 
+Few more helper functions are available, you can check them [here](https://godoc.org/github.com/bnkamalesh/webgo#R200). 
 
 When using `Send` or `SendResponse`, the response is wrapped in WebGo's [response struct](https://github.com/bnkamalesh/webgo/blob/master/responses.go#L17) and is sent as JSON.
 
 ```json
 {
 	"data": "<any valid JSON payload>",
-	"status": "<HTTP status code>"
+	"status": "<HTTP status code, of type integer>"
 }
 ```
 
@@ -160,7 +160,7 @@ When using `SendError`, the response is wrapped in WebGo's [error response struc
 ```json
 {
 	"errors": "<any valid JSON payload>",
-	"status": "<HTTP status code>"
+	"status": "<HTTP status code, of type integer>"
 }
 ```
 
@@ -198,7 +198,7 @@ router.Start()
 
 ## Graceful shutdown
 
-Graceful shutdown lets you shutdown your server without affecting any live connections/clients connected to your server. It will complete executing all the active/live requests and shutdown post that.
+Graceful shutdown lets you shutdown the server without affecting any live connections/clients connected to the server. It will complete executing all the active/live requests before shutting down.
 
 Sample code to show how to use shutdown
 
@@ -227,6 +227,7 @@ func main() {
 			os.Exit(0)
 		}
 
+		// If you have HTTP server running, you can use the following code
 		// err := router.ShutdownHTTPS()
 		// if err != nil {
 		// 	fmt.Println(err)
@@ -250,7 +251,7 @@ func main() {
 
 ## Logging
 
-WebGo exposes a singleton logger variable [LOGHANDLER](https://godoc.org/github.com/bnkamalesh/webgo#Logger) with which you can plugin your custom logger. Any custom logger which you're trying to use should comply to WebGo's [Logger](https://godoc.org/github.com/bnkamalesh/webgo#Logger) interface.
+WebGo exposes a singleton+global logger variable [LOGHANDLER](https://godoc.org/github.com/bnkamalesh/webgo#Logger) with which you can plugin your custom logger. Any custom logger should implement WebGo's [Logger](https://godoc.org/github.com/bnkamalesh/webgo#Logger) interface.
 
 ```golang
 type Logger interface {
@@ -264,7 +265,7 @@ type Logger interface {
 
 ## Sample
 
-A sample is provided with the repo, [refer here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go). You can try the following API calls with the sample app.
+A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go). You can try the following API calls with the sample app.
 
 1. `http://localhost:8080/`
 	- Route with no named parameters configured
@@ -313,4 +314,4 @@ Info 2019/07/09 18:35:54 HTTP server, listening on :8080
 
 ## The gopher
 
-The gopher I have used on top was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, and they can sitback and enjoy a cup of coffee just like this gopher, while using WebGo.
+The gopher used here was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, and they can sitback and enjoy a cup of coffee just like this gopher, while using WebGo.
