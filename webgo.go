@@ -23,17 +23,16 @@ type ctxkey string
 
 const wgoCtxKey = ctxkey("webgocontext")
 
-// WC is the WebgoContext. A new instance of WC is injected inside every request's context object
-// Note: This name will be deperecated and renamed to `WebgoContext` in the next major release
-type WC struct {
+// ContextPayload is the WebgoContext. A new instance of ContextPayload is injected inside every request's context object
+type ContextPayload struct {
 	Params     map[string]string
 	Route      *Route
 	AppContext map[string]interface{}
 }
 
-// Context returns the WebgoContext injected inside the HTTP request context
-func Context(r *http.Request) *WC {
-	wc, _ := r.Context().Value(wgoCtxKey).(*WC)
+// Context returns the ContextPayload injected inside the HTTP request context
+func Context(r *http.Request) *ContextPayload {
+	wc, _ := r.Context().Value(wgoCtxKey).(*ContextPayload)
 	return wc
 }
 

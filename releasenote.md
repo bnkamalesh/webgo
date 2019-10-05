@@ -1,5 +1,12 @@
 # Release notes
 
+## Release - 06/10/2019
+
+### v3.0.0
+
+1. Using fmt.Errorf instead of using fmt.Sprintf to form string and creating error
+2. Renamed webgo context from "WC" to "ContextPayload" for readability
+
 ## Release - 11/10/2018
 
 ### v2.4.0

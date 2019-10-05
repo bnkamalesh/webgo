@@ -1,7 +1,6 @@
 package webgo
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -54,14 +53,12 @@ func (r *Route) computePatternStr(patternString string, hasWildcard bool, key st
 
 	for idx, k := range r.uriKeys {
 		if key == k {
-			return "", errors.New(
-				fmt.Sprintf(
-					"%s\nURI:%s\nKey:%s, Position: %d",
-					errDuplicateKey,
-					r.Pattern,
-					k,
-					idx+1,
-				),
+			return "", fmt.Errorf(
+				"%s\nURI:%s\nKey:%s, Position: %d",
+				errDuplicateKey,
+				r.Pattern,
+				k,
+				idx+1,
 			)
 		}
 	}

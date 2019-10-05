@@ -1,3 +1,3 @@
-module github.com/bnkamalesh/webgo/v2
+module github.com/bnkamalesh/webgo/v3
 
 go 1.12

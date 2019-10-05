@@ -141,7 +141,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		context.WithValue(
 			req.Context(),
 			wgoCtxKey,
-			&WC{
+			&ContextPayload{
 				Params:     params,
 				Route:      route,
 				AppContext: rtr.AppContext,

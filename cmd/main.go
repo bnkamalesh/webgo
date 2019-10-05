@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/middleware"
+	"github.com/bnkamalesh/webgo/v3/middleware"
 
-	"github.com/bnkamalesh/webgo"
+	"github.com/bnkamalesh/webgo/v3"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
