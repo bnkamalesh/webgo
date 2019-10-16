@@ -1,8 +1,17 @@
 language: go
 go:
-  - "1.8"
+  # webgo is still compatible with 1.8, but the tests are importing versioned 
+  # modules which fails older Go versions
+  # - "1.8"
+  - "1.11"
+  - "1.12"
   - master
 
-# before_script:
-#   - cd ./tests
-#   - go run main.go &
+before_install:
+  - go get -t -v ./...
+
+script:
+  - go test -v -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
