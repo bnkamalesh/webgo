@@ -80,6 +80,10 @@ type Router struct {
 
 	// NotFound is the generic handler for 404 resource not found response
 	NotFound http.HandlerFunc
+
+	// NotImplemented is the generic handler for 501 method not implemented
+	NotImplemented http.HandlerFunc
+
 	// AppContext holds all the app specific context which is to be injected into all HTTP
 	// request context
 	AppContext map[string]interface{}
@@ -112,7 +116,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	case http.MethodDelete:
 		rr = rtr.deleteHandlers
 	default:
-		Send(rw, "", "501 Not Implemented", http.StatusNotImplemented)
+		rtr.NotImplemented(rw, req)
 		return
 	}
 
@@ -165,6 +169,16 @@ func (rtr *Router) Use(f Middleware) {
 			}
 		}
 	}
+
+	nf := rtr.NotFound
+	rtr.NotFound = func(rw http.ResponseWriter, req *http.Request) {
+		f(rw, req, nf)
+	}
+
+	ni := rtr.NotImplemented
+	rtr.NotImplemented = func(rw http.ResponseWriter, req *http.Request) {
+		f(rw, req, ni)
+	}
 }
 
 // NewRouter initializes returns a new router instance with all the configurations and routes set
@@ -180,7 +194,10 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		deleteHandlers: handlers[http.MethodDelete],
 		allHandlers:    handlers,
 
-		NotFound:   http.NotFound,
+		NotFound: http.NotFound,
+		NotImplemented: func(rw http.ResponseWriter, req *http.Request) {
+			Send(rw, "", "501 Not Implemented", http.StatusNotImplemented)
+		},
 		AppContext: make(map[string]interface{}),
 		config:     cfg,
 	}

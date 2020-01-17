@@ -3,6 +3,7 @@ package webgo
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -147,19 +148,54 @@ func TestMiddleware(t *testing.T) {
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
 		t.Fatal(err, url)
-
 	}
 	router.ServeHTTP(respRec, req)
 
 	if respRec.Code != http.StatusOK {
-		t.Fatal(err, respRec.Code, url)
-
+		t.Fatalf("Expected status '200', got '%d'", respRec.Code)
 	}
 
 	v := respRec.Header().Get("k1")
 	if respRec.Header().Get("k1") != "v1" {
 		t.Fatal("Expected response header value `v1` for key `k1`, received", v)
+	}
 
+	// test middleware with 404 request
+	router, respRec = setup()
+	router.Use(mware)
+	url = fmt.Sprintf("%s/random/unimplemented/path", baseapi)
+	req, err = http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Fatal(err, url)
+	}
+
+	router.ServeHTTP(respRec, req)
+	if respRec.Code != http.StatusNotFound {
+		t.Fatalf("Expected status '404', got '%d'", respRec.Code)
+	}
+	v = respRec.Header().Get("k1")
+	if respRec.Header().Get("k1") != "v1" {
+		t.Fatalf("Expected response header value `v1` for key `k1`, received '%s'", v)
+	}
+
+	// test middleware with 501 request
+	router, respRec = setup()
+	router.Use(mware)
+	req, err = http.NewRequest("UNIMPLEMENTED", baseapi, bytes.NewBuffer(nil))
+	if err != nil {
+		t.Fatal(err, url)
+	}
+	router.ServeHTTP(respRec, req)
+	if respRec.Code != http.StatusNotImplemented {
+		t.Fatalf(
+			"Expected status '%d', got '%d'",
+			http.StatusNotImplemented,
+			respRec.Code,
+		)
+	}
+	v = respRec.Header().Get("k1")
+	if respRec.Header().Get("k1") != "v1" {
+		t.Fatal("Expected response header value `v1` for key `k1`, received", v)
 	}
 }
 func TestGetPostResponse(t *testing.T) {

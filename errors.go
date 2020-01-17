@@ -11,7 +11,7 @@ var (
 	ErrInvalidPort = errors.New("Port number not provided or is invalid (should be between 0 - 65535)")
 )
 
-// Service defines all the logging methods to be implemented
+// Logger defines all the logging methods to be implemented
 type Logger interface {
 	Debug(data ...interface{})
 	Info(data ...interface{})
@@ -54,6 +54,7 @@ func (lh *logHandler) Fatal(data ...interface{}) {
 	lh.fatal.Fatalln(data...)
 }
 
+// LOGHANDLER is a global variable which webgo uses to log messages
 var LOGHANDLER Logger
 
 func init() {
