@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -19,12 +18,15 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 	route := wctx.Route
 	webgo.R200(
 		w,
-		fmt.Sprintf(
-			"Route name: '%s', params: '%s'",
-			route.Name,
-			params,
-		),
+		map[string]interface{}{
+			"route":   route.Name,
+			"params":  params,
+			"chained": r.Header.Get("chained"),
+		},
 	)
+}
+func chain(w http.ResponseWriter, r *http.Request) {
+	r.Header.Set("chained", "true")
 }
 
 func getRoutes() []*webgo.Route {
@@ -44,10 +46,10 @@ func getRoutes() []*webgo.Route {
 			TrailingSlash: true,
 		},
 		&webgo.Route{
-			Name:                    "api",                                             // A label for the API/URI, this is not used anywhere.
-			Method:                  http.MethodGet,                                    // request type
-			Pattern:                 "/api/:param",                                     // Pattern for the route
-			Handlers:                []http.HandlerFunc{middleware.Cors(), helloWorld}, // route handler
+			Name:                    "api",                                 // A label for the API/URI, this is not used anywhere.
+			Method:                  http.MethodGet,                        // request type
+			Pattern:                 "/api/:param",                         // Pattern for the route
+			Handlers:                []http.HandlerFunc{chain, helloWorld}, // route handler
 			TrailingSlash:           true,
 			FallThroughPostResponse: true,
 		},

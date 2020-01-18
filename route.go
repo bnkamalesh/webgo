@@ -158,6 +158,7 @@ func defaultRouteServe(r *Route) http.HandlerFunc {
 				ResponseWriter: rw,
 			}
 		}
+
 		for _, handler := range r.Handlers {
 			if !crw.written {
 				// If there has been no write to response writer yet

@@ -98,7 +98,7 @@ type Router struct {
 }
 
 func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	rr := []*Route(nil)
+	var rr []*Route
 
 	switch req.Method {
 	case http.MethodOptions:
@@ -115,14 +115,16 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		rr = rtr.patchHandlers
 	case http.MethodDelete:
 		rr = rtr.deleteHandlers
-	default:
+	}
+
+	if rr == nil {
 		rtr.NotImplemented(rw, req)
 		return
 	}
 
-	route := new(Route)
+	var route *Route
+	var params map[string]string
 	ok := false
-	params := make(map[string]string)
 	path := req.URL.EscapedPath()
 	for _, r := range rr {
 		if ok, params = r.matchAndGet(path); ok {
@@ -198,8 +200,7 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		NotImplemented: func(rw http.ResponseWriter, req *http.Request) {
 			Send(rw, "", "501 Not Implemented", http.StatusNotImplemented)
 		},
-		AppContext: make(map[string]interface{}),
-		config:     cfg,
+		config: cfg,
 	}
 
 	return r
