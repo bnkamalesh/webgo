@@ -63,5 +63,6 @@ func main() {
 	}
 	router := webgo.NewRouter(cfg, getRoutes())
 	router.Use(middleware.AccessLog)
+	router.Use(middleware.CorsWrap())
 	router.Start()
 }

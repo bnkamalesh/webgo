@@ -30,7 +30,6 @@ func TestResponses(t *testing.T) {
 	R302(respRec, nil)
 	if respRec.Code != http.StatusFound {
 		t.Error("Expected response status 302, got", respRec.Code)
-		t.Fail()
 	}
 
 	_, respRec = setup()

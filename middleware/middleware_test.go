@@ -93,21 +93,18 @@ func TestCorsOptionsChain(t *testing.T) {
 
 	req, err = http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Error(err, url)
 	}
 
 	router.ServeHTTP(respRec, req)
 
 	if respRec.Code != 200 {
-		t.Log(err, respRec.Code, url)
-		t.Fail()
+		t.Error(err, respRec.Code, url)
 	}
 
 	h = respRec.Header().Get(headerAllowHeaders)
 	if h != allowHeaders {
-		t.Log("Expected ", allowHeaders, "\ngot", h)
-		t.Fail()
+		t.Error("Expected ", allowHeaders, "\ngot", h)
 	}
 }
 
@@ -116,40 +113,34 @@ func TestChain(t *testing.T) {
 	url := baseapi
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Error(err, url)
 	}
 
 	router.ServeHTTP(respRec, req)
 
 	if respRec.Code != 200 {
-		t.Log(err, respRec.Code, url)
-		t.Fail()
+		t.Error(err, respRec.Code, url)
 	}
 
 	h := respRec.Header().Get(headerAllowHeaders)
 	if h != allowHeaders {
-		t.Log("Expected ", allowHeaders, "\ngot", h)
-		t.Fail()
+		t.Error("Expected ", allowHeaders, "\ngot", h)
 	}
 
 	req, err = http.NewRequest(http.MethodOptions, url, bytes.NewBuffer(nil))
 	if err != nil {
-		t.Log(err, url)
-		t.Fail()
+		t.Error(err, url)
 	}
 
 	router.ServeHTTP(respRec, req)
 
 	if respRec.Code != 200 {
-		t.Log(err, respRec.Code, url)
-		t.Fail()
+		t.Error(err, respRec.Code, url)
 	}
 
 	h = respRec.Header().Get(headerAllowHeaders)
 	if h != allowHeaders {
-		t.Log("Expected ", allowHeaders, "\ngot", h)
-		t.Fail()
+		t.Error("Expected ", allowHeaders, "\ngot", h)
 	}
 }
 

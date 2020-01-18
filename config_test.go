@@ -8,12 +8,10 @@ func TestConfig(t *testing.T) {
 
 	cfg.Port = "a"
 	if cfg.Validate() != ErrInvalidPort {
-		t.Log("Port validation failed")
-		t.Fail()
+		t.Error("Port validation failed")
 	}
 	cfg.Port = "65536"
 	if cfg.Validate() != ErrInvalidPort {
-		t.Log("Port validation failed")
-		t.Fail()
+		t.Error("Port validation failed")
 	}
 }
