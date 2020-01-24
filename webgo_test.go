@@ -155,6 +155,11 @@ func TestMiddleware(t *testing.T) {
 		t.Fatalf("Expected status '200', got '%d'", respRec.Code)
 	}
 
+	wctx := Context(req)
+	if wctx == nil {
+		t.Fatalf("Expected webgo context, got nil")
+	}
+
 	v := respRec.Header().Get("k1")
 	if respRec.Header().Get("k1") != "v1" {
 		t.Fatal("Expected response header value `v1` for key `k1`, received", v)

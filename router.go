@@ -107,7 +107,7 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// webgo context object is created and is injected to the request context
-	r = r.WithContext(
+	*r = *r.WithContext(
 		context.WithValue(
 			r.Context(),
 			wgoCtxKey,
@@ -115,35 +115,35 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	)
 
-	var rr []*Route
+	var routes []*Route
 
 	switch r.Method {
 	case http.MethodOptions:
-		rr = rtr.optHandlers
+		routes = rtr.optHandlers
 	case http.MethodHead:
-		rr = rtr.headHandlers
+		routes = rtr.headHandlers
 	case http.MethodGet:
-		rr = rtr.getHandlers
+		routes = rtr.getHandlers
 	case http.MethodPost:
-		rr = rtr.postHandlers
+		routes = rtr.postHandlers
 	case http.MethodPut:
-		rr = rtr.putHandlers
+		routes = rtr.putHandlers
 	case http.MethodPatch:
-		rr = rtr.patchHandlers
+		routes = rtr.patchHandlers
 	case http.MethodDelete:
-		rr = rtr.deleteHandlers
+		routes = rtr.deleteHandlers
 	}
 
-	if rr == nil {
+	if routes == nil {
 		rtr.NotImplemented(w, r)
 		return
 	}
 
 	ok := false
 	path := r.URL.EscapedPath()
-	for _, r := range rr {
-		if ok, ctxPayload.Params = r.matchAndGet(path); ok {
-			ctxPayload.Route = r
+	for _, route := range routes {
+		if ok, ctxPayload.Params = route.matchAndGet(path); ok {
+			ctxPayload.Route = route
 			break
 		}
 	}
@@ -227,11 +227,10 @@ func checkDuplicateRoutes(idx int, route *Route, routes []*Route) {
 
 // httpHandlers returns all the handlers in a map, for each HTTP method
 func httpHandlers(routes []*Route) map[string][]*Route {
-	handlers := make(map[string][]*Route, len(validHTTPMethods))
+	handlers := map[string][]*Route{}
 
-	for _, validMethod := range validHTTPMethods {
-		handlers[validMethod] = []*Route{}
-	}
+	handlers[http.MethodHead] = []*Route{}
+	handlers[http.MethodGet] = []*Route{}
 
 	for idx, route := range routes {
 		found := false
