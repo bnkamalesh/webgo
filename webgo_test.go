@@ -167,7 +167,7 @@ func TestMiddleware(t *testing.T) {
 
 	// test middleware with 404 request
 	router, respRec = setup()
-	router.Use(mware)
+	router.UseOnSpecialHandlers(mware)
 	url = fmt.Sprintf("%s/random/unimplemented/path", baseapi)
 	req, err = http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
@@ -185,7 +185,7 @@ func TestMiddleware(t *testing.T) {
 
 	// test middleware with 501 request
 	router, respRec = setup()
-	router.Use(mware)
+	router.UseOnSpecialHandlers(mware)
 	req, err = http.NewRequest("UNIMPLEMENTED", baseapi, bytes.NewBuffer(nil))
 	if err != nil {
 		t.Fatal(err, url)

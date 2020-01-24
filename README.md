@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v3.2.1
+# WebGo v3.2.9
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side). Unlike full-fledged frameworks out there, it tries to get out of the developers' way as soon as possible. It has always been and will always be Go standard library compliant. With the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -93,7 +93,7 @@ webgo.Route{
 
 ## Middleware
 
-WebGo middleware lets you wrap all the routes with a middleware. Unlike handler chaining, applies to the whole router. All middlewares should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) to add a Middleware the to the router. Following code shows how a middleware can be used in WebGo.
+WebGo middleware lets you wrap all the routes with a middleware. Unlike handler chaining, middleware applies to the whole router. All middleware should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) to add a Middleware to the router. Following code shows how a middleware can be used in WebGo.
 
 ```golang
 import (
@@ -117,7 +117,11 @@ func routes() []*webgo.Route {
 
 func main() {
 	router := webgo.NewRouter(*webgo.Config, routes())
+
+	router.UseOnSpecialHandlers(middleware.AccessLog)
+	
 	router.Use(middleware.AccessLog)
+
 	router.Start()
 }
 

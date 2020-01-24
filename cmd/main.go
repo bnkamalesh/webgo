@@ -63,8 +63,13 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 60 * time.Second,
 	}
+
 	router := webgo.NewRouter(cfg, getRoutes())
+
+	router.UseOnSpecialHandlers(middleware.AccessLog)
+
 	router.Use(middleware.AccessLog)
 	router.Use(middleware.CorsWrap())
+
 	router.Start()
 }

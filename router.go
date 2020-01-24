@@ -170,6 +170,19 @@ func (rtr *Router) Use(f Middleware) {
 			}
 		}
 	}
+}
+
+// UseOnSpecialHandlers adds middleware to the 2 special handlers of webgo
+func (rtr *Router) UseOnSpecialHandlers(f Middleware) {
+	// v3.2.1 introduced the feature of adding middleware to both notfound & not implemented
+	// handlers
+	/*
+		- It was added considering an `accesslog` middleware, where all requests should be logged
+		# This is now being moved to a separate function considering an authentication middleware, where all requests
+		  including 404 & 501 would respond with `not authenticated` if you do not have special handling
+		  within the middleware. It is a cleaner implementation to avoid this and let users add their
+		  middleware separately to NOTFOUND & NOTIMPLEMENTED handlers
+	*/
 
 	nf := rtr.NotFound
 	rtr.NotFound = func(rw http.ResponseWriter, req *http.Request) {
