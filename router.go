@@ -97,10 +97,27 @@ type Router struct {
 	httpsServer *http.Server
 }
 
-func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w = &customResponseWriter{
+		ResponseWriter: w,
+	}
+
+	ctxPayload := &ContextPayload{
+		AppContext: rtr.AppContext,
+	}
+
+	// webgo context object is created and is injected to the request context
+	r = r.WithContext(
+		context.WithValue(
+			r.Context(),
+			wgoCtxKey,
+			ctxPayload,
+		),
+	)
+
 	var rr []*Route
 
-	switch req.Method {
+	switch r.Method {
 	case http.MethodOptions:
 		rr = rtr.optHandlers
 	case http.MethodHead:
@@ -118,44 +135,26 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if rr == nil {
-		rtr.NotImplemented(rw, req)
+		rtr.NotImplemented(w, r)
 		return
 	}
 
-	var route *Route
-	var params map[string]string
 	ok := false
-	path := req.URL.EscapedPath()
+	path := r.URL.EscapedPath()
 	for _, r := range rr {
-		if ok, params = r.matchAndGet(path); ok {
-			route = r
+		if ok, ctxPayload.Params = r.matchAndGet(path); ok {
+			ctxPayload.Route = r
 			break
 		}
 	}
 
 	if !ok {
 		// serve 404 when there are no matching routes
-		rtr.NotFound(rw, req)
+		rtr.NotFound(w, r)
 		return
 	}
 
-	crw := &customResponseWriter{
-		ResponseWriter: rw,
-	}
-	// webgo context object created and is injected to the request context
-	reqwc := req.WithContext(
-		context.WithValue(
-			req.Context(),
-			wgoCtxKey,
-			&ContextPayload{
-				Params:     params,
-				Route:      route,
-				AppContext: rtr.AppContext,
-			},
-		),
-	)
-
-	route.serve(crw, reqwc)
+	ctxPayload.Route.serve(w, r)
 }
 
 // Middleware is the signature of WebGo's middleware
