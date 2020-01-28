@@ -1,5 +1,27 @@
 # Release notes
 
+## Release - 28/01/2019
+
+### v3.3.0
+#### Note: all changes from v3.0.0 to now are consolidated and listed
+
+1. Updated tests to use .Erorr instead of Log & Fail
+2. Updated the sample app to use CORS middleware
+3. 'Method not implemented' status is now executed using a handler similar to 'NotFound'
+4. overwriting the actual request instance
+5. refactored for better readability
+6. removed some variable declarations to avoid memory allocation
+7. updated how middleware is used on NotFound & NotImplemented handlers, new method `UseOnSpecialHandlers` should be used to apply middleware on 'NotFound' & 'NotImplemented' handlers
+	- added test to check if webgo context is available in middleware
+8. Updated middleware package to use webgo v3
+9. updated sample app to show chaining
+10. updated ServeHTTP to inject webgo context into the request earlier, to make it available to middleware as well
+11. Updated travis settings
+12. Using codecov.io for coverage
+13. patched test command to ignore `cmd` directory
+14. updated test to use v3 instead of latest
+15. Implemented `http.Hijacker` for the custom response writer used in the router
+
 ## Release - 06/10/2019
 
 ### v3.0.0

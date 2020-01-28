@@ -1,7 +1,10 @@
 package webgo
 
 import (
+	"bufio"
 	"context"
+	"errors"
+	"net"
 	"net/http"
 )
 
@@ -65,6 +68,15 @@ func (crw *customResponseWriter) Flush() {
 	if rw, ok := crw.ResponseWriter.(http.Flusher); ok {
 		rw.Flush()
 	}
+}
+
+// Hijack implements the http.Hijacker interface
+func (crw *customResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := crw.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, errors.New("unable to create hijacker")
+	}
+	return hj.Hijack()
 }
 
 // Router is the HTTP router
