@@ -105,6 +105,7 @@ func routes() []*webgo.Route {
 	return []*webgo.Route{
 		&webo.Route{
 			Name: "home",
+			Method: http.http.MethodGet,
 			Pattern: "/",
 			Handlers: []http.HandlerFunc{
 				func(w http.ResponseWriter, r *http.Request) {
@@ -116,7 +117,12 @@ func routes() []*webgo.Route {
 }
 
 func main() {
-	router := webgo.NewRouter(*webgo.Config, routes())
+	router := webgo.NewRouter(*webgo.Config{
+		Host:         "",
+		Port:         "8080",
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 60 * time.Second,
+	}, routes())
 
 	router.UseOnSpecialHandlers(middleware.AccessLog)
 	
