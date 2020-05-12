@@ -237,14 +237,14 @@ func checkDuplicateRoutes(idx int, route *Route, routes []*Route) {
 		rt := routes[i]
 
 		if rt.Name == route.Name {
-			LOGHANDLER.Warn("Duplicate route name(\"" + rt.Name + "\") detected. Route name should be unique.")
+			LOGHANDLER.Info("Duplicate route name(\"" + rt.Name + "\") detected")
 		}
 
 		if rt.Method == route.Method {
 			// regex pattern match
 			if ok, _ := rt.matchAndGet(route.Pattern); ok {
 				LOGHANDLER.Warn("Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
-				LOGHANDLER.Info("Only the first route to match the URI pattern would handle the request")
+				LOGHANDLER.Warn("Only the first route to match the URI pattern would handle the request")
 			}
 		}
 	}
