@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v3.3.2
+# WebGo v3.3.3
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side). Unlike full-fledged frameworks out there, it tries to get out of the developers' way as soon as possible. It has always been and will always be Go standard library compliant. With the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -273,6 +273,16 @@ type Logger interface {
 }
 ```
 
+### Configuring the default Logger
+
+The default logger uses Go standard library's `log.Logger` with `os.Stdout` (for debug and info logs) & `os.Stderr` (for warning, error, fatal) as default io.Writers. You can set the io.Writer as well as disable specific types of logs using the `GlobalLoggerConfig(stdout, stderr, cfgs...)` function.
+
+```golang
+GlobalLoggerConfig(nil, nil, LogCfgDisableDebug, LogCfgDisableInfo...)
+```
+
+Usage is show in `cmd/main.go`.
+
 ## Sample
 
 A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go). You can try the following API calls with the sample app.
@@ -324,4 +334,4 @@ Info 2019/07/09 18:35:54 HTTP server, listening on :8080
 
 ## The gopher
 
-The gopher used here was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, and they can sitback and enjoy a cup of coffee just like this gopher, while using WebGo.
+The gopher used here was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, so sitback and enjoy a cup of coffee like this gopher.

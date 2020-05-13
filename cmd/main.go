@@ -70,6 +70,9 @@ func main() {
 
 	router.Use(middleware.AccessLog)
 	router.Use(middleware.CorsWrap())
-
+	webgo.GlobalLoggerConfig(
+		nil, nil,
+		webgo.LogCfgDisableDebug,
+	)
 	router.Start()
 }
