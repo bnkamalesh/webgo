@@ -79,6 +79,7 @@ func setup() (*Router, *httptest.ResponseRecorder) {
 		KeyFile:            "tests/ssl/server.key",
 		ReadTimeout:        15,
 		WriteTimeout:       60,
+		ShutdownTimeout:    4 * time.Second,
 		InsecureSkipVerify: true,
 	}, getRoutes())
 
@@ -514,21 +515,19 @@ func TestAppContext(t *testing.T) {
 func TestStart(t *testing.T) {
 	router, _ := setup()
 	go router.Start()
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 3)
 	err := router.Shutdown()
 	if err != nil {
 		t.Fatal(err)
-
 	}
 }
 func TestStartHTTPS(t *testing.T) {
 	router, _ := setup()
 	go router.StartHTTPS()
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 3)
 	err := router.ShutdownHTTPS()
 	if err != nil {
 		t.Fatal(err)
-
 	}
 }
 
