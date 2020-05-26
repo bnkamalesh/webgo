@@ -25,6 +25,11 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 }
+
+func invalidJSON(w http.ResponseWriter, r *http.Request) {
+	webgo.R200(w, make(chan int))
+}
+
 func chain(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("chained", "true")
 }
@@ -52,6 +57,13 @@ func getRoutes() []*webgo.Route {
 			Handlers:                []http.HandlerFunc{chain, helloWorld}, // route handler
 			TrailingSlash:           true,
 			FallThroughPostResponse: true,
+		},
+		&webgo.Route{
+			Name:          "invalidjson",                   // A label for the API/URI, this is not used anywhere.
+			Method:        http.MethodGet,                  // request type
+			Pattern:       "/invalidjson",                  // Pattern for the route
+			Handlers:      []http.HandlerFunc{invalidJSON}, // route handler
+			TrailingSlash: true,
 		},
 	}
 }

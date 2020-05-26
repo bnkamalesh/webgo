@@ -150,7 +150,7 @@ func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
 
 }
 
-func defaultRouteServe(r *Route) http.HandlerFunc {
+func routeserveWithLoop(r *Route) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		crw, _ := rw.(*customResponseWriter)
 		if crw == nil {
@@ -160,16 +160,20 @@ func defaultRouteServe(r *Route) http.HandlerFunc {
 		}
 
 		for _, handler := range r.Handlers {
-			if !crw.written {
-				// If there has been no write to response writer yet
-				handler(crw, req)
-			} else if r.FallThroughPostResponse {
-				// run a handler post response write, only if fall through is enabled
-				handler(crw, req)
-			} else {
-				// Do not run any more handlers if already responded and no fall through enabled
+			if crw.written && !r.FallThroughPostResponse {
 				break
 			}
+			handler(crw, req)
 		}
 	}
+}
+
+func defaultRouteServe(r *Route) http.HandlerFunc {
+	if len(r.Handlers) > 1 {
+		return routeserveWithLoop(r)
+	}
+
+	// when there is only 1 handler, custom response writer is not required to check if response
+	// is already written or fallthrough is enabled
+	return r.Handlers[0]
 }

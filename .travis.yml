@@ -10,6 +10,8 @@ before_install:
   - go get -t -v ./...
 
 script:
+  # go.mod is overwritten to avoid go version being part of the mod file, which fails tests on mismatching version
+  - echo "module github.com/bnkamalesh/webgo/v3" > go.mod
   - go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
 
 after_success:

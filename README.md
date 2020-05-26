@@ -7,9 +7,15 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v3.3.3
+# WebGo v3.4.0
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side). Unlike full-fledged frameworks out there, it tries to get out of the developers' way as soon as possible. It has always been and will always be Go standard library compliant. With the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
+
+### Deprecation notice
+
+- 'AppContext' from `ContextPayload.AppContext`
+- 'AppContext' from `Router.AppContext`
+
 
 WebGo provides the following features/capabilities
 
