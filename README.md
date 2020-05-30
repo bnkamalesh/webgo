@@ -103,8 +103,8 @@ WebGo middleware lets you wrap all the routes with a middleware. Unlike handler 
 
 ```golang
 import (
-	"github.com/bnkamalesh/webgo"
-	"github.com/bnkamalesh/webgo/middleware"
+	"github.com/bnkamalesh/webgo/v3"
+	"github.com/bnkamalesh/webgo/v3/middleware"
 )
 
 func routes() []*webgo.Route {

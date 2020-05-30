@@ -109,11 +109,41 @@ type Router struct {
 	httpsServer *http.Server
 }
 
-func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w = &customResponseWriter{
-		ResponseWriter: w,
+// methodRoutes returns the list of Routes handling the HTTP method given the request
+func (rtr *Router) methodRoutes(r *http.Request) (routes []*Route) {
+	switch r.Method {
+	case http.MethodOptions:
+		return rtr.optHandlers
+	case http.MethodHead:
+		return rtr.headHandlers
+	case http.MethodGet:
+		return rtr.getHandlers
+	case http.MethodPost:
+		return rtr.postHandlers
+	case http.MethodPut:
+		return rtr.putHandlers
+	case http.MethodPatch:
+		return rtr.patchHandlers
+	case http.MethodDelete:
+		return rtr.deleteHandlers
 	}
 
+	return nil
+}
+
+func routeWithParams(r *http.Request, routes []*Route) (*Route, map[string]string) {
+	var params map[string]string
+	ok := false
+	path := r.URL.EscapedPath()
+	for _, route := range routes {
+		if ok, params = route.matchAndGet(path); ok {
+			return route, params
+		}
+	}
+	return nil, nil
+}
+
+func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctxPayload := &ContextPayload{
 		AppContext: rtr.AppContext,
 	}
@@ -127,40 +157,18 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	)
 
-	var routes []*Route
-
-	switch r.Method {
-	case http.MethodOptions:
-		routes = rtr.optHandlers
-	case http.MethodHead:
-		routes = rtr.headHandlers
-	case http.MethodGet:
-		routes = rtr.getHandlers
-	case http.MethodPost:
-		routes = rtr.postHandlers
-	case http.MethodPut:
-		routes = rtr.putHandlers
-	case http.MethodPatch:
-		routes = rtr.patchHandlers
-	case http.MethodDelete:
-		routes = rtr.deleteHandlers
+	w = &customResponseWriter{
+		ResponseWriter: w,
 	}
 
+	routes := rtr.methodRoutes(r)
 	if routes == nil {
 		rtr.NotImplemented(w, r)
 		return
 	}
 
-	ok := false
-	path := r.URL.EscapedPath()
-	for _, route := range routes {
-		if ok, ctxPayload.Params = route.matchAndGet(path); ok {
-			ctxPayload.Route = route
-			break
-		}
-	}
-
-	if !ok {
+	ctxPayload.Route, ctxPayload.Params = routeWithParams(r, routes)
+	if ctxPayload.Route == nil {
 		// serve 404 when there are no matching routes
 		rtr.NotFound(w, r)
 		return

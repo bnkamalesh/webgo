@@ -108,6 +108,44 @@ func TestInvalidHTTPMethod(t *testing.T) {
 	}
 }
 
+func BenchmarkGet(b *testing.B) {
+	router, respRec := setup()
+
+	url := fmt.Sprintf(
+		"%s/hello/%s/goblin/%s",
+		baseapi,
+		p1,
+		p2,
+	)
+	for i := 0; i < b.N; i++ {
+		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+		if err != nil {
+			b.Fatal(err, url)
+			return
+		}
+		router.ServeHTTP(respRec, req)
+		resp := response{}
+		err = json.NewDecoder(respRec.Body).Decode(&resp)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if resp.Data["method"] != http.MethodGet {
+			b.Fatal(
+				"URL:", url,
+				"response method:", resp.Data["method"],
+				"required method:", http.MethodGet,
+			)
+		}
+
+		if resp.Data["p1"] != p1 {
+			b.Fatal("p1:", resp.Data["p1"])
+		}
+
+		if resp.Data["p2"] != p2 {
+			b.Fatal("p2:", resp.Data["p2"])
+		}
+	}
+}
 func TestGet(t *testing.T) {
 	router, respRec := setup()
 
@@ -216,7 +254,6 @@ func TestGetPostResponse(t *testing.T) {
 
 	if respRec.Code != http.StatusOK {
 		t.Fatal(err, respRec.Code, url)
-
 	}
 }
 func TestGet404(t *testing.T) {
