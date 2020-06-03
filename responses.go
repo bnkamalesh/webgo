@@ -50,7 +50,7 @@ const (
 	HTMLContentType = "text/html; charset=UTF-8"
 
 	// ErrInternalServer to send when there's an internal server error
-	ErrInternalServer = "Internal server error."
+	ErrInternalServer = "Internal server error"
 )
 
 // SendHeader is used to send only a response header, i.e no response body
@@ -65,7 +65,8 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 	w.WriteHeader(rCode)
 	_, err := fmt.Fprint(w, data)
 	if err != nil {
-		R500(w, ErrInternalServer)
+		Send(w, "text/plain", ErrInternalServer, http.StatusInternalServerError)
+		LOGHANDLER.Error(err)
 	}
 }
 
@@ -82,8 +83,8 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
-		LOGHANDLER.Error(err)
 		R500(w, ErrInternalServer)
+		LOGHANDLER.Error(err)
 	}
 }
 
@@ -100,8 +101,8 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
-		LOGHANDLER.Error(err)
 		R500(w, ErrInternalServer)
+		LOGHANDLER.Error(err)
 	}
 }
 
@@ -114,6 +115,7 @@ func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Te
 	// Rendering an HTML template with appropriate data
 	err := tpl.Execute(w, data)
 	if err != nil {
+		Send(w, "text/plain", ErrInternalServer, http.StatusInternalServerError)
 		LOGHANDLER.Error(err.Error())
 	}
 }

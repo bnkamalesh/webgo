@@ -131,6 +131,7 @@ func (rtr *Router) methodRoutes(r *http.Request) (routes []*Route) {
 	return nil
 }
 
+// routeWithParams returns the correct 'route' and its URI parameters, for the given request
 func routeWithParams(r *http.Request, routes []*Route) (*Route, map[string]string) {
 	var params map[string]string
 	ok := false
@@ -157,6 +158,9 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	)
 
+	// a custom response writer is used to set appropriate HTTP status code in case of
+	// encoding errors. i.e. if there's a JSON encoding issue while responding,
+	// the HTTP status code would say 200, and and the JSON payload {"status": 500}
 	w = &customResponseWriter{
 		ResponseWriter: w,
 	}
@@ -215,6 +219,16 @@ func (rtr *Router) UseOnSpecialHandlers(f Middleware) {
 	}
 }
 
+func deprecationLogs() {
+	LOGHANDLER.Warn(
+		`Following features are being deprecated:
+	- 'AppContext' from 'ContextPayload.AppContext', will be removed completely
+	- 'AppContext' from 'Router.AppContext', will be removed completely
+	- 'Params' from 'ContextPayload.Params', will be removed. URI params can be fetched using new function 'ContextPayload.URIParams(*http.Request)map[string]string'
+		`,
+	)
+}
+
 // NewRouter initializes returns a new router instance with all the configurations and routes set
 func NewRouter(cfg *Config, routes []*Route) *Router {
 	handlers := httpHandlers(routes)
@@ -235,6 +249,8 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		config: cfg,
 	}
 
+	deprecationLogs()
+
 	return r
 }
 
@@ -250,7 +266,7 @@ func checkDuplicateRoutes(idx int, route *Route, routes []*Route) {
 
 		if rt.Method == route.Method {
 			// regex pattern match
-			if ok, _ := rt.matchAndGet(route.Pattern); ok {
+			if ok, _ := rt.matchPath(route.Pattern); ok {
 				LOGHANDLER.Warn("Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
 				LOGHANDLER.Warn("Only the first route to match the URI pattern would handle the request")
 			}

@@ -3,6 +3,7 @@ package webgo
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -67,43 +68,54 @@ func (r *Route) computePatternStr(patternString string, hasWildcard bool, key st
 	return patternString, nil
 }
 
+func (r *Route) parseURIWithParams(patternString string) (string, error) {
+	if !strings.Contains(r.Pattern, ":") {
+		return "", nil
+	}
+
+	var err error
+	// uriValues is a map of URI Key and its respective value,
+	// this is calculated per request
+	key := ""
+	hasKey := false
+	hasWildcard := false
+
+	for i := 0; i < len(r.Pattern); i++ {
+		char := string(r.Pattern[i])
+
+		if char == ":" {
+			hasKey = true
+		} else if char == "*" {
+			hasWildcard = true
+		} else if hasKey && char != "/" {
+			key += char
+		} else if hasKey && len(key) > 0 {
+			patternString, err = r.computePatternStr(patternString, hasWildcard, key)
+			if err != nil {
+				return "", err
+			}
+			hasWildcard, hasKey = false, false
+			key = ""
+		}
+	}
+
+	if hasKey && len(key) > 0 {
+		patternString, err = r.computePatternStr(patternString, hasWildcard, key)
+		if err != nil {
+			return "", err
+		}
+	}
+	return patternString, nil
+}
+
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
 	patternString := r.Pattern
 	err := error(nil)
 
-	if strings.Contains(r.Pattern, ":") {
-		// uriValues is a map of URI Key and it's respective value,
-		// this is calculated per request
-		key := ""
-		hasKey := false
-		hasWildcard := false
-
-		for i := 0; i < len(r.Pattern); i++ {
-			char := string(r.Pattern[i])
-
-			if char == ":" {
-				hasKey = true
-			} else if char == "*" {
-				hasWildcard = true
-			} else if hasKey && char != "/" {
-				key += char
-			} else if hasKey && len(key) > 0 {
-				patternString, err = r.computePatternStr(patternString, hasWildcard, key)
-				if err != nil {
-					return err
-				}
-				hasWildcard, hasKey = false, false
-				key = ""
-			}
-		}
-
-		if hasKey && len(key) > 0 {
-			patternString, err = r.computePatternStr(patternString, hasWildcard, key)
-			if err != nil {
-				return err
-			}
-		}
+	patternString, err = r.parseURIWithParams(patternString)
+	if err != nil {
+		return err
 	}
 
 	if r.TrailingSlash {
@@ -125,32 +137,43 @@ func (r *Route) init() error {
 	return nil
 }
 
+// matchPath matches the requestURI with the URI pattern of the route.
+// If the path is an exact match (i.e. no URI paramters), then the second paramter ('isExactMatch') is true
+func (r *Route) matchPath(requestURI string) (bool, isExactMatch bool) {
+	if r.Pattern == requestURI {
+		return true, true
+	}
+
+	return r.uriPattern.Match([]byte(requestURI)), false
+}
+
+func (r *Route) params(requestURI string) map[string]string {
+	params := r.uriPattern.FindStringSubmatch(requestURI)
+
+	uriValues := make(map[string]string, len(params)-1)
+	for i := 1; i < len(params); i++ {
+		uriValues[r.uriKeys[i-1]], _ = url.QueryUnescape(params[i])
+	}
+
+	return uriValues
+}
+
 // matchAndGet returns if the request URI matches the pattern defined in a Route as well as
 // all the URI parameters configured for the route.
 func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
-	if r.Pattern == requestURI {
-		return true, nil
-	}
-
-	if !r.uriPattern.Match([]byte(requestURI)) {
+	matched, isExactMatch := r.matchPath(requestURI)
+	if !matched {
 		return false, nil
 	}
 
-	// Getting URI parameters
-	values := r.uriPattern.FindStringSubmatch(requestURI)
-	if len(values) == 0 {
+	if isExactMatch {
 		return true, nil
 	}
 
-	uriValues := make(map[string]string, len(values)-1)
-	for i := 1; i < len(values); i++ {
-		uriValues[r.uriKeys[i-1]] = values[i]
-	}
-	return true, uriValues
-
+	return true, r.params(requestURI)
 }
 
-func routeserveWithLoop(r *Route) http.HandlerFunc {
+func routeServeChainedHandlers(r *Route) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		crw, _ := rw.(*customResponseWriter)
 		if crw == nil {
@@ -170,7 +193,7 @@ func routeserveWithLoop(r *Route) http.HandlerFunc {
 
 func defaultRouteServe(r *Route) http.HandlerFunc {
 	if len(r.Handlers) > 1 {
-		return routeserveWithLoop(r)
+		return routeServeChainedHandlers(r)
 	}
 
 	// when there is only 1 handler, custom response writer is not required to check if response

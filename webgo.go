@@ -30,6 +30,11 @@ type ContextPayload struct {
 	AppContext map[string]interface{}
 }
 
+// URIParams returns the URI parameters of the respective route
+func (cp *ContextPayload) URIParams(r *http.Request) map[string]string {
+	return cp.Route.params(r.URL.EscapedPath())
+}
+
 // Context returns the ContextPayload injected inside the HTTP request context
 func Context(r *http.Request) *ContextPayload {
 	wc, _ := r.Context().Value(wgoCtxKey).(*ContextPayload)
