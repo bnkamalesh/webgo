@@ -3,7 +3,6 @@ package webgo
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 )
@@ -152,7 +151,7 @@ func (r *Route) params(requestURI string) map[string]string {
 
 	uriValues := make(map[string]string, len(params)-1)
 	for i := 1; i < len(params); i++ {
-		uriValues[r.uriKeys[i-1]], _ = url.QueryUnescape(params[i])
+		uriValues[r.uriKeys[i-1]] = params[i]
 	}
 
 	return uriValues

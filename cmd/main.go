@@ -4,16 +4,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v3/middleware"
+	"github.com/bnkamalesh/webgo/v4/middleware"
 
-	"github.com/bnkamalesh/webgo/v3"
+	"github.com/bnkamalesh/webgo/v4"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	// WebGo context
 	wctx := webgo.Context(r)
 	// URI paramaters, map[string]string
-	params := wctx.Params
+	params := wctx.Params()
 	// route, the webgo.Route which is executing this request
 	route := wctx.Route
 	webgo.R200(

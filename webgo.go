@@ -25,20 +25,20 @@ const wgoCtxKey = ctxkey("webgocontext")
 
 // ContextPayload is the WebgoContext. A new instance of ContextPayload is injected inside every request's context object
 type ContextPayload struct {
-	Params     map[string]string
-	Route      *Route
-	AppContext map[string]interface{}
+	Route *Route
+	path  string
 }
 
-// URIParams returns the URI parameters of the respective route
-func (cp *ContextPayload) URIParams(r *http.Request) map[string]string {
-	return cp.Route.params(r.URL.EscapedPath())
+// Params returns the URI parameters of the respective route
+func (cp *ContextPayload) Params() map[string]string {
+	return cp.Route.params(cp.path)
 }
 
 // Context returns the ContextPayload injected inside the HTTP request context
 func Context(r *http.Request) *ContextPayload {
-	wc, _ := r.Context().Value(wgoCtxKey).(*ContextPayload)
-	return wc
+	// wc, _ := r.Context().Value(wgoCtxKey).(*ContextPayload)
+	// return wc
+	return r.Context().Value(wgoCtxKey).(*ContextPayload)
 }
 
 // StartHTTPS starts the server with HTTPS enabled

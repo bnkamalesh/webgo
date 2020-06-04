@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bnkamalesh/webgo/v3"
+	"github.com/bnkamalesh/webgo/v4"
 )
 
 const baseapi = "http://127.0.0.1:9696/"

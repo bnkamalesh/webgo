@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v3"
+	"github.com/bnkamalesh/webgo/v4"
 )
 
 // responseWriter is a custom HTTP response writer

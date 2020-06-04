@@ -96,10 +96,6 @@ type Router struct {
 	// NotImplemented is the generic handler for 501 method not implemented
 	NotImplemented http.HandlerFunc
 
-	// AppContext holds all the app specific context which is to be injected into all HTTP
-	// request context
-	AppContext map[string]interface{}
-
 	// config has all the app config
 	config *Config
 
@@ -131,23 +127,20 @@ func (rtr *Router) methodRoutes(r *http.Request) (routes []*Route) {
 	return nil
 }
 
-// routeWithParams returns the correct 'route' and its URI parameters, for the given request
-func routeWithParams(r *http.Request, routes []*Route) (*Route, map[string]string) {
-	var params map[string]string
+// discoverRoute returns the correct 'route', for the given request
+func discoverRoute(path string, routes []*Route) *Route {
 	ok := false
-	path := r.URL.EscapedPath()
 	for _, route := range routes {
-		if ok, params = route.matchAndGet(path); ok {
-			return route, params
+		if ok, _ = route.matchPath(path); ok {
+			return route
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctxPayload := &ContextPayload{
-		AppContext: rtr.AppContext,
-	}
+
+	ctxPayload := &ContextPayload{}
 
 	// webgo context object is created and is injected to the request context
 	*r = *r.WithContext(
@@ -171,14 +164,20 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctxPayload.Route, ctxPayload.Params = routeWithParams(r, routes)
-	if ctxPayload.Route == nil {
+	path := r.URL.EscapedPath()
+	route := discoverRoute(
+		path,
+		routes,
+	)
+	ctxPayload.Route = route
+	ctxPayload.path = path
+	if route == nil {
 		// serve 404 when there are no matching routes
 		rtr.NotFound(w, r)
 		return
 	}
 
-	ctxPayload.Route.serve(w, r)
+	route.serve(w, r)
 }
 
 // Middleware is the signature of WebGo's middleware
@@ -220,13 +219,6 @@ func (rtr *Router) UseOnSpecialHandlers(f Middleware) {
 }
 
 func deprecationLogs() {
-	LOGHANDLER.Warn(
-		`Following features are being deprecated:
-	- 'AppContext' from 'ContextPayload.AppContext', will be removed completely
-	- 'AppContext' from 'Router.AppContext', will be removed completely
-	- 'Params' from 'ContextPayload.Params', will be removed. URI params can be fetched using new function 'ContextPayload.URIParams(*http.Request)map[string]string'
-		`,
-	)
 }
 
 // NewRouter initializes returns a new router instance with all the configurations and routes set

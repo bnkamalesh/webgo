@@ -29,16 +29,6 @@ const p2 = "spiderman"
 const baseapi = "http://127.0.0.1:9696"
 const baseapiHTTPS = "http://127.0.0.1:9696"
 
-var BenchAPIs = map[string]string{
-	"GETNOPARAM":    strings.Join([]string{baseapi, "nparams"}, "/"),
-	"GETWITHPARAM":  strings.Join([]string{baseapi, "wparams", p1, "goblin", p2}, "/"),
-	"POSTWITHPARAM": strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
-}
-var GETAppContextAPI = []string{
-	strings.Join([]string{baseapi, "appcontext"}, "/"),
-	strings.Join([]string{baseapiHTTPS, "appcontext"}, "/"),
-}
-
 var GETAPI = []string{
 	strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
 	strings.Join([]string{baseapiHTTPS, "hello", p1, "goblin", p2}, "/"),
@@ -83,11 +73,6 @@ func setup() (*Router, *httptest.ResponseRecorder) {
 		InsecureSkipVerify: true,
 	}, getRoutes())
 
-	router.AppContext = map[string]interface{}{
-		"config": &appConfig{
-			Name: "WebGo",
-		},
-	}
 	return router, httptest.NewRecorder()
 }
 
@@ -108,15 +93,8 @@ func TestInvalidHTTPMethod(t *testing.T) {
 	}
 }
 
-func BenchmarkGet(b *testing.B) {
+func runbench(b *testing.B, url string) {
 	router, respRec := setup()
-
-	url := fmt.Sprintf(
-		"%s/hello/%s/goblin/%s",
-		baseapi,
-		p1,
-		p2,
-	)
 	for i := 0; i < b.N; i++ {
 		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 		if err != nil {
@@ -124,28 +102,32 @@ func BenchmarkGet(b *testing.B) {
 			return
 		}
 		router.ServeHTTP(respRec, req)
-		resp := response{}
-		err = json.NewDecoder(respRec.Body).Decode(&resp)
-		if err != nil {
-			b.Fatal(err)
-		}
-		if resp.Data["method"] != http.MethodGet {
-			b.Fatal(
-				"URL:", url,
-				"response method:", resp.Data["method"],
-				"required method:", http.MethodGet,
+		if respRec.Result().StatusCode != http.StatusOK {
+			b.Fatalf(
+				"%s %s, expected %d, got %d",
+				err.Error(),
+				url,
+				http.StatusOK,
+				respRec.Result().StatusCode,
 			)
-		}
-
-		if resp.Data["p1"] != p1 {
-			b.Fatal("p1:", resp.Data["p1"])
-		}
-
-		if resp.Data["p2"] != p2 {
-			b.Fatal("p2:", resp.Data["p2"])
 		}
 	}
 }
+func BenchmarkGetNoParams(b *testing.B) {
+	url := strings.Join([]string{baseapi, "nparams"}, "/")
+	runbench(b, url)
+}
+
+func BenchmarkGetWithParams(b *testing.B) {
+	url := strings.Join([]string{baseapi, "wparams", p1, "goblin", p2}, "/")
+	runbench(b, url)
+}
+
+func BenchmarkPostWithParams(b *testing.B) {
+	url := strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/")
+	runbench(b, url)
+}
+
 func TestGet(t *testing.T) {
 	router, respRec := setup()
 
@@ -496,57 +478,21 @@ func TestOptions(t *testing.T) {
 		err = json.NewDecoder(respRec.Body).Decode(&resp)
 		if err != nil {
 			t.Fatal(err)
-
 			continue
 		}
 
 		if resp.Data["method"] != http.MethodOptions {
 			t.Fatal("response method:", resp.Data["method"], " required method:", http.MethodOptions)
-
 		}
 
 		if resp.Data["p1"] != p1 {
 			t.Fatal("p1:", resp.Data["p1"])
-
 		}
 
 		if resp.Data["p2"] != p2 {
 			t.Fatal("p2:", resp.Data["p2"])
-
-		}
-
-		if resp.Data["payload"] != string(payload) {
-			t.Fatal("payload:", resp.Data["payload"])
-
 		}
 	}
-}
-
-func TestAppContext(t *testing.T) {
-	router, respRec := setup()
-	for _, url := range GETAppContextAPI {
-		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
-		if err != nil {
-			t.Fatal(err, url)
-
-			continue
-		}
-
-		resp := response{}
-		router.ServeHTTP(respRec, req)
-		err = json.NewDecoder(respRec.Body).Decode(&resp)
-		if err != nil {
-			t.Fatal(err)
-
-			continue
-		}
-
-		if resp.Data["Name"] != "WebGo" {
-			t.Fatal("Invalid App context config received")
-
-		}
-	}
-
 }
 
 func TestStart(t *testing.T) {
@@ -568,10 +514,7 @@ func TestStartHTTPS(t *testing.T) {
 	}
 }
 
-func dummy(w http.ResponseWriter, r *http.Request) {
-
-	output := ""
-
+func withrequestbody(w http.ResponseWriter, r *http.Request) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Println(err)
@@ -580,15 +523,14 @@ func dummy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	output = string(b)
-
+	output := string(b)
 	wctx := Context(r)
-
+	params := wctx.Params()
 	R200(
 		w,
 		map[string]string{
-			"p1":      wctx.Params["p1"],
-			"p2":      wctx.Params["p2"],
+			"p1":      params["p1"],
+			"p2":      params["p2"],
 			"payload": output,
 			"pattern": r.URL.Path,
 			"method":  r.Method,
@@ -596,96 +538,89 @@ func dummy(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func getAppConfig(w http.ResponseWriter, r *http.Request) {
+func withuriparams(w http.ResponseWriter, r *http.Request) {
 	wctx := Context(r)
-	aC, ok := wctx.AppContext["config"].(*appConfig)
-	if !ok {
-		R400(w, "No app config found")
-		return
-	}
-	R200(w, aC)
+	params := wctx.Params()
+	R200(
+		w,
+		map[string]string{
+			"p1":      params["p1"],
+			"p2":      params["p2"],
+			"pattern": r.URL.Path,
+			"method":  r.Method,
+		},
+	)
 }
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	R200(w, "Hello world")
 }
 
-func postResp(w http.ResponseWriter, r *http.Request) {
-	log.Println("This is a post response handler")
-}
-
 func getRoutes() []*Route {
 	return []*Route{
 		{
-			Name:                    "root",         // A label for the API/URI
-			Method:                  http.MethodGet, // request type
+			Name:                    "root",
+			Method:                  http.MethodGet,
 			Pattern:                 "/",
-			FallThroughPostResponse: true, // Pattern for the route
+			FallThroughPostResponse: true,
 			TrailingSlash:           true,
-			Handlers:                []http.HandlerFunc{dummy, postResp}, // route handler
+			Handlers:                []http.HandlerFunc{helloWorld},
 		},
 		{
-			Name:     "appcontext",                     // A label for the API/URI
-			Method:   http.MethodGet,                   // request type
-			Pattern:  "/appcontext",                    // Pattern for the route
-			Handlers: []http.HandlerFunc{getAppConfig}, // route handler
+			Name:     "hw-noparams",
+			Method:   http.MethodGet,
+			Pattern:  "/nparams",
+			Handlers: []http.HandlerFunc{helloWorld},
 		},
 		{
-			Name:     "hw-noparams",                  // A label for the API/URI
-			Method:   http.MethodGet,                 // request type
-			Pattern:  "/nparams",                     // Pattern for the route
-			Handlers: []http.HandlerFunc{helloWorld}, // route handler
-		},
-		{
-			Name:          "hw-withparams", // A label for the API/URI
+			Name:          "hw-withparams",
 			Method:        http.MethodGet,
-			TrailingSlash: true,                           // request type
-			Pattern:       "/wparams/:p1/goblin/:p2",      // Pattern for the route
-			Handlers:      []http.HandlerFunc{helloWorld}, // route handler
+			TrailingSlash: true,
+			Pattern:       "/wparams/:p1/goblin/:p2",
+			Handlers:      []http.HandlerFunc{withuriparams},
 		},
 		{
-			Name:     "params-get",              // A label for the API/URI
-			Method:   http.MethodGet,            // request type
-			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-get",
+			Method:   http.MethodGet,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withuriparams},
 		},
 		{
-			Name:     "params-head",             // A label for the API/URI
-			Method:   http.MethodHead,           // request type
-			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-head",
+			Method:   http.MethodHead,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withuriparams},
 		},
 
 		{
-			Name:     "params-post-sameuri",     // A label for the API/URI
-			Method:   http.MethodPost,           // request type
-			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-post-sameuri",
+			Method:   http.MethodPost,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
 		},
 		{
-			Name:     "params-put-sameuri",      // A label for the API/URI
-			Method:   http.MethodPut,            // request type
-			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-put-sameuri",
+			Method:   http.MethodPut,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
 		},
 		{
-			Name:     "params-patch-sameuri",    // A label for the API/URI
-			Method:   http.MethodPatch,          // request type
-			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-patch-sameuri",
+			Method:   http.MethodPatch,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
 		},
 		{
-			Name:     "params-delete-sameuri",   // A label for the API/URI
-			Method:   http.MethodDelete,         // request type
-			Pattern:  "/hello/:p1/goblin/:p2",   // Pattern for the route
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-delete-sameuri",
+			Method:   http.MethodDelete,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
 		},
 		{
-			Name:    "params-options-sameuri", // A label for the API/URI
-			Method:  http.MethodOptions,       // request type
-			Pattern: "/hello/:p1/goblin/:p2",  // Pattern for the route
-			// Handler: []http.HandlerFunc{dummy}, // route handler
-			Handlers: []http.HandlerFunc{dummy}, // route handler
+			Name:     "params-options-sameuri",
+			Method:   http.MethodOptions,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withuriparams},
 		},
 	}
 }
