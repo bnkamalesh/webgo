@@ -7,15 +7,13 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v3.5.4
+# WebGo v4.0.0
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. Unlike full-fledged frameworks, it gets out of your way as soon as possible in the execution flow. WebGo has always been and will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
-### Deprecation notice ❗
+### Important ❗
 
-- 'AppContext' from `ContextPayload.AppContext`, will be removed completely
-- 'AppContext' from `Router.AppContext`, will be removed completely
-- 'Params' from `ContextPayload.Params`, will be removed. URI params can be fetched using new function `ContextPayload.URIParams(*http.Request)map[string]string`
+- `ContextPayload.URIParams(*http.Request)map[string]string` was replaced despite being newly introduced in v3.5.4. The new function is `ContextPayload.Params()map[string]string`, and has a slight performance advantage compared to URIParams
 
 
 ### Index
