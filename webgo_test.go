@@ -100,7 +100,7 @@ func makeBenchReq(b *testing.B,
 ) error {
 	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
 	if err != nil {
-		return fmt.Errorf("%s %w", url, err)
+		return fmt.Errorf("%s %s", url, err.Error())
 	}
 	router.ServeHTTP(respRec, req)
 	if respRec.Result().StatusCode != http.StatusOK {
