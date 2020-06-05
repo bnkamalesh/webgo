@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"sync"
 )
 
 // urlchars is regex to validate characters in a URI parameter
@@ -22,31 +23,44 @@ const (
 	errDuplicateKey     = `Error: Duplicate URI keys found`
 )
 
-var validHTTPMethods = []string{
-	http.MethodOptions,
-	http.MethodHead,
-	http.MethodGet,
-	http.MethodPost,
-	http.MethodPut,
-	http.MethodPatch,
-	http.MethodDelete,
-}
+var (
+	validHTTPMethods = []string{
+		http.MethodOptions,
+		http.MethodHead,
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+	}
+
+	ctxPool = &sync.Pool{
+		New: func() interface{} {
+			return new(ContextPayload)
+		},
+	}
+	crwPool = &sync.Pool{
+		New: func() interface{} {
+			return new(customResponseWriter)
+		},
+	}
+)
 
 // customResponseWriter is a custom HTTP response writer
 type customResponseWriter struct {
 	http.ResponseWriter
-	statusCode int
-	written    bool
+	statusCode    int
+	written       bool
+	headerWritten bool
 }
 
 // WriteHeader is the interface implementation to get HTTP response code and add
 // it to the custom response writer
 func (crw *customResponseWriter) WriteHeader(code int) {
-	if crw.written {
-		LOGHANDLER.Warn(errMultiHeaderWrite)
+	if crw.written || crw.headerWritten {
 		return
 	}
-
+	crw.headerWritten = true
 	crw.statusCode = code
 	crw.ResponseWriter.WriteHeader(code)
 }
@@ -58,7 +72,9 @@ func (crw *customResponseWriter) Write(body []byte) (int, error) {
 		LOGHANDLER.Warn(errMultiWrite)
 		return 0, nil
 	}
-
+	if !crw.headerWritten {
+		crw.WriteHeader(crw.statusCode)
+	}
 	crw.written = true
 	return crw.ResponseWriter.Write(body)
 }
@@ -72,11 +88,32 @@ func (crw *customResponseWriter) Flush() {
 
 // Hijack implements the http.Hijacker interface
 func (crw *customResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hj, ok := crw.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, errors.New("unable to create hijacker")
+	if hj, ok := crw.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
 	}
-	return hj.Hijack()
+
+	return nil, nil, errors.New("unable to create hijacker")
+}
+
+func (crw *customResponseWriter) reset() {
+	crw.statusCode = 0
+	crw.written = false
+	crw.headerWritten = false
+	crw.ResponseWriter = nil
+}
+
+// Middleware is the signature of WebGo's middleware
+type Middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
+
+// discoverRoute returns the correct 'route', for the given request
+func discoverRoute(path string, routes []*Route) *Route {
+	ok := false
+	for _, route := range routes {
+		if ok, _ = route.matchPath(path); ok {
+			return route
+		}
+	}
+	return nil
 }
 
 // Router is the HTTP router
@@ -127,20 +164,14 @@ func (rtr *Router) methodRoutes(r *http.Request) (routes []*Route) {
 	return nil
 }
 
-// discoverRoute returns the correct 'route', for the given request
-func discoverRoute(path string, routes []*Route) *Route {
-	ok := false
-	for _, route := range routes {
-		if ok, _ = route.matchPath(path); ok {
-			return route
-		}
-	}
-	return nil
-}
+func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	// a custom response writer is used to set appropriate HTTP status code in case of
+	// encoding errors. i.e. if there's a JSON encoding issue while responding,
+	// the HTTP status code would say 200, and and the JSON payload {"status": 500}
+	crw := newCRW(rw, 0)
 
-func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-	ctxPayload := &ContextPayload{}
+	// ctxPayload := &ContextPayload{}
+	ctxPayload := newContext()
 
 	// webgo context object is created and is injected to the request context
 	*r = *r.WithContext(
@@ -151,16 +182,11 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		),
 	)
 
-	// a custom response writer is used to set appropriate HTTP status code in case of
-	// encoding errors. i.e. if there's a JSON encoding issue while responding,
-	// the HTTP status code would say 200, and and the JSON payload {"status": 500}
-	w = &customResponseWriter{
-		ResponseWriter: w,
-	}
-
 	routes := rtr.methodRoutes(r)
 	if routes == nil {
-		rtr.NotImplemented(w, r)
+		crw.statusCode = http.StatusNotImplemented
+		rtr.NotImplemented(crw, r)
+		releasePoolResources(crw, ctxPayload)
 		return
 	}
 
@@ -169,19 +195,19 @@ func (rtr *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		path,
 		routes,
 	)
-	ctxPayload.Route = route
 	ctxPayload.path = path
 	if route == nil {
 		// serve 404 when there are no matching routes
-		rtr.NotFound(w, r)
+		crw.statusCode = http.StatusNotFound
+		rtr.NotFound(crw, r)
+		releasePoolResources(crw, ctxPayload)
 		return
 	}
 
-	route.serve(w, r)
+	ctxPayload.Route = route
+	route.serve(crw, r)
+	releasePoolResources(crw, ctxPayload)
 }
-
-// Middleware is the signature of WebGo's middleware
-type Middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
 
 // Use adds a middleware layer
 func (rtr *Router) Use(f Middleware) {
@@ -216,6 +242,32 @@ func (rtr *Router) UseOnSpecialHandlers(f Middleware) {
 	rtr.NotImplemented = func(rw http.ResponseWriter, req *http.Request) {
 		f(rw, req, ni)
 	}
+}
+
+func newCRW(rw http.ResponseWriter, rCode int) *customResponseWriter {
+	crw := crwPool.Get().(*customResponseWriter)
+	crw.ResponseWriter = rw
+	crw.statusCode = rCode
+	return crw
+}
+
+func releaseCRW(crw *customResponseWriter) {
+	crw.reset()
+	crwPool.Put(crw)
+}
+
+func newContext() *ContextPayload {
+	return ctxPool.Get().(*ContextPayload)
+}
+
+func releaseContext(cp *ContextPayload) {
+	cp.reset()
+	ctxPool.Put(cp)
+}
+
+func releasePoolResources(crw *customResponseWriter, cp *ContextPayload) {
+	releaseCRW(crw)
+	releaseContext(cp)
 }
 
 func deprecationLogs() {

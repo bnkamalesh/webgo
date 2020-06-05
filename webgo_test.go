@@ -93,23 +93,45 @@ func TestInvalidHTTPMethod(t *testing.T) {
 	}
 }
 
+func makeBenchReq(b *testing.B,
+	router *Router,
+	respRec *httptest.ResponseRecorder,
+	url string,
+) error {
+	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+	if err != nil {
+		return fmt.Errorf("%s %w", url, err)
+	}
+	router.ServeHTTP(respRec, req)
+	if respRec.Result().StatusCode != http.StatusOK {
+		return fmt.Errorf(
+			"%s %s, expected %d, got %d",
+			err.Error(),
+			url,
+			http.StatusOK,
+			respRec.Result().StatusCode,
+		)
+	}
+	return nil
+}
+
 func runbench(b *testing.B, url string) {
 	router, respRec := setup()
+	var err error
+	// b.RunParallel(func(pb *testing.PB) {
+	// 	for pb.Next() {
+	// 		respRec = httptest.NewRecorder()
+	// 		err = makeBenchReq(b, router, respRec, url)
+	// 		if err != nil {
+	// 			b.Fatal(err)
+	// 		}
+	// 	}
+	// })
+
 	for i := 0; i < b.N; i++ {
-		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+		err = makeBenchReq(b, router, respRec, url)
 		if err != nil {
-			b.Fatal(err, url)
-			return
-		}
-		router.ServeHTTP(respRec, req)
-		if respRec.Result().StatusCode != http.StatusOK {
-			b.Fatalf(
-				"%s %s, expected %d, got %d",
-				err.Error(),
-				url,
-				http.StatusOK,
-				respRec.Result().StatusCode,
-			)
+			b.Fatal(err)
 		}
 	}
 }
@@ -197,7 +219,10 @@ func TestMiddleware(t *testing.T) {
 
 	router.ServeHTTP(respRec, req)
 	if respRec.Code != http.StatusNotFound {
-		t.Fatalf("Expected status '404', got '%d'", respRec.Code)
+		t.Fatalf(
+			"Expected status '404', got '%d'",
+			respRec.Code,
+		)
 	}
 	v = respRec.Header().Get("k1")
 	if respRec.Header().Get("k1") != "v1" {
@@ -521,7 +546,7 @@ func withrequestbody(w http.ResponseWriter, r *http.Request) {
 		R400(w, err)
 		return
 	}
-	defer r.Body.Close()
+	r.Body.Close()
 
 	output := string(b)
 	wctx := Context(r)

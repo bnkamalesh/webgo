@@ -25,13 +25,19 @@ const wgoCtxKey = ctxkey("webgocontext")
 
 // ContextPayload is the WebgoContext. A new instance of ContextPayload is injected inside every request's context object
 type ContextPayload struct {
-	Route *Route
-	path  string
+	Route     *Route
+	path      string
+	pathbytes []byte
 }
 
 // Params returns the URI parameters of the respective route
 func (cp *ContextPayload) Params() map[string]string {
 	return cp.Route.params(cp.path)
+}
+
+func (cp *ContextPayload) reset() {
+	cp.Route = nil
+	cp.path = ""
 }
 
 // Context returns the ContextPayload injected inside the HTTP request context
