@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"sync"
@@ -60,6 +61,7 @@ func (crw *customResponseWriter) WriteHeader(code int) {
 	if crw.written || crw.headerWritten {
 		return
 	}
+
 	crw.headerWritten = true
 	crw.statusCode = code
 	crw.ResponseWriter.WriteHeader(code)
@@ -72,9 +74,9 @@ func (crw *customResponseWriter) Write(body []byte) (int, error) {
 		LOGHANDLER.Warn(errMultiWrite)
 		return 0, nil
 	}
-	if !crw.headerWritten {
-		crw.WriteHeader(crw.statusCode)
-	}
+
+	crw.WriteHeader(crw.statusCode)
+
 	crw.written = true
 	return crw.ResponseWriter.Write(body)
 }
@@ -93,6 +95,14 @@ func (crw *customResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	}
 
 	return nil, nil, errors.New("unable to create hijacker")
+}
+
+// CloseNotify implements the http.CloseNotifier interface
+func (crw *customResponseWriter) CloseNotify() <-chan bool {
+	if n, ok := crw.ResponseWriter.(http.CloseNotifier); ok {
+		return n.CloseNotify()
+	}
+	return nil
 }
 
 func (crw *customResponseWriter) reset() {
@@ -170,7 +180,6 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// the HTTP status code would say 200, and and the JSON payload {"status": 500}
 	crw := newCRW(rw, 0)
 
-	// ctxPayload := &ContextPayload{}
 	ctxPayload := newContext()
 
 	// webgo context object is created and is injected to the request context
@@ -273,7 +282,7 @@ func releasePoolResources(crw *customResponseWriter, cp *ContextPayload) {
 func deprecationLogs() {
 }
 
-// NewRouter initializes returns a new router instance with all the configurations and routes set
+// NewRouter initializes & returns a new router instance with all the configurations and routes set
 func NewRouter(cfg *Config, routes []*Route) *Router {
 	handlers := httpHandlers(routes)
 	r := &Router{
@@ -305,16 +314,31 @@ func checkDuplicateRoutes(idx int, route *Route, routes []*Route) {
 		rt := routes[i]
 
 		if rt.Name == route.Name {
-			LOGHANDLER.Info("Duplicate route name(\"" + rt.Name + "\") detected")
+			LOGHANDLER.Info(
+				fmt.Sprintf(
+					"Duplicate route name('%s') detected",
+					rt.Name,
+				),
+			)
 		}
 
-		if rt.Method == route.Method {
-			// regex pattern match
-			if ok, _ := rt.matchPath(route.Pattern); ok {
-				LOGHANDLER.Warn("Duplicate URI pattern detected.\nPattern: '" + rt.Pattern + "'\nDuplicate pattern: '" + route.Pattern + "'")
-				LOGHANDLER.Warn("Only the first route to match the URI pattern would handle the request")
-			}
+		if rt.Method != route.Method {
+			continue
 		}
+
+		// regex pattern match
+		if ok, _ := rt.matchPath(route.Pattern); !ok {
+			continue
+		}
+
+		LOGHANDLER.Warn(
+			fmt.Sprintf(
+				"Duplicate URI pattern detected.\nPattern: '%s'\nDuplicate pattern: '%s'",
+				rt.Pattern,
+				route.Pattern,
+			),
+		)
+		LOGHANDLER.Warn("Only the first route to match the URI pattern would handle the request")
 	}
 }
 
@@ -335,12 +359,23 @@ func httpHandlers(routes []*Route) map[string][]*Route {
 		}
 
 		if !found {
-			LOGHANDLER.Fatal("Unsupported HTTP request method provided. Method:", route.Method)
+			LOGHANDLER.Fatal(
+				fmt.Sprintf(
+					"Unsupported HTTP method provided. Method: '%s'",
+					route.Method,
+				),
+			)
 			return nil
 		}
 
 		if route.Handlers == nil || len(route.Handlers) == 0 {
-			LOGHANDLER.Fatal("No handlers provided for the route '", route.Pattern, "', method '", route.Method, "'")
+			LOGHANDLER.Fatal(
+				fmt.Sprintf(
+					"No handlers provided for the route '%s', method '%s'",
+					route.Pattern,
+					route.Method,
+				),
+			)
 			return nil
 		}
 
