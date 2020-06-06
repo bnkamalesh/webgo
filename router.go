@@ -117,9 +117,9 @@ type Middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
 
 // discoverRoute returns the correct 'route', for the given request
 func discoverRoute(path string, routes []*Route) *Route {
-	ok := false
+	// ok := false
 	for _, route := range routes {
-		if ok, _ = route.matchPath(path); ok {
+		if ok, _ := route.matchPath(path); ok {
 			return route
 		}
 	}

@@ -12,7 +12,7 @@ import (
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	// WebGo context
 	wctx := webgo.Context(r)
-	// URI paramaters, map[string]string
+	// URI parameters, map[string]string
 	params := wctx.Params()
 	// route, the webgo.Route which is executing this request
 	route := wctx.Route

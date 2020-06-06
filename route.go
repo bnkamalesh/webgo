@@ -110,9 +110,8 @@ func (r *Route) parseURIWithParams(patternString string) (string, error) {
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
 	patternString := r.Pattern
-	err := error(nil)
 
-	patternString, err = r.parseURIWithParams(patternString)
+	patternString, err := r.parseURIWithParams(patternString)
 	if err != nil {
 		return err
 	}
@@ -137,7 +136,7 @@ func (r *Route) init() error {
 }
 
 // matchPath matches the requestURI with the URI pattern of the route.
-// If the path is an exact match (i.e. no URI paramters), then the second paramter ('isExactMatch') is true
+// If the path is an exact match (i.e. no URI parameters), then the second parameter ('isExactMatch') is true
 func (r *Route) matchPath(requestURI string) (bool, isExactMatch bool) {
 	if r.Pattern == requestURI {
 		return true, true
