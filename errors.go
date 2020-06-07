@@ -94,17 +94,7 @@ func init() {
 	GlobalLoggerConfig(nil, nil)
 }
 
-// GlobalLoggerConfig is used to configure the global/default logger of webgo
-// IMPORTANT: This is not concurrent safe
-func GlobalLoggerConfig(stdout io.Writer, stderr io.Writer, cfgs ...logCfg) {
-	if stdout == nil {
-		stdout = os.Stdout
-	}
-
-	if stderr == nil {
-		stderr = os.Stderr
-	}
-
+func loggerWithCfg(stdout io.Writer, stderr io.Writer, cfgs ...logCfg) *logHandler {
 	lh = &logHandler{
 		debug: log.New(stdout, "Debug ", log.LstdFlags),
 		info:  log.New(stdout, "Info ", log.LstdFlags),
@@ -137,5 +127,19 @@ func GlobalLoggerConfig(stdout io.Writer, stderr io.Writer, cfgs ...logCfg) {
 			}
 		}
 	}
-	LOGHANDLER = lh
+	return lh
+}
+
+// GlobalLoggerConfig is used to configure the global/default logger of webgo
+// IMPORTANT: This is not concurrent safe
+func GlobalLoggerConfig(stdout io.Writer, stderr io.Writer, cfgs ...logCfg) {
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+
+	if stderr == nil {
+		stderr = os.Stderr
+	}
+
+	LOGHANDLER = loggerWithCfg(stdout, stderr, cfgs...)
 }

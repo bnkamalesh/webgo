@@ -59,6 +59,7 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 	w.Header().Set(HeaderContentType, contentType)
 	_, err := fmt.Fprint(w, data)
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(ErrInternalServer))
 		LOGHANDLER.Error(err)
 	}
@@ -74,7 +75,6 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
-		w.WriteHeader(http.StatusInternalServerError)
 		R500(w, ErrInternalServer)
 		LOGHANDLER.Error(err)
 	}
@@ -90,7 +90,6 @@ func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 			In case of encoding error, send "internal server error" after
 			logging the actual error.
 		*/
-		w.WriteHeader(http.StatusInternalServerError)
 		R500(w, ErrInternalServer)
 		LOGHANDLER.Error(err)
 	}

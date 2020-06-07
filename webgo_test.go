@@ -59,6 +59,122 @@ var OPTIONSAPI = []string{
 	strings.Join([]string{baseapiHTTPS, "hello", p1, "goblin", p2}, "/"),
 }
 
+func withrequestbody(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		R400(w, err)
+		return
+	}
+	r.Body.Close()
+
+	output := string(b)
+	wctx := Context(r)
+	params := wctx.Params()
+	R200(
+		w,
+		map[string]string{
+			"p1":      params["p1"],
+			"p2":      params["p2"],
+			"payload": output,
+			"pattern": r.URL.Path,
+			"method":  r.Method,
+		},
+	)
+}
+
+func withuriparams(w http.ResponseWriter, r *http.Request) {
+	wctx := Context(r)
+	params := wctx.Params()
+	R200(
+		w,
+		map[string]string{
+			"p1":      params["p1"],
+			"p2":      params["p2"],
+			"pattern": r.URL.Path,
+			"method":  r.Method,
+		},
+	)
+}
+
+func helloWorld(w http.ResponseWriter, r *http.Request) {
+	R200(w, "Hello world")
+}
+
+func getRoutes() []*Route {
+	return []*Route{
+		{
+			Name:                    "root",
+			Method:                  http.MethodGet,
+			Pattern:                 "/",
+			FallThroughPostResponse: true,
+			TrailingSlash:           true,
+			Handlers:                []http.HandlerFunc{helloWorld},
+		},
+		{
+			Name:     "hw-noparams",
+			Method:   http.MethodGet,
+			Pattern:  "/nparams",
+			Handlers: []http.HandlerFunc{helloWorld},
+		},
+		{
+			Name:          "hw-withparams",
+			Method:        http.MethodGet,
+			TrailingSlash: true,
+			Pattern:       "/wparams/:p1/goblin/:p2",
+			Handlers:      []http.HandlerFunc{withuriparams},
+		},
+		{
+			Name:     "params-get",
+			Method:   http.MethodGet,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withuriparams},
+		},
+		{
+			Name:     "params-head",
+			Method:   http.MethodHead,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withuriparams},
+		},
+
+		{
+			Name:     "params-post-sameuri",
+			Method:   http.MethodPost,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
+		},
+		{
+			Name:     "params-put-sameuri",
+			Method:   http.MethodPut,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
+		},
+		{
+			Name:     "params-patch-sameuri",
+			Method:   http.MethodPatch,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
+		},
+		{
+			Name:     "params-delete-sameuri",
+			Method:   http.MethodDelete,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withrequestbody},
+		},
+		{
+			Name:     "params-options-sameuri",
+			Method:   http.MethodOptions,
+			Pattern:  "/hello/:p1/goblin/:p2",
+			Handlers: []http.HandlerFunc{withuriparams},
+		},
+	}
+}
+
+func mware(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+	rw.Header().Add("k1", "v1")
+	next(rw, req)
+}
+
 func setup() (*Router, *httptest.ResponseRecorder) {
 	// Initializing router with all the required routes
 	router := NewRouter(&Config{
@@ -91,63 +207,6 @@ func TestInvalidHTTPMethod(t *testing.T) {
 			t.Fatalf(`Expected response HTTP status code %d, received %d`, http.StatusNotImplemented, respRec.Code)
 		}
 	}
-}
-
-func makeBenchReq(b *testing.B,
-	router *Router,
-	respRec *httptest.ResponseRecorder,
-	url string,
-) error {
-	req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
-	if err != nil {
-		return fmt.Errorf("%s %s", url, err.Error())
-	}
-	router.ServeHTTP(respRec, req)
-	if respRec.Result().StatusCode != http.StatusOK {
-		return fmt.Errorf(
-			"%s %s, expected %d, got %d",
-			err.Error(),
-			url,
-			http.StatusOK,
-			respRec.Result().StatusCode,
-		)
-	}
-	return nil
-}
-
-func runbench(b *testing.B, url string) {
-	router, respRec := setup()
-	var err error
-	// b.RunParallel(func(pb *testing.PB) {
-	// 	for pb.Next() {
-	// 		respRec = httptest.NewRecorder()
-	// 		err = makeBenchReq(b, router, respRec, url)
-	// 		if err != nil {
-	// 			b.Fatal(err)
-	// 		}
-	// 	}
-	// })
-
-	for i := 0; i < b.N; i++ {
-		err = makeBenchReq(b, router, respRec, url)
-		if err != nil {
-			b.Fatal(err)
-		}
-	}
-}
-func BenchmarkGetNoParams(b *testing.B) {
-	url := strings.Join([]string{baseapi, "nparams"}, "/")
-	runbench(b, url)
-}
-
-func BenchmarkGetWithParams(b *testing.B) {
-	url := strings.Join([]string{baseapi, "wparams", p1, "goblin", p2}, "/")
-	runbench(b, url)
-}
-
-func BenchmarkPostWithParams(b *testing.B) {
-	url := strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/")
-	runbench(b, url)
 }
 
 func TestGet(t *testing.T) {
@@ -537,120 +596,4 @@ func TestStartHTTPS(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-}
-
-func withrequestbody(w http.ResponseWriter, r *http.Request) {
-	b, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Println(err)
-		R400(w, err)
-		return
-	}
-	r.Body.Close()
-
-	output := string(b)
-	wctx := Context(r)
-	params := wctx.Params()
-	R200(
-		w,
-		map[string]string{
-			"p1":      params["p1"],
-			"p2":      params["p2"],
-			"payload": output,
-			"pattern": r.URL.Path,
-			"method":  r.Method,
-		},
-	)
-}
-
-func withuriparams(w http.ResponseWriter, r *http.Request) {
-	wctx := Context(r)
-	params := wctx.Params()
-	R200(
-		w,
-		map[string]string{
-			"p1":      params["p1"],
-			"p2":      params["p2"],
-			"pattern": r.URL.Path,
-			"method":  r.Method,
-		},
-	)
-}
-
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	R200(w, "Hello world")
-}
-
-func getRoutes() []*Route {
-	return []*Route{
-		{
-			Name:                    "root",
-			Method:                  http.MethodGet,
-			Pattern:                 "/",
-			FallThroughPostResponse: true,
-			TrailingSlash:           true,
-			Handlers:                []http.HandlerFunc{helloWorld},
-		},
-		{
-			Name:     "hw-noparams",
-			Method:   http.MethodGet,
-			Pattern:  "/nparams",
-			Handlers: []http.HandlerFunc{helloWorld},
-		},
-		{
-			Name:          "hw-withparams",
-			Method:        http.MethodGet,
-			TrailingSlash: true,
-			Pattern:       "/wparams/:p1/goblin/:p2",
-			Handlers:      []http.HandlerFunc{withuriparams},
-		},
-		{
-			Name:     "params-get",
-			Method:   http.MethodGet,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withuriparams},
-		},
-		{
-			Name:     "params-head",
-			Method:   http.MethodHead,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withuriparams},
-		},
-
-		{
-			Name:     "params-post-sameuri",
-			Method:   http.MethodPost,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withrequestbody},
-		},
-		{
-			Name:     "params-put-sameuri",
-			Method:   http.MethodPut,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withrequestbody},
-		},
-		{
-			Name:     "params-patch-sameuri",
-			Method:   http.MethodPatch,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withrequestbody},
-		},
-		{
-			Name:     "params-delete-sameuri",
-			Method:   http.MethodDelete,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withrequestbody},
-		},
-		{
-			Name:     "params-options-sameuri",
-			Method:   http.MethodOptions,
-			Pattern:  "/hello/:p1/goblin/:p2",
-			Handlers: []http.HandlerFunc{withuriparams},
-		},
-	}
-}
-
-func mware(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	rw.Header().Add("k1", "v1")
-	next(rw, req)
 }

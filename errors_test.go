@@ -2,6 +2,7 @@ package webgo
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 )
 
@@ -49,4 +50,97 @@ func TestGlobalLoggerConfig(t *testing.T) {
 			t.Errorf("GlobalLoggerConfig() = %v, want %v", gotStderr, tt.wantStderr)
 		}
 	}
+}
+
+func TestLogging(t *testing.T) {
+	logmsg := "hello world"
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+	logh := loggerWithCfg(stdout, stderr)
+
+	logh.Debug(logmsg)
+	stdStr := stdout.String()
+	outstr := strings.TrimSpace(stdStr)
+	outstr = outstr[(len(outstr))-len(logmsg):]
+	if outstr != logmsg {
+		t.Fatalf(
+			"expected output '%s', got '%s'",
+			logmsg,
+			outstr,
+		)
+	}
+	if stdStr[0:5] != "Debug" {
+		t.Fatalf(
+			"expected '%s' in the beginning of log, got '%s'",
+			"Debug",
+			stdStr[0:6],
+		)
+	}
+
+	stdout = new(bytes.Buffer)
+	stderr = new(bytes.Buffer)
+	logh = loggerWithCfg(stdout, stderr)
+	logh.Info(logmsg)
+	stdStr = stdout.String()
+	outstr = strings.TrimSpace(stdStr)
+	outstr = outstr[(len(outstr))-len(logmsg):]
+	if outstr != logmsg {
+		t.Fatalf(
+			"expected output '%s', got '%s'",
+			logmsg,
+			outstr,
+		)
+	}
+	if stdStr[0:4] != "Info" {
+		t.Fatalf(
+			"expected '%s' in the beginning of log, got '%s'",
+			"Info",
+			stdStr[0:4],
+		)
+	}
+
+	stdout = new(bytes.Buffer)
+	stderr = new(bytes.Buffer)
+	logh = loggerWithCfg(stdout, stderr)
+	logh.Warn(logmsg)
+	stdStr = stderr.String()
+	outstr = strings.TrimSpace(stdStr)
+	outstr = outstr[(len(outstr))-len(logmsg):]
+	if outstr != logmsg {
+		t.Fatalf(
+			"expected output '%s', got '%s'",
+			logmsg,
+			outstr,
+		)
+	}
+	if stdStr[0:4] != "Warn" {
+		t.Fatalf(
+			"expected '%s' in the beginning of log, got '%s'",
+			"Warn",
+			stdStr[0:4],
+		)
+	}
+
+	stdout = new(bytes.Buffer)
+	stderr = new(bytes.Buffer)
+	logh = loggerWithCfg(stdout, stderr)
+	logh.Error(logmsg)
+	stdStr = stderr.String()
+	outstr = strings.TrimSpace(stdStr)
+	outstr = outstr[(len(outstr))-len(logmsg):]
+	if outstr != logmsg {
+		t.Fatalf(
+			"expected output '%s', got '%s'",
+			logmsg,
+			outstr,
+		)
+	}
+	if stdStr[0:5] != "Error" {
+		t.Fatalf(
+			"expected '%s' in the beginning of log, got '%s'",
+			"Error",
+			stdStr[0:4],
+		)
+	}
+
 }
