@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v4.0.4
+# WebGo v4.0.6
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. Unlike full-fledged frameworks, it gets out of your way as soon as possible in the execution flow. WebGo has always been and will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -70,7 +70,7 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 	// WebGo context
 	wctx := webgo.Context(r)
 	// URI paramaters, map[string]string
-	params := wctx.URIParams(r)
+	params := wctx.Params()
 	// route, the webgo.Route which is executing this request
 	route := wctx.Route
 	webgo.R200(
