@@ -279,9 +279,6 @@ func releasePoolResources(crw *customResponseWriter, cp *ContextPayload) {
 	releaseContext(cp)
 }
 
-func deprecationLogs() {
-}
-
 // NewRouter initializes & returns a new router instance with all the configurations and routes set
 func NewRouter(cfg *Config, routes []*Route) *Router {
 	handlers := httpHandlers(routes)
@@ -301,8 +298,6 @@ func NewRouter(cfg *Config, routes []*Route) *Router {
 		},
 		config: cfg,
 	}
-
-	deprecationLogs()
 
 	return r
 }
