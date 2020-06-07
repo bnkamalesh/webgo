@@ -7,11 +7,13 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v4.0.6
+# WebGo v4.0.7
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. Unlike full-fledged frameworks, it gets out of your way as soon as possible in the execution flow. WebGo has always been and will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
 ### Important ❗
+
+- Regression introduced in `v4.0.4`, exists on `v4.0.6` as well. Requests panic when not using Webgo's response methods (e.g. R200, Send, SendResponse etc.) because the default HTTP status is set as 0
 
 - `ContextPayload.URIParams(*http.Request)map[string]string` was replaced despite being newly introduced in v3.5.4. The new function is `ContextPayload.Params()map[string]string`, and has a slight performance advantage compared to URIParams
 

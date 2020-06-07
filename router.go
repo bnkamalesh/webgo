@@ -178,7 +178,7 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// a custom response writer is used to set appropriate HTTP status code in case of
 	// encoding errors. i.e. if there's a JSON encoding issue while responding,
 	// the HTTP status code would say 200, and and the JSON payload {"status": 500}
-	crw := newCRW(rw, 0)
+	crw := newCRW(rw, http.StatusOK)
 
 	ctxPayload := newContext()
 
