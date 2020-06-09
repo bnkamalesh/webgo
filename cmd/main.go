@@ -4,9 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v4/middleware"
-
 	"github.com/bnkamalesh/webgo/v4"
+	"github.com/bnkamalesh/webgo/v4/middleware"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -34,35 +33,39 @@ func chain(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("chained", "true")
 }
 
+func helloHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("hello world"))
+}
+
 func getRoutes() []*webgo.Route {
 	return []*webgo.Route{
 		&webgo.Route{
-			Name:          "root",                         // A label for the API/URI, this is not used anywhere.
-			Method:        http.MethodGet,                 // request type
-			Pattern:       "/",                            // Pattern for the route
-			Handlers:      []http.HandlerFunc{helloWorld}, // route handler
+			Name:          "root",
+			Method:        http.MethodGet,
+			Pattern:       "/",
+			Handlers:      []http.HandlerFunc{helloHandler},
 			TrailingSlash: true,
 		},
 		&webgo.Route{
-			Name:          "matchall",                     // A label for the API/URI, this is not used anywhere.
-			Method:        http.MethodGet,                 // request type
-			Pattern:       "/matchall/:wildcard*",         // Pattern for the route
-			Handlers:      []http.HandlerFunc{helloWorld}, // route handler
+			Name:          "matchall",
+			Method:        http.MethodGet,
+			Pattern:       "/matchall/:wildcard*",
+			Handlers:      []http.HandlerFunc{helloWorld},
 			TrailingSlash: true,
 		},
 		&webgo.Route{
-			Name:                    "api",                                 // A label for the API/URI, this is not used anywhere.
-			Method:                  http.MethodGet,                        // request type
-			Pattern:                 "/api/:param",                         // Pattern for the route
-			Handlers:                []http.HandlerFunc{chain, helloWorld}, // route handler
+			Name:                    "api",
+			Method:                  http.MethodGet,
+			Pattern:                 "/api/:param",
+			Handlers:                []http.HandlerFunc{chain, helloWorld},
 			TrailingSlash:           true,
 			FallThroughPostResponse: true,
 		},
 		&webgo.Route{
-			Name:          "invalidjson",                   // A label for the API/URI, this is not used anywhere.
-			Method:        http.MethodGet,                  // request type
-			Pattern:       "/invalidjson",                  // Pattern for the route
-			Handlers:      []http.HandlerFunc{invalidJSON}, // route handler
+			Name:          "invalidjson",
+			Method:        http.MethodGet,
+			Pattern:       "/invalidjson",
+			Handlers:      []http.HandlerFunc{invalidJSON},
 			TrailingSlash: true,
 		},
 	}
@@ -79,7 +82,6 @@ func main() {
 	router := webgo.NewRouter(cfg, getRoutes())
 
 	router.UseOnSpecialHandlers(middleware.AccessLog)
-
 	router.Use(middleware.AccessLog)
 	router.Use(middleware.CorsWrap())
 	webgo.GlobalLoggerConfig(

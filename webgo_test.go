@@ -97,6 +97,16 @@ func withuriparams(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
+func httpresponsewriter(w http.ResponseWriter, r *http.Request) {
+	payload, _ := json.Marshal(
+		map[string]string{
+			"pattern": r.URL.Path,
+			"method":  r.Method,
+		},
+	)
+	w.Write(payload)
+}
+
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	R200(w, "Hello world")
 }
@@ -166,6 +176,12 @@ func getRoutes() []*Route {
 			Method:   http.MethodOptions,
 			Pattern:  "/hello/:p1/goblin/:p2",
 			Handlers: []http.HandlerFunc{withuriparams},
+		},
+		{
+			Name:     "httpresponsewriter",
+			Method:   http.MethodGet,
+			Pattern:  "/httpresponsewriter",
+			Handlers: []http.HandlerFunc{httpresponsewriter},
 		},
 	}
 }
@@ -579,6 +595,38 @@ func TestOptions(t *testing.T) {
 	}
 }
 
+func TestHTTPResponseWriter(t *testing.T) {
+	router, respRec := setup()
+	path := "httpresponsewriter"
+	url := fmt.Sprintf("%s/%s", baseapi, path)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal(err, url)
+	}
+
+	resp := response{}
+	router.ServeHTTP(respRec, req)
+	if respRec.Result().StatusCode != http.StatusOK {
+		t.Fatalf(
+			"expected status 200, got '%d', url '%s'",
+			respRec.Result().StatusCode,
+			url,
+		)
+	}
+
+	err = json.NewDecoder(respRec.Body).Decode(&resp)
+	if err != nil {
+		t.Fatal(err, url)
+	}
+
+	if resp.Data["pattern"] != path {
+		fmt.Sprintf(
+			"expected pattern '%s', got '%s'",
+			path,
+			resp.Data["pattern"],
+		)
+	}
+}
 func TestStart(t *testing.T) {
 	router, _ := setup()
 	go router.Start()

@@ -42,9 +42,17 @@ func (cp *ContextPayload) reset() {
 
 // Context returns the ContextPayload injected inside the HTTP request context
 func Context(r *http.Request) *ContextPayload {
-	// wc, _ := r.Context().Value(wgoCtxKey).(*ContextPayload)
-	// return wc
 	return r.Context().Value(wgoCtxKey).(*ContextPayload)
+}
+
+// ResponseStatus returns the response status code. It works only if the http.ResponseWriter
+// is not wrapped in another response writer before calling ResponseStatus
+func ResponseStatus(rw http.ResponseWriter) int {
+	crw, ok := rw.(*customResponseWriter)
+	if !ok {
+		return http.StatusOK
+	}
+	return crw.statusCode
 }
 
 // StartHTTPS starts the server with HTTPS enabled

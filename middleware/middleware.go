@@ -11,24 +11,10 @@ import (
 	"github.com/bnkamalesh/webgo/v4"
 )
 
-// responseWriter is a custom HTTP response writer
-type responseWriter struct {
-	http.ResponseWriter
-	code int
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.code = code
-	rw.ResponseWriter.WriteHeader(code)
-}
-
 // AccessLog is a middleware which prints access log to stdout
 func AccessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 	start := time.Now()
-	w := &responseWriter{
-		ResponseWriter: rw,
-	}
-	next(w, req)
+	next(rw, req)
 	end := time.Now()
 
 	webgo.LOGHANDLER.Info(
@@ -38,7 +24,7 @@ func AccessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc)
 			req.Method,
 			req.URL.String(),
 			end.Sub(start).String(),
-			w.code,
+			webgo.ResponseStatus(rw),
 		),
 	)
 }

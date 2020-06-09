@@ -119,7 +119,6 @@ func TestSend(t *testing.T) {
 	if str != "hello" {
 		t.Error("Expected 'hello', got", str)
 	}
-
 }
 
 func TestRender(t *testing.T) {

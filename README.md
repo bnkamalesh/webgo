@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v4.0.7
+# WebGo v4.1.1
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. Unlike full-fledged frameworks, it gets out of your way as soon as possible in the execution flow. WebGo has always been and will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -113,8 +113,8 @@ WebGo middleware lets you wrap all the routes with a middleware. Unlike handler 
 
 ```golang
 import (
-	"github.com/bnkamalesh/webgo/v3"
-	"github.com/bnkamalesh/webgo/v3/middleware"
+	"github.com/bnkamalesh/webgo/v4"
+	"github.com/bnkamalesh/webgo/v4/middleware"
 )
 
 func routes() []*webgo.Route {
@@ -164,11 +164,12 @@ func main() {
 
 WebGo provides a few helper functions.
 
-1. [SendHeader(w http.ResponseWriter, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendHeader) - Send only an HTTP response header with the provided response code.
-2. [Send(w http.ResponseWriter, contentType string, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#Send) - Send any response as is, with the provided content type and response code
-3. [SendResponse(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendResponse) - Send a JSON response wrapped in WebGo's default response struct.
-4. [SendError(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendError) - Send a JSON response wrapped in WebGo's default error response struct
-5. [Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template)](https://godoc.org/github.com/bnkamalesh/webgo#Render) - Render renders a Go template, with the provided data & response code.
+1. [ResponseStatus(w http.ResponseWriter)](https://godoc.org/github.com/bnkamalesh/webgo#ResponseStatus) get the HTTP status code from response writer
+2. [SendHeader(w http.ResponseWriter, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendHeader) - Send only an HTTP response header with the provided response code.
+3. [Send(w http.ResponseWriter, contentType string, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#Send) - Send any response as is, with the provided content type and response code
+4. [SendResponse(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendResponse) - Send a JSON response wrapped in WebGo's default response struct.
+5. [SendError(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendError) - Send a JSON response wrapped in WebGo's default error response struct
+6. [Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template)](https://godoc.org/github.com/bnkamalesh/webgo#Render) - Render renders a Go template, with the provided data & response code.
 
 Few more helper functions are available, you can check them [here](https://godoc.org/github.com/bnkamalesh/webgo#R200). 
 
