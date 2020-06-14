@@ -68,12 +68,12 @@ func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int
 // SendResponse is used to respond to any request (JSON response) based on the code, data etc.
 func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 	w = crwAsserter(w, rCode)
-
+	w.Header().Add(HeaderContentType, JSONContentType)
 	err := json.NewEncoder(w).Encode(dOutput{Data: data, Status: rCode})
 	if err != nil {
 		/*
-			In case of encoding error, send "internal server error" after
-			logging the actual error.
+			In case of encoding error, send "internal server error" and
+			log the actual error.
 		*/
 		R500(w, ErrInternalServer)
 		LOGHANDLER.Error(err)
@@ -83,12 +83,12 @@ func SendResponse(w http.ResponseWriter, data interface{}, rCode int) {
 // SendError is used to respond to any request with an error
 func SendError(w http.ResponseWriter, data interface{}, rCode int) {
 	w = crwAsserter(w, rCode)
-
+	w.Header().Add(HeaderContentType, JSONContentType)
 	err := json.NewEncoder(w).Encode(errOutput{data, rCode})
 	if err != nil {
 		/*
-			In case of encoding error, send "internal server error" after
-			logging the actual error.
+			In case of encoding error, send "internal server error" and
+			log the actual error.
 		*/
 		R500(w, ErrInternalServer)
 		LOGHANDLER.Error(err)
