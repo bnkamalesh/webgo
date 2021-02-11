@@ -349,6 +349,13 @@ $ docker run \
 Info 2020/06/03 12:55:26 HTTP server, listening on :8080
 ```
 
+### Benchmark
+
+You can view benchmark results at the following repos:
+
+1. [the-benchmarker](https://github.com/the-benchmarker/web-frameworks)
+2. [go-web-framework-benchmark](https://github.com/smallnest/go-web-framework-benchmark)
+
 ### Contributing
 
 Refer [here](https://github.com/bnkamalesh/webgo/blob/master/CONTRIBUTING.md) to find out details about making a contribution
