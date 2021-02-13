@@ -117,7 +117,6 @@ type Middleware func(http.ResponseWriter, *http.Request, http.HandlerFunc)
 
 // discoverRoute returns the correct 'route', for the given request
 func discoverRoute(path string, routes []*Route) *Route {
-	// ok := false
 	for _, route := range routes {
 		if ok, _ := route.matchPath(path); ok {
 			return route
@@ -153,8 +152,8 @@ type Router struct {
 }
 
 // methodRoutes returns the list of Routes handling the HTTP method given the request
-func (rtr *Router) methodRoutes(r *http.Request) (routes []*Route) {
-	switch r.Method {
+func (rtr *Router) methodRoutes(method string) (routes []*Route) {
+	switch method {
 	case http.MethodOptions:
 		return rtr.optHandlers
 	case http.MethodHead:
@@ -180,9 +179,30 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// the HTTP status code would say 200, and and the JSON payload {"status": 500}
 	crw := newCRW(rw, http.StatusOK)
 
-	ctxPayload := newContext()
+	routes := rtr.methodRoutes(r.Method)
+	if routes == nil {
+		// serve 501 when HTTP method is not implemented
+		crw.statusCode = http.StatusNotImplemented
+		rtr.NotImplemented(crw, r)
+		releaseCRW(crw)
+		return
+	}
 
-	// webgo context object is created and is injected to the request context
+	path := r.URL.EscapedPath()
+	route := discoverRoute(path, routes)
+	if route == nil {
+		// serve 404 when there are no matching routes
+		crw.statusCode = http.StatusNotFound
+		rtr.NotFound(crw, r)
+		releaseCRW(crw)
+		return
+	}
+
+	ctxPayload := newContext()
+	ctxPayload.path = path
+	ctxPayload.Route = route
+
+	// webgo context is injected to the HTTP request context
 	*r = *r.WithContext(
 		context.WithValue(
 			r.Context(),
@@ -191,30 +211,10 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		),
 	)
 
-	routes := rtr.methodRoutes(r)
-	if routes == nil {
-		crw.statusCode = http.StatusNotImplemented
-		rtr.NotImplemented(crw, r)
-		releasePoolResources(crw, ctxPayload)
-		return
-	}
-
-	path := r.URL.EscapedPath()
-	route := discoverRoute(
-		path,
-		routes,
-	)
-	ctxPayload.path = path
-	if route == nil {
-		// serve 404 when there are no matching routes
-		crw.statusCode = http.StatusNotFound
-		rtr.NotFound(crw, r)
-		releasePoolResources(crw, ctxPayload)
-		return
-	}
-
-	ctxPayload.Route = route
 	route.serve(crw, r)
+
+	// IMPORTANT/TODO: if the handler panics, resources are not released from the pool.
+	// `defer releasePoolResources(crw, ctxPayload)` would solve the problem but with a potential performance hit
 	releasePoolResources(crw, ctxPayload)
 }
 

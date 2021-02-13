@@ -124,6 +124,9 @@ func (cfg *Config) normalize() {
 }
 
 func allowedHeaders(headers []string) string {
+	if len(headers) == 0 {
+		return ""
+	}
 	allowedHeaders := strings.Join(headers, ",")
 	if allowedHeaders[len(allowedHeaders)-1] != ',' {
 		allowedHeaders += ","

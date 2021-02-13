@@ -33,19 +33,9 @@ func makeBenchReq(b *testing.B,
 
 func runbench(b *testing.B, url string) {
 	router, respRec := setup()
-	var err error
-	// b.RunParallel(func(pb *testing.PB) {
-	// 	for pb.Next() {
-	// 		respRec = httptest.NewRecorder()
-	// 		err = makeBenchReq(b, router, respRec, url)
-	// 		if err != nil {
-	// 			b.Fatal(err)
-	// 		}
-	// 	}
-	// })
 
 	for i := 0; i < b.N; i++ {
-		err = makeBenchReq(b, router, respRec, url)
+		err := makeBenchReq(b, router, respRec, url)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -64,14 +54,4 @@ func BenchmarkGetWithParams(b *testing.B) {
 func BenchmarkPostWithParams(b *testing.B) {
 	url := strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/")
 	runbench(b, url)
-}
-
-func Benchmark_MatchAndGet(b *testing.B) {
-	router, _ := setup()
-	r := router.getHandlers[2]
-
-	path := "/hello/world/goblin/spiderman"
-	for i := 0; i < b.N; i++ {
-		r.matchAndGet(path)
-	}
 }

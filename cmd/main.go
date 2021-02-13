@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/bnkamalesh/webgo/v4"
-	"github.com/bnkamalesh/webgo/v4/middleware"
+	"github.com/bnkamalesh/webgo/v4/middleware/accesslog"
+	"github.com/bnkamalesh/webgo/v4/middleware/cors"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -39,21 +40,21 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 
 func getRoutes() []*webgo.Route {
 	return []*webgo.Route{
-		&webgo.Route{
+		{
 			Name:          "root",
 			Method:        http.MethodGet,
 			Pattern:       "/",
 			Handlers:      []http.HandlerFunc{helloHandler},
 			TrailingSlash: true,
 		},
-		&webgo.Route{
+		{
 			Name:          "matchall",
 			Method:        http.MethodGet,
 			Pattern:       "/matchall/:wildcard*",
 			Handlers:      []http.HandlerFunc{helloWorld},
 			TrailingSlash: true,
 		},
-		&webgo.Route{
+		{
 			Name:                    "api",
 			Method:                  http.MethodGet,
 			Pattern:                 "/api/:param",
@@ -61,7 +62,7 @@ func getRoutes() []*webgo.Route {
 			TrailingSlash:           true,
 			FallThroughPostResponse: true,
 		},
-		&webgo.Route{
+		{
 			Name:          "invalidjson",
 			Method:        http.MethodGet,
 			Pattern:       "/invalidjson",
@@ -81,9 +82,9 @@ func main() {
 
 	router := webgo.NewRouter(cfg, getRoutes())
 
-	router.UseOnSpecialHandlers(middleware.AccessLog)
-	router.Use(middleware.AccessLog)
-	router.Use(middleware.CorsWrap())
+	router.UseOnSpecialHandlers(accesslog.AccessLog)
+	router.Use(accesslog.AccessLog)
+	router.Use(cors.CORS(nil))
 	webgo.GlobalLoggerConfig(
 		nil, nil,
 		webgo.LogCfgDisableDebug,

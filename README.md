@@ -7,16 +7,9 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v4.1.3
+# WebGo v4.1.9
 
-WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. Unlike full-fledged frameworks, it gets out of your way as soon as possible in the execution flow. WebGo has always been and will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
-
-### Important ❗
-
-- Regression introduced in `v4.0.4`, exists on `v4.0.6` as well. Requests panic when not using Webgo's response methods (e.g. R200, Send, SendResponse etc.) because the default HTTP status is set as 0
-
-- `ContextPayload.URIParams(*http.Request)map[string]string` was replaced despite being newly introduced in v3.5.4. The new function is `ContextPayload.Params()map[string]string`, and has a slight performance advantage compared to URIParams
-
+WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
 ### Index
 
@@ -32,13 +25,12 @@ WebGo is a minimalistic framework for [Go](https://golang.org) to build web appl
 
 ## Router
 
-
-The router is one of the most important component of a web application. It helps identify the HTTP requests and pass them on to respective handlers. A handler is identified using a [URI](https://developer.mozilla.org/en-US/docs/Glossary/URI). WebGo supports defining URIs with the following patterns
+Router routes multiple paths/[URI](https://developer.mozilla.org/en-US/docs/Glossary/URI)s to its respective HTTP handler. It supports defining URIs with the following patterns
 
 1. `/api/users` 
 	- Static URI pattern with no variables
 2. `/api/users/:userID` 
-	- URI pattern with variable `userID` (named URI parameter)
+	- URI pattern with named variable `userID` (named URI parameter)
 	- This will **_not_** match `/api/users/johndoe/account`. It only matches till `/api/users/johndoe/`
 		- If TrailingSlash is set to true, refer to [sample](https://github.com/bnkamalesh/webgo#sample)
 3. `/api/users/:misc*`
@@ -65,7 +57,7 @@ webgo.Route{
 }
 ```
 
-You can access named parameters of the URI using the `Context` function.
+You can access named parameters of the URI using the `Context` function. Note: webgo Context is **not** available inside special handlers, since it serves no purpose 
 
 ```golang
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +80,7 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 
 ## Handler chaining
 
-Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a handler has written a response to the http request. This is made possible by setting `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo#sample)).
+Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a handler has written a response to the HTTP request. This is made possible by setting `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo#sample)).
 
 ```golang
 webgo.Route{
@@ -109,7 +101,9 @@ webgo.Route{
 
 ## Middleware
 
-WebGo middleware lets you wrap all the routes with a middleware. Unlike handler chaining, middleware applies to all the handlers. All middleware should be of type [Middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware). The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) && [UseOnSpecialHandlers](https://godoc.org/github.com/bnkamalesh/webgo#Router.UseOnSpecialHandlers) to add a Middleware to the router. Following code shows how a middleware can be used in WebGo.
+WebGo [middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware) lets you wrap all the routes with a middleware unlike handler chaining. The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) && [UseOnSpecialHandlers](https://godoc.org/github.com/bnkamalesh/webgo#Router.UseOnSpecialHandlers) to add a Middleware to the router. Following code shows how a middleware can be used.
+
+NotFound && NotImplemented are the handlers which are considered `Special` handlers. `webgo.Context(r)` within special handlers will return `nil`.
 
 ```golang
 import (
@@ -171,7 +165,7 @@ WebGo provides a few helper functions.
 5. [SendError(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendError) - Send a JSON response wrapped in WebGo's default error response struct
 6. [Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template)](https://godoc.org/github.com/bnkamalesh/webgo#Render) - Render renders a Go template, with the provided data & response code.
 
-Few more helper functions are available, you can check them [here](https://godoc.org/github.com/bnkamalesh/webgo#R200). 
+You can find other helper functions [here](https://godoc.org/github.com/bnkamalesh/webgo#R200). 
 
 When using `Send` or `SendResponse`, the response is wrapped in WebGo's [response struct](https://github.com/bnkamalesh/webgo/blob/master/responses.go#L17) and is serialized as JSON.
 
@@ -278,7 +272,7 @@ func main() {
 
 ## Logging
 
-WebGo exposes a singleton & global scoped logger variable [LOGHANDLER](https://godoc.org/github.com/bnkamalesh/webgo#Logger) with which you can plugin your custom logger. Any custom logger should implement WebGo's [Logger](https://godoc.org/github.com/bnkamalesh/webgo#Logger) interface.
+WebGo exposes a singleton & global scoped logger variable [LOGHANDLER](https://godoc.org/github.com/bnkamalesh/webgo#Logger) with which you can plug in your custom logger by implementing the [Logger](https://godoc.org/github.com/bnkamalesh/webgo#Logger) interface.
 
 ```golang
 type Logger interface {
@@ -322,7 +316,7 @@ A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo
 
 ### How to run the sample
 
-If you have Go installed on your system, open your terminal and:
+If you have Go installed on your computer, open the terminal and:
 
 ```bash
 $ cd $GOPATH/src
@@ -335,7 +329,7 @@ $ go run cmd/main.go
 Info 2020/06/03 12:55:26 HTTP server, listening on :8080
 ```
 
-Or if you have [Docker](https://www.docker.com/), open your terminal and:
+Or if you have [Docker](https://www.docker.com/), open the terminal and:
 
 ```bash
 $ git clone https://github.com/bnkamalesh/webgo.git

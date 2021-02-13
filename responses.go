@@ -55,7 +55,6 @@ func crwAsserter(w http.ResponseWriter, rCode int) http.ResponseWriter {
 // `{data: <data>, status: <int>` struct
 func Send(w http.ResponseWriter, contentType string, data interface{}, rCode int) {
 	w = crwAsserter(w, rCode)
-
 	w.Header().Set(HeaderContentType, contentType)
 	_, err := fmt.Fprint(w, data)
 	if err != nil {

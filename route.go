@@ -146,38 +146,22 @@ func (r *Route) matchPath(requestURI string) (bool, isExactMatch bool) {
 }
 
 func (r *Route) params(requestURI string) map[string]string {
-	params := r.uriPattern.FindStringSubmatch(requestURI)
+	params := r.uriPattern.FindStringSubmatch(requestURI)[1:]
+	uriValues := make(map[string]string, len(params))
 
-	uriValues := make(map[string]string, len(params)-1)
-	for i := 1; i < len(params); i++ {
-		uriValues[r.uriKeys[i-1]] = params[i]
+	for i := 0; i < len(params); i++ {
+		uriValues[r.uriKeys[i]] = params[i]
 	}
 
 	return uriValues
 }
 
-// matchAndGet returns if the request URI matches the pattern defined in a Route as well as
-// all the URI parameters configured for the route.
-func (r *Route) matchAndGet(requestURI string) (bool, map[string]string) {
-	matched, isExactMatch := r.matchPath(requestURI)
-	if !matched {
-		return false, nil
-	}
-
-	if isExactMatch {
-		return true, nil
-	}
-
-	return true, r.params(requestURI)
-}
-
 func routeServeChainedHandlers(r *Route) http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
-		crw, _ := rw.(*customResponseWriter)
-		if crw == nil {
-			crw = &customResponseWriter{
-				ResponseWriter: rw,
-			}
+
+		crw, ok := rw.(*customResponseWriter)
+		if !ok {
+			crw = newCRW(rw, http.StatusOK)
 		}
 
 		for _, handler := range r.Handlers {
