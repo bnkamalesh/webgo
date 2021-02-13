@@ -69,7 +69,7 @@ func (r *Route) computePatternStr(patternString string, hasWildcard bool, key st
 
 func (r *Route) parseURIWithParams(patternString string) (string, error) {
 	if !strings.Contains(r.Pattern, ":") {
-		return "", nil
+		return patternString, nil
 	}
 
 	var err error

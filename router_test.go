@@ -30,7 +30,6 @@ func TestRoute_computePatternStr(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
 		{
 			name: "",
 			fields: fields{
