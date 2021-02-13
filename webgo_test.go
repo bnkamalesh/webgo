@@ -266,7 +266,7 @@ func TestGetWithNoParams(t *testing.T) {
 			continue
 		}
 
-		expected := strings.ReplaceAll(url, baseapi, "")
+		expected := strings.Replace(url, baseapi, "", 1)
 		if expected != resp.Data {
 			t.Fatalf("Expected '%s', got '%s'", expected, resp.Data)
 		}
