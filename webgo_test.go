@@ -29,6 +29,12 @@ const p2 = "spiderman"
 const baseapi = "http://127.0.0.1:9696"
 const baseapiHTTPS = "http://127.0.0.1:9696"
 
+var GETAPINOPARAMS = []string{
+	strings.Join([]string{baseapi, "nparams"}, "/"),
+	strings.Join([]string{baseapi, "nparams", "2"}, "/"),
+	strings.Join([]string{baseapi, "nparams", "-", "3"}, "/"),
+}
+
 var GETAPI = []string{
 	strings.Join([]string{baseapi, "hello", p1, "goblin", p2}, "/"),
 	strings.Join([]string{baseapiHTTPS, "hello", p1, "goblin", p2}, "/"),
@@ -108,7 +114,7 @@ func httpresponsewriter(w http.ResponseWriter, r *http.Request) {
 }
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
-	R200(w, "Hello world")
+	R200(w, r.URL.Path)
 }
 
 func getRoutes() []*Route {
@@ -125,6 +131,18 @@ func getRoutes() []*Route {
 			Name:     "hw-noparams",
 			Method:   http.MethodGet,
 			Pattern:  "/nparams",
+			Handlers: []http.HandlerFunc{helloWorld},
+		},
+		{
+			Name:     "hw-noparams-2",
+			Method:   http.MethodGet,
+			Pattern:  "/nparams/2",
+			Handlers: []http.HandlerFunc{helloWorld},
+		},
+		{
+			Name:     "hw-noparams-3",
+			Method:   http.MethodGet,
+			Pattern:  "/nparams/-/3",
 			Handlers: []http.HandlerFunc{helloWorld},
 		},
 		{
@@ -221,6 +239,36 @@ func TestInvalidHTTPMethod(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 		if respRec.Code != http.StatusNotImplemented {
 			t.Fatalf(`Expected response HTTP status code %d, received %d`, http.StatusNotImplemented, respRec.Code)
+		}
+	}
+}
+
+func TestGetWithNoParams(t *testing.T) {
+	router, respRec := setup()
+
+	for _, url := range GETAPINOPARAMS {
+		req, err := http.NewRequest(http.MethodGet, url, bytes.NewBuffer(nil))
+		if err != nil {
+			t.Fatal(err, url)
+			continue
+		}
+
+		router.ServeHTTP(respRec, req)
+
+		resp := struct {
+			Data   string
+			Status int
+		}{}
+
+		err = json.NewDecoder(respRec.Body).Decode(&resp)
+		if err != nil {
+			t.Fatal(err)
+			continue
+		}
+
+		expected := strings.ReplaceAll(url, baseapi, "")
+		if expected != resp.Data {
+			t.Fatalf("Expected '%s', got '%s'", expected, resp.Data)
 		}
 	}
 }
