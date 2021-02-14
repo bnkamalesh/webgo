@@ -3,160 +3,574 @@ package webgo
 import (
 	"encoding/json"
 	"html/template"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"testing"
 )
 
-func TestResponses(t *testing.T) {
-	_, respRec := setup()
-	R200(respRec, nil)
-	if respRec.Code != http.StatusOK {
-		t.Error("Expected response status 200, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R201(respRec, nil)
-	if respRec.Code != http.StatusCreated {
-		t.Error("Expected response status 201, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R204(respRec)
-	if respRec.Code != http.StatusNoContent {
-		t.Error("Expected response status 204, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R302(respRec, nil)
-	if respRec.Code != http.StatusFound {
-		t.Error("Expected response status 302, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R400(respRec, nil)
-	if respRec.Code != http.StatusBadRequest {
-		t.Error("Expected response status 400, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R403(respRec, nil)
-	if respRec.Code != http.StatusForbidden {
-		t.Error("Expected response status 403, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R404(respRec, nil)
-	if respRec.Code != http.StatusNotFound {
-		t.Error("Expected response status 404, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R406(respRec, nil)
-	if respRec.Code != http.StatusNotAcceptable {
-		t.Error("Expected response status 406, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R451(respRec, nil)
-	if respRec.Code != http.StatusUnavailableForLegalReasons {
-		t.Error("Expected response status 451, got", respRec.Code)
-	}
-
-	_, respRec = setup()
-	R500(respRec, nil)
-	if respRec.Code != http.StatusInternalServerError {
-		t.Error("Expected response status 500, got", respRec.Code)
+func TestSendHeader(t *testing.T) {
+	w := httptest.NewRecorder()
+	SendHeader(w, http.StatusNoContent)
+	if w.Result().StatusCode != http.StatusNoContent {
+		t.Errorf("Expected code '%d', got '%d'", http.StatusNoContent, w.Result().StatusCode)
 	}
 }
 
-func TestInvalidResponses(t *testing.T) {
-	_, respRec := setup()
+func TestSendError(t *testing.T) {
+	w := httptest.NewRecorder()
+	payload := map[string]string{"message": "hello world"}
+	SendError(w, payload, http.StatusBadRequest)
 
-	R200(respRec, make(chan int))
-	resp := response{}
-	err := json.NewDecoder(respRec.Body).Decode(&resp)
+	resp := struct {
+		Errors map[string]string
+	}{}
+
+	body, err := ioutil.ReadAll(w.Body)
 	if err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 
-	if resp.Status != http.StatusInternalServerError {
-		t.Error("Expected status 500, got:", resp.Status)
-	}
-
-	if respRec.Result().StatusCode != http.StatusInternalServerError {
-		t.Error("Expected status 500, got:", respRec.Result().StatusCode)
-	}
-
-	_, respRec = setup()
-
-	R400(respRec, make(chan int))
-	resp = response{}
-	err = json.NewDecoder(respRec.Body).Decode(&resp)
+	err = json.Unmarshal(body, &resp)
 	if err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 
-	if resp.Status != http.StatusInternalServerError {
-		t.Error("Expected status 500, got:", resp.Status)
+	if !reflect.DeepEqual(payload, resp.Errors) {
+		t.Errorf(
+			"Expected '%v', got '%v'. Raw response: '%s'",
+			payload,
+			resp.Errors,
+			string(body),
+		)
+	}
+	if w.Result().StatusCode != http.StatusBadRequest {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusBadRequest,
+			w.Result().StatusCode,
+			string(body),
+		)
 	}
 
-	if respRec.Result().StatusCode != http.StatusInternalServerError {
-		t.Error("Expected status 500, got:", respRec.Result().StatusCode)
+	// testing invalid response body
+	w = httptest.NewRecorder()
+
+	invResp := struct {
+		Errors string
+	}{}
+	invalidPayload := make(chan int)
+	SendError(w, invalidPayload, http.StatusBadRequest)
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	err = json.Unmarshal(body, &invResp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if invResp.Errors != `Internal server error` {
+		t.Errorf(
+			"Expected 'Internal server error', got '%v'. Raw response: '%s'",
+			invResp.Errors,
+			string(body),
+		)
+	}
+
+	if w.Result().StatusCode != http.StatusInternalServerError {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusInternalServerError,
+			w.Result().StatusCode,
+			string(body),
+		)
+	}
+
+}
+
+func TestSendResponse(t *testing.T) {
+	w := httptest.NewRecorder()
+	payload := map[string]string{"hello": "world"}
+
+	SendResponse(w, payload, http.StatusOK)
+	body, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	resp := struct {
+		Data map[string]string
+	}{}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if !reflect.DeepEqual(payload, resp.Data) {
+		t.Errorf(
+			"Expected '%v', got '%v'. Raw response: '%s'",
+			payload,
+			resp.Data,
+			string(body),
+		)
+	}
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusOK,
+			w.Result().StatusCode,
+			string(body),
+		)
+	}
+
+	// testing invalid response payload
+	w = httptest.NewRecorder()
+	SendResponse(w, make(chan int), http.StatusOK)
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	invalidresp := struct {
+		Errors string
+	}{}
+
+	err = json.Unmarshal(body, &invalidresp)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if !reflect.DeepEqual(`Internal server error`, invalidresp.Errors) {
+		t.Errorf(
+			"Expected '%v', got '%v'. Raw response: '%s'",
+			payload,
+			invalidresp.Errors,
+			string(body),
+		)
+	}
+
+	if w.Result().StatusCode != http.StatusInternalServerError {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusInternalServerError,
+			w.Result().StatusCode,
+			string(body),
+		)
 	}
 }
 
 func TestSend(t *testing.T) {
-	_, respRec := setup()
-	Send(respRec, "text/html", "hello", http.StatusOK)
+	w := httptest.NewRecorder()
+	payload := map[string]string{"hello": "world"}
+	reqBody, _ := json.Marshal(payload)
 
-	if respRec.Code != http.StatusOK {
-		t.Error("Expected status '200', got", respRec.Code)
+	Send(w, JSONContentType, string(reqBody), http.StatusOK)
+	body, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
 	}
 
-	str := respRec.Body.String()
-	if str != "hello" {
-		t.Error("Expected 'hello', got", str)
+	resp := map[string]string{}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if !reflect.DeepEqual(payload, resp) {
+		t.Errorf(
+			"Expected '%v', got '%v'. Raw response: '%s'",
+			payload,
+			resp,
+			string(body),
+		)
+	}
+
+	if w.Result().StatusCode != http.StatusOK {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusOK,
+			w.Result().StatusCode,
+			string(body),
+		)
 	}
 }
 
 func TestRender(t *testing.T) {
-	_, respResc := setup()
-
-	tmpl, err := template.New("sample").Parse(`hello world`)
+	w := httptest.NewRecorder()
+	data := struct {
+		Hello string
+	}{
+		Hello: "world",
+	}
+	tpl := template.New("txttemp")
+	tpl, err := tpl.Parse(`{{.Hello}}`)
 	if err != nil {
-		t.Error(err)
+		t.Error(err.Error())
+		return
+	}
+	Render(w, data, http.StatusOK, tpl)
+
+	body, err := ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if w.Code != http.StatusOK {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusOK,
+			w.Code,
+			string(body),
+		)
+	}
+
+	w = httptest.NewRecorder()
+	invaliddata := 0
+
+	tpl = template.New("invalid")
+	tpl, err = tpl.Parse(`{{.Hello}}`)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	Render(w, invaliddata, http.StatusOK, tpl)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
 		return
 	}
 
-	Render(respResc, nil, http.StatusOK, tmpl)
-	str := respResc.Body.String()
-	if str != `hello world` {
-		t.Error(str)
+	str := string(body)
+	want := `Internal server error`
+	if str != want {
+		t.Errorf(
+			"Expected '%s', got '%s'. Raw response: '%s'",
+			want,
+			str,
+			str,
+		)
+	}
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusInternalServerError,
+			w.Code,
+			string(body),
+		)
 	}
 }
-func TestRender404(t *testing.T) {
-	_, respResc := setup()
 
-	tmpl, err := template.New("sample").Parse(`{{.ErrDescription}}`)
+func TestResponsehelpers(t *testing.T) {
+	w := httptest.NewRecorder()
+	want := "hello world"
+	resp := struct {
+		Data   string
+		Errors string
+		Status int
+	}{}
+
+	R200(w, want)
+
+	body, err := ioutil.ReadAll(w.Body)
 	if err != nil {
-		t.Error(err)
+		t.Error(err.Error())
 		return
 	}
 
-	Render404(respResc, tmpl)
-
-	str := respResc.Body.String()
-	if str != `Sorry, the URL you requested was not found on this server... Or you&#39;re lost :-/` {
-		t.Error(str)
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
 	}
-}
 
-func TestSendHeader(t *testing.T) {
-	_, respResc := setup()
-	SendHeader(respResc, http.StatusAccepted)
-	if respResc.Code != http.StatusAccepted {
-		t.Error("Expected response code 202, got:", respResc.Code)
+	if resp.Data != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Data,
+		)
 	}
+	if w.Code != http.StatusOK {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusOK,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R201
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	R201(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Data != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Data,
+		)
+	}
+	if w.Code != http.StatusCreated {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusCreated,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R204
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	R204(w)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	if string(body) != "" {
+		t.Errorf(
+			"Expected empty response, got '%s'",
+			string(body),
+		)
+	}
+	if w.Code != http.StatusNoContent {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusNoContent,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R302
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	R302(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Data != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Data,
+		)
+	}
+	if w.Code != http.StatusFound {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusFound,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R400
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	resp.Errors = ""
+	R400(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Errors != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Errors,
+		)
+	}
+	if w.Code != http.StatusBadRequest {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusBadRequest,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R403
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	resp.Errors = ""
+	R403(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Errors != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Errors,
+		)
+	}
+	if w.Code != http.StatusForbidden {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusForbidden,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R404
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	resp.Errors = ""
+	R404(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Errors != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Errors,
+		)
+	}
+	if w.Code != http.StatusNotFound {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusNotFound,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R406
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	resp.Errors = ""
+	R406(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Errors != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Errors,
+		)
+	}
+	if w.Code != http.StatusNotAcceptable {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusNotAcceptable,
+			w.Code,
+			string(body),
+		)
+	}
+
+	// R451
+	w = httptest.NewRecorder()
+	resp.Data = ""
+	resp.Errors = ""
+	R451(w, want)
+
+	body, err = ioutil.ReadAll(w.Body)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+
+	if resp.Errors != want {
+		t.Errorf(
+			"Expected '%s', got '%s'",
+			want,
+			resp.Errors,
+		)
+	}
+	if w.Code != http.StatusUnavailableForLegalReasons {
+		t.Errorf(
+			"Expected response status code %d, got %d. Raw response: '%s'",
+			http.StatusUnavailableForLegalReasons,
+			w.Code,
+			string(body),
+		)
+	}
+
 }

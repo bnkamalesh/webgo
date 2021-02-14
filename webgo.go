@@ -116,7 +116,7 @@ func (router *Router) Shutdown() error {
 	}
 	timer := router.config.ShutdownTimeout
 
-	ctx, cancel := context.WithTimeout(context.Background(), timer)
+	ctx, cancel := context.WithTimeout(context.TODO(), timer)
 	defer cancel()
 
 	err := router.httpServer.Shutdown(ctx)
@@ -133,7 +133,7 @@ func (router *Router) ShutdownHTTPS() error {
 	}
 	timer := router.config.ShutdownTimeout
 
-	ctx, cancel := context.WithTimeout(context.Background(), timer)
+	ctx, cancel := context.WithTimeout(context.TODO(), timer)
 	defer cancel()
 
 	err := router.httpsServer.Shutdown(ctx)

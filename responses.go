@@ -109,17 +109,6 @@ func Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Te
 	}
 }
 
-// Render404 - used to render a 404 page
-func Render404(w http.ResponseWriter, tpl *template.Template) {
-	Render(w, ErrorData{
-		http.StatusNotFound,
-		"Sorry, the URL you requested was not found on this server... Or you're lost :-/",
-	},
-		http.StatusNotFound,
-		tpl,
-	)
-}
-
 // R200 - Successful/OK response
 func R200(w http.ResponseWriter, data interface{}) {
 	SendResponse(w, data, http.StatusOK)

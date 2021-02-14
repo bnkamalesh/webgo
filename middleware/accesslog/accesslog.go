@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v4"
+	"github.com/bnkamalesh/webgo/v5"
 )
 
 // AccessLog is a middleware which prints access log to stdout
@@ -21,8 +21,7 @@ func AccessLog(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc)
 
 	webgo.LOGHANDLER.Info(
 		fmt.Sprintf(
-			"%s %s %s %s %d",
-			end.Format("2006-01-02 15:04:05 -0700 MST"),
+			"%s %s %s %d",
 			req.Method,
 			req.URL.String(),
 			end.Sub(start).String(),

@@ -1,89 +1,73 @@
 package webgo
 
 import (
-	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 	"testing"
 )
 
-func TestRoute_init(t *testing.T) {
+func TestRoute_computePatternStr(t *testing.T) {
 	type fields struct {
-		Name          string
-		Method        string
-		Pattern       string
-		TrailingSlash bool
-		Handlers      []http.HandlerFunc
+		Name                    string
+		Method                  string
+		Pattern                 string
+		TrailingSlash           bool
+		FallThroughPostResponse bool
+		Handlers                []http.HandlerFunc
+		uriKeys                 []string
+		uriPatternString        string
+		uriPattern              *regexp.Regexp
+		serve                   http.HandlerFunc
+	}
+	type args struct {
+		patternString string
+		hasWildcard   bool
+		key           string
 	}
 	tests := []struct {
-		name           string
-		fields         fields
-		wantPatternStr string
-		wantErr        bool
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
 	}{
 		{
-			name: "without trailing slash, without params",
+			name: "duplicate URIs",
 			fields: fields{
-				Name:          "",
-				Method:        http.MethodGet,
-				Pattern:       "/user",
-				TrailingSlash: false,
-				Handlers:      []http.HandlerFunc{http.NotFound},
+				Pattern: "/a/b/:c/:c",
+				// uriKeys is initialized with a key, so as to detect duplicate key
+				uriKeys: []string{"c"},
 			},
-			wantErr:        false,
-			wantPatternStr: "^/user$",
-		},
-		{
-			name: "with trailing slash, without params",
-			fields: fields{
-				Name:          "",
-				Method:        http.MethodGet,
-				Pattern:       "/user",
-				TrailingSlash: true,
-				Handlers:      []http.HandlerFunc{http.NotFound},
+			args: args{
+				patternString: strings.Replace("/a/b/:c/:c", ":c", urlchars, 2),
+				hasWildcard:   false,
+				key:           "c",
 			},
-			wantErr:        false,
-			wantPatternStr: fmt.Sprintf("^/user%s$", trailingSlash),
-		},
-		{
-			name: "without trailing slash, with params",
-			fields: fields{
-				Name:          "",
-				Method:        http.MethodGet,
-				Pattern:       "/user/:id",
-				TrailingSlash: false,
-				Handlers:      []http.HandlerFunc{http.NotFound},
-			},
-			wantErr:        false,
-			wantPatternStr: fmt.Sprintf("^/user/%s$", "([^/]+)"),
-		},
-		{
-			name: "with trailing slash, with params",
-			fields: fields{
-				Name:          "",
-				Method:        http.MethodGet,
-				Pattern:       "/user/:id",
-				TrailingSlash: true,
-				Handlers:      []http.HandlerFunc{http.NotFound},
-			},
-			wantErr:        false,
-			wantPatternStr: fmt.Sprintf("^/user/%s%s$", "([^/]+)", trailingSlash),
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Route{
-				Name:          tt.fields.Name,
-				Method:        tt.fields.Method,
-				Pattern:       tt.fields.Pattern,
-				TrailingSlash: tt.fields.TrailingSlash,
-				Handlers:      tt.fields.Handlers,
+				Name:                    tt.fields.Name,
+				Method:                  tt.fields.Method,
+				Pattern:                 tt.fields.Pattern,
+				TrailingSlash:           tt.fields.TrailingSlash,
+				FallThroughPostResponse: tt.fields.FallThroughPostResponse,
+				Handlers:                tt.fields.Handlers,
+				uriKeys:                 tt.fields.uriKeys,
+				uriPatternString:        tt.fields.uriPatternString,
+				uriPattern:              tt.fields.uriPattern,
+				serve:                   tt.fields.serve,
 			}
-			err := r.init()
-			if err != nil {
-				t.Error(err.Error())
+			got, err := r.computePatternStr(tt.args.patternString, tt.args.hasWildcard, tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Route.computePatternStr() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
-			if r.uriPatternString != tt.wantPatternStr {
-				t.Errorf("Expected pattern '%s', got '%s'", tt.wantPatternStr, r.uriPatternString)
+			if got != tt.want {
+				t.Errorf("Route.computePatternStr() = %v, want %v", got, tt.want)
 			}
 		})
 	}

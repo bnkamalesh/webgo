@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v4"
-	"github.com/bnkamalesh/webgo/v4/middleware/accesslog"
-	"github.com/bnkamalesh/webgo/v4/middleware/cors"
+	"github.com/bnkamalesh/webgo/v5"
+	"github.com/bnkamalesh/webgo/v5/middleware/accesslog"
+	"github.com/bnkamalesh/webgo/v5/middleware/cors"
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {

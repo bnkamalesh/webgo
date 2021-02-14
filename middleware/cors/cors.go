@@ -16,7 +16,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/bnkamalesh/webgo/v4"
+	"github.com/bnkamalesh/webgo/v5"
 )
 
 const (
@@ -117,16 +117,11 @@ type Config struct {
 	AllowedHeaders []string
 }
 
-func (cfg *Config) normalize() {
-	if cfg.TimeoutSecs < 60 {
-		cfg.TimeoutSecs = 60
-	}
-}
-
 func allowedHeaders(headers []string) string {
 	if len(headers) == 0 {
-		return ""
+		return allowHeaders
 	}
+
 	allowedHeaders := strings.Join(headers, ",")
 	if allowedHeaders[len(allowedHeaders)-1] != ',' {
 		allowedHeaders += ","
@@ -176,10 +171,44 @@ func Middleware(allowedOriginRegex []regexp.Regexp, corsTimeout, allowedMethods,
 	}
 }
 
+// AddOptionsHandlers appends OPTIONS handler for all the routes
+// The response body would be empty for all the new handlers added
+func AddOptionsHandlers(routes []*webgo.Route) []*webgo.Route {
+	dummyHandler := func(w http.ResponseWriter, r *http.Request) {}
+	if len(routes) == 0 {
+		return []*webgo.Route{
+			{
+				Name:          "cors",
+				Pattern:       "/:w*",
+				Method:        http.MethodOptions,
+				TrailingSlash: true,
+				Handlers:      []http.HandlerFunc{dummyHandler},
+			},
+		}
+	}
+
+	list := make([]*webgo.Route, 0, len(routes))
+	list = append(list, routes...)
+
+	for _, r := range routes {
+		list = append(list, &webgo.Route{
+			Name:          fmt.Sprintf("%s-CORS", r.Name),
+			Method:        http.MethodOptions,
+			Pattern:       r.Pattern,
+			TrailingSlash: true,
+			Handlers:      []http.HandlerFunc{dummyHandler},
+		})
+	}
+
+	return list
+}
+
 // CORS is a single CORS middleware which can be applied to the whole app at once
 func CORS(cfg *Config) webgo.Middleware {
 	if cfg == nil {
 		cfg = new(Config)
+		// 30 minutes
+		cfg.TimeoutSecs = 30 * 60
 	}
 
 	allowedOrigins := cfg.AllowedOrigins

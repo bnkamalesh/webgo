@@ -29,7 +29,7 @@ type Config struct {
 	// InsecureSkipVerify is the HTTP certificate verification
 	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 
-	// ShutdownTimeout is the duration in which graceful shutdown is completed, in seconds
+	// ShutdownTimeout is the duration in which graceful shutdown is completed
 	ShutdownTimeout time.Duration
 }
 
