@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -38,6 +40,26 @@ func helloHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("hello world"))
 }
 
+func errorSetter(w http.ResponseWriter, r *http.Request) {
+	err := errors.New("oh no, server error")
+	webgo.SetError(r, err)
+
+	webgo.R500(w, err.Error())
+}
+
+// errLogger is a middleware which will log all errors returned/set by a handler
+func errLogger(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	next(w, r)
+
+	err := webgo.GetError(r)
+	if err != nil {
+		// log only server errors
+		if webgo.ResponseStatus(w) > 499 {
+			log.Println("errorLogger:", err.Error())
+		}
+	}
+}
+
 func getRoutes() []*webgo.Route {
 	return []*webgo.Route{
 		{
@@ -69,6 +91,13 @@ func getRoutes() []*webgo.Route {
 			Handlers:      []http.HandlerFunc{invalidJSON},
 			TrailingSlash: true,
 		},
+		{
+			Name:          "error-setter",
+			Method:        http.MethodGet,
+			Pattern:       "/error-setter",
+			Handlers:      []http.HandlerFunc{errorSetter},
+			TrailingSlash: true,
+		},
 	}
 }
 
@@ -81,13 +110,13 @@ func main() {
 	}
 
 	router := webgo.NewRouter(cfg, getRoutes())
-
 	router.UseOnSpecialHandlers(accesslog.AccessLog)
-	router.Use(accesslog.AccessLog)
-	router.Use(cors.CORS(nil))
+	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
+
 	webgo.GlobalLoggerConfig(
 		nil, nil,
 		webgo.LogCfgDisableDebug,
 	)
+
 	router.Start()
 }

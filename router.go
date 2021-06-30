@@ -219,19 +219,23 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 // Use adds a middleware layer
-func (rtr *Router) Use(f Middleware) {
+func (rtr *Router) Use(flist ...Middleware) {
 	for _, handlers := range rtr.allHandlers {
-		for _, route := range handlers {
-			srv := route.serve
-			route.serve = func(rw http.ResponseWriter, req *http.Request) {
-				f(rw, req, srv)
+		for idx := range handlers {
+			route := handlers[idx]
+			for idx := range flist {
+				f := flist[idx]
+				srv := route.serve
+				route.serve = func(rw http.ResponseWriter, req *http.Request) {
+					f(rw, req, srv)
+				}
 			}
 		}
 	}
 }
 
 // UseOnSpecialHandlers adds middleware to the 2 special handlers of webgo
-func (rtr *Router) UseOnSpecialHandlers(f Middleware) {
+func (rtr *Router) UseOnSpecialHandlers(flist ...Middleware) {
 	// v3.2.1 introduced the feature of adding middleware to both notfound & not implemented
 	// handlers
 	/*
@@ -242,14 +246,17 @@ func (rtr *Router) UseOnSpecialHandlers(f Middleware) {
 		  middleware separately to NOTFOUND & NOTIMPLEMENTED handlers
 	*/
 
-	nf := rtr.NotFound
-	rtr.NotFound = func(rw http.ResponseWriter, req *http.Request) {
-		f(rw, req, nf)
-	}
+	for idx := range flist {
+		f := flist[idx]
+		nf := rtr.NotFound
+		rtr.NotFound = func(rw http.ResponseWriter, req *http.Request) {
+			f(rw, req, nf)
+		}
 
-	ni := rtr.NotImplemented
-	rtr.NotImplemented = func(rw http.ResponseWriter, req *http.Request) {
-		f(rw, req, ni)
+		ni := rtr.NotImplemented
+		rtr.NotImplemented = func(rw http.ResponseWriter, req *http.Request) {
+			f(rw, req, ni)
+		}
 	}
 }
 

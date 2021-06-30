@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v5.0.0
+# WebGo v5.2.0
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -107,8 +107,9 @@ NotFound && NotImplemented are the handlers which are considered `Special` handl
 
 ```golang
 import (
-	"github.com/bnkamalesh/webgo/v4"
-	"github.com/bnkamalesh/webgo/v4/middleware"
+	"github.com/bnkamalesh/webgo/v5"
+	"github.com/bnkamalesh/webgo/v5/middleware/accesslog"
+	"github.com/bnkamalesh/webgo/v5/middleware/cors"
 )
 
 func routes() []*webgo.Route {
@@ -134,9 +135,9 @@ func main() {
 		WriteTimeout: 60 * time.Second,
 	}, routes())
 
-	router.UseOnSpecialHandlers(middleware.AccessLog)
+	router.UseOnSpecialHandlers(accesslog.AccessLog)
 	
-	router.Use(middleware.AccessLog)
+	router.Use(accesslog.AccessLog)
 
 	router.Start()
 }
@@ -147,8 +148,8 @@ Any number of middleware can be added to the router, the order of execution of m
 
 ```golang
 func main() {
-	router.Use(middleware.AccessLog)
-	router.Use(middleware.CorsWrap())
+	router.Use(accesslog.AccessLog, cors.CORS(nil))
+	router.Use(<more middleware>)
 }
 ```
 
@@ -296,7 +297,7 @@ Usage is shown in `cmd/main.go`.
 
 ## Usage
 
-A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go). You can try the following API calls with the sample app.
+A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go). You can try the following API calls with the sample app. It also uses all the features provided by webgo
 
 1. `http://localhost:8080/`
 	- Route with no named parameters configured
@@ -313,6 +314,8 @@ A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo
 	- e.g.
 		- http://localhost:8080/api/hello
 		- http://localhost:8080/api/world
+4. `http://localhost:8080/error-setter`
+	- Route which sets an error and sets response status 500
 
 ### How to run the sample
 
