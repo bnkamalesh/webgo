@@ -26,6 +26,7 @@ const wgoCtxKey = ctxkey("webgocontext")
 // ContextPayload is the WebgoContext. A new instance of ContextPayload is injected inside every request's context object
 type ContextPayload struct {
 	Route *Route
+	Err   error
 	path  string
 }
 
@@ -37,11 +38,33 @@ func (cp *ContextPayload) Params() map[string]string {
 func (cp *ContextPayload) reset() {
 	cp.Route = nil
 	cp.path = ""
+	cp.Err = nil
+}
+
+// SetError sets the err within the context
+func (cp *ContextPayload) SetError(err error) {
+	cp.Err = err
+}
+
+// Error returns the error set within the context
+func (cp *ContextPayload) Error() error {
+	return cp.Err
 }
 
 // Context returns the ContextPayload injected inside the HTTP request context
 func Context(r *http.Request) *ContextPayload {
 	return r.Context().Value(wgoCtxKey).(*ContextPayload)
+}
+
+// SetError is a helper function to set the error in webgo context
+func SetError(r *http.Request, err error) {
+	ctx := Context(r)
+	ctx.SetError(err)
+}
+
+// GetError is a helper function to get the error from webgo context
+func GetError(r *http.Request) error {
+	return Context(r).Error()
 }
 
 // ResponseStatus returns the response status code. It works only if the http.ResponseWriter
