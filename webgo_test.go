@@ -13,6 +13,7 @@ e.g.
 package webgo
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -59,5 +60,20 @@ func TestStartHTTPS(t *testing.T) {
 	err := router.ShutdownHTTPS()
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestErrorHandling(t *testing.T) {
+	err := errors.New("hello world, failed")
+	router, _ := setup("7878")
+	w := httptest.NewRecorder()
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+	router.ServeHTTP(w, r)
+
+	SetError(r, err)
+	gotErr := GetError(r)
+
+	if !errors.Is(err, gotErr) {
+		t.Fatalf("expected err %v, got %v", err, gotErr)
 	}
 }

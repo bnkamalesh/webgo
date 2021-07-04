@@ -9,55 +9,37 @@
 
 # WebGo v5.2.0
 
-WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with zero 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
+WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with no 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
-### Index
+### Contents
 
 1. [Router](https://github.com/bnkamalesh/webgo#router)
 2. [Handler chaining](https://github.com/bnkamalesh/webgo#handler-chaining)
 3. [Middleware](https://github.com/bnkamalesh/webgo#middleware)
-4. [Helper functions](https://github.com/bnkamalesh/webgo#helper-functions)
-5. [HTTPS ready](https://github.com/bnkamalesh/webgo#https-ready)
-6. [Graceful shutdown](https://github.com/bnkamalesh/webgo#graceful-shutdown)
-7. [Logging](https://github.com/bnkamalesh/webgo#logging)
-8. [Usage](https://github.com/bnkamalesh/webgo#usage)
+4. [Error handling](https://github.com/bnkamalesh/webgo#error-handling)
+5. [Helper functions](https://github.com/bnkamalesh/webgo#helper-functions)
+6. [HTTPS ready](https://github.com/bnkamalesh/webgo#https-ready)
+7. [Graceful shutdown](https://github.com/bnkamalesh/webgo#graceful-shutdown)
+8. [Logging](https://github.com/bnkamalesh/webgo#logging)
+9. [Usage](https://github.com/bnkamalesh/webgo#usage)
 
 
 ## Router
 
-Router routes multiple paths/[URI](https://developer.mozilla.org/en-US/docs/Glossary/URI)s to its respective HTTP handler. It supports defining URIs with the following patterns
+Webgo has a simplistic, regex based router and supports defining [URI](https://developer.mozilla.org/en-US/docs/Glossary/URI)s with the following patterns
 
-1. `/api/users` 
-	- Static URI pattern with no variables
+1. `/api/users` - URI with no dynamic values
 2. `/api/users/:userID` 
-	- URI pattern with named variable `userID` (named URI parameter)
-	- This will **_not_** match `/api/users/johndoe/account`. It only matches till `/api/users/johndoe/`
-		- If TrailingSlash is set to true, refer to [sample](https://github.com/bnkamalesh/webgo#sample)
+	- URI with a named parameter, `userID`
+	- If TrailingSlash is set to true, it will accept the URI ending with a '/', refer to [sample](https://github.com/bnkamalesh/webgo#sample)
 3. `/api/users/:misc*`
-	- Named URI variable `misc`
+	- Named URI parameter `misc`, with a wildcard suffix '*'
 	- This matches everything after `/api/users`. e.g. `/api/users/a/b/c/d`
 
-If multiple patterns match the same URI, the first matching handler would be executed. Refer to the [sample](https://github.com/bnkamalesh/webgo#sample) to see how routes are configured. A WebGo [Route](https://godoc.org/github.com/bnkamalesh/webgo#Route) is defined as following:
+When there are multiple handlers matching the same URI, only the first occurring handler will handle the request.
+Refer to the [sample](https://github.com/bnkamalesh/webgo#sample) to see how routes are configured.  You can access named parameters of the URI using the `Context` function. 
 
-```golang
-webgo.Route{
-	// A name for the API (preferrably unique)
-	Name string
-	// HTTP verb, i.e. GET, POST, PUT, PATCH, HEAD, DELETE
-	Method string
-	// The URI pattern
-	Pattern string
-	// If the URI ends with a '/', should it be considered valid or not? e.g. '/api/users' vs '/api/users/'
-	TrailingSlash bool
-	// In case of chained handlers, should the execution continue after one of the handlers have 
-	// responded to the HTTP request
-	FallThroughPostResponse bool
-	// The list of HTTP handlers
-	Handlers []http.HandlerFunc
-}
-```
-
-You can access named parameters of the URI using the `Context` function. Note: webgo Context is **not** available inside special handlers, since it serves no purpose 
+Note: webgo Context is **not** available inside the special handlers (not found & method not implemented)
 
 ```golang
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -73,76 +55,20 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 			"Route name: '%s', params: '%s'", 
 			route.Name,
 			params, 
-			),
+		),
 	)
 }
 ```
 
 ## Handler chaining
 
-Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a handler has written a response to the HTTP request. This is made possible by setting `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo#sample)).
-
-```golang
-webgo.Route{
-	Name: "chained",
-	Method: http.MethodGet,
-	Pattern: "/api",
-	TrailingSlash: false,
-	FallThroughPostResponse: true,
-	Handlers []http.HandlerFunc{
-		handler1,
-		handler2,
-		.
-		.
-		.
-	}
-}
-```
+Handler chaining lets you execute multiple handlers for a given route. Execution of a chain can be configured to run even after a handler has written a response to the HTTP request, if you set `FallThroughPostResponse` to `true` (refer [sample](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go#L70)).
 
 ## Middleware
 
-WebGo [middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware) lets you wrap all the routes with a middleware unlike handler chaining. The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) && [UseOnSpecialHandlers](https://godoc.org/github.com/bnkamalesh/webgo#Router.UseOnSpecialHandlers) to add a Middleware to the router. Following code shows how a middleware can be used.
+WebGo [middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware) lets you wrap all the routes with a middleware unlike handler chaining. The router exposes a method [Use](https://godoc.org/github.com/bnkamalesh/webgo#Router.Use) && [UseOnSpecialHandlers](https://godoc.org/github.com/bnkamalesh/webgo#Router.UseOnSpecialHandlers) to add a Middleware to the router.
 
-NotFound && NotImplemented are the handlers which are considered `Special` handlers. `webgo.Context(r)` within special handlers will return `nil`.
-
-```golang
-import (
-	"github.com/bnkamalesh/webgo/v5"
-	"github.com/bnkamalesh/webgo/v5/middleware/accesslog"
-	"github.com/bnkamalesh/webgo/v5/middleware/cors"
-)
-
-func routes() []*webgo.Route {
-	return []*webgo.Route{
-		&webo.Route{
-			Name: "home",
-			Method: http.http.MethodGet,
-			Pattern: "/",
-			Handlers: []http.HandlerFunc{
-				func(w http.ResponseWriter, r *http.Request) {
-					webgo.R200(w, "home")
-				}
-			},
-		},
-	}
-}
-
-func main() {
-	router := webgo.NewRouter(*webgo.Config{
-		Host:         "",
-		Port:         "8080",
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 60 * time.Second,
-	}, routes())
-
-	router.UseOnSpecialHandlers(accesslog.AccessLog)
-	
-	router.Use(accesslog.AccessLog)
-
-	router.Start()
-}
-
-```
+NotFound && NotImplemented are considered `Special` handlers. `webgo.Context(r)` within special handlers will return `nil`.
 
 Any number of middleware can be added to the router, the order of execution of middleware would be [LIFO](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) (Last In First Out). i.e. in case of the following code
 
@@ -155,20 +81,13 @@ func main() {
 
 **_CorsWrap_** would be executed first, followed by **_AccessLog_**.
 
+## Error handling
+
+Webgo context has 2 methods to [set](https://github.com/bnkamalesh/webgo/blob/master/webgo.go#L60) & [get](https://github.com/bnkamalesh/webgo/blob/master/webgo.go#L66) within a request context. It enables Webgo to implement a single middleware where you can handle error logging, or any related implementation. [example](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go#L51).
+
 ## Helper functions
 
-WebGo provides a few helper functions.
-
-1. [ResponseStatus(w http.ResponseWriter)](https://godoc.org/github.com/bnkamalesh/webgo#ResponseStatus) get the HTTP status code from response writer
-2. [SendHeader(w http.ResponseWriter, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendHeader) - Send only an HTTP response header with the provided response code.
-3. [Send(w http.ResponseWriter, contentType string, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#Send) - Send any response as is, with the provided content type and response code
-4. [SendResponse(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendResponse) - Send a JSON response wrapped in WebGo's default response struct.
-5. [SendError(w http.ResponseWriter, data interface{}, rCode int)](https://godoc.org/github.com/bnkamalesh/webgo#SendError) - Send a JSON response wrapped in WebGo's default error response struct
-6. [Render(w http.ResponseWriter, data interface{}, rCode int, tpl *template.Template)](https://godoc.org/github.com/bnkamalesh/webgo#Render) - Render renders a Go template, with the provided data & response code.
-
-You can find other helper functions [here](https://godoc.org/github.com/bnkamalesh/webgo#R200). 
-
-When using `Send` or `SendResponse`, the response is wrapped in WebGo's [response struct](https://github.com/bnkamalesh/webgo/blob/master/responses.go#L17) and is serialized as JSON.
+WebGo provides a few helper functions. When using `Send` or `SendResponse` (other Rxxx responder functions), the response is wrapped in WebGo's [response struct](https://github.com/bnkamalesh/webgo/blob/master/responses.go#L17) and is serialized as JSON.
 
 ```json
 {
@@ -220,7 +139,7 @@ router.Start()
 
 ## Graceful shutdown
 
-Graceful shutdown lets you shutdown the server without affecting any live connections/clients connected to the server. It will complete executing all the active/live requests before shutting down.
+Graceful shutdown lets you shutdown the server without affecting any live connections/clients connected to the server. Any new connection request after initiating a shutdown would be ignored.
 
 Sample code to show how to use shutdown
 
@@ -275,80 +194,14 @@ func main() {
 
 WebGo exposes a singleton & global scoped logger variable [LOGHANDLER](https://godoc.org/github.com/bnkamalesh/webgo#Logger) with which you can plug in your custom logger by implementing the [Logger](https://godoc.org/github.com/bnkamalesh/webgo#Logger) interface.
 
-```golang
-type Logger interface {
-    Debug(data ...interface{})
-    Info(data ...interface{})
-    Warn(data ...interface{})
-    Error(data ...interface{})
-    Fatal(data ...interface{})
-}
-```
-
 ### Configuring the default Logger
 
 The default logger uses Go standard library's `log.Logger` with `os.Stdout` (for debug and info logs) & `os.Stderr` (for warning, error, fatal) as default io.Writers. You can set the io.Writer as well as disable specific types of logs using the `GlobalLoggerConfig(stdout, stderr, cfgs...)` function.
 
-```golang
-GlobalLoggerConfig(nil, nil, LogCfgDisableDebug, LogCfgDisableInfo...)
-```
-
-Usage is shown in `cmd/main.go`.
-
 ## Usage
 
-A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go). You can try the following API calls with the sample app. It also uses all the features provided by webgo
-
-1. `http://localhost:8080/`
-	- Route with no named parameters configured
-2. `http://localhost:8080/matchall/`
-	- Route with wildcard parameter configured
-	- All URIs which begin with `/matchall` will be matched because it has a wildcard variable
-	- e.g. 
-		- http://localhost:8080/matchall/hello
-		- http://localhost:8080/matchall/hello/world
-		- http://localhost:8080/matchall/hello/world/user
-3. `http://localhost:8080/api/<param>
-	- Route with a named 'param' configured
-	- It will match all requests which match `/api/<single parameter>`
-	- e.g.
-		- http://localhost:8080/api/hello
-		- http://localhost:8080/api/world
-4. `http://localhost:8080/error-setter`
-	- Route which sets an error and sets response status 500
-
-### How to run the sample
-
-If you have Go installed on your computer, open the terminal and:
-
-```bash
-$ cd $GOPATH/src
-$ mkdir -p github.com/bnkamalesh
-$ cd github.com/bnkamalesh
-$ git clone https://github.com/bnkamalesh/webgo.git
-$ cd webgo
-$ go run cmd/main.go
-
-Info 2020/06/03 12:55:26 HTTP server, listening on :8080
-```
-
-Or if you have [Docker](https://www.docker.com/), open the terminal and:
-
-```bash
-$ git clone https://github.com/bnkamalesh/webgo.git
-$ cd webgo
-$ docker run \
--p 8080:8080 \
--v ${PWD}:/go/src/github.com/bnkamalesh/webgo/ \
--w /go/src/github.com/bnkamalesh/webgo/cmd \
---rm -ti golang:latest go run main.go
-
-Info 2020/06/03 12:55:26 HTTP server, listening on :8080
-```
-
+A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go).
 ### Benchmark
-
-You can view benchmark results at the following repos:
 
 1. [the-benchmarker](https://github.com/the-benchmarker/web-frameworks)
 2. [go-web-framework-benchmark](https://github.com/smallnest/go-web-framework-benchmark)
@@ -363,4 +216,4 @@ Thanks to all the [contributors](https://github.com/bnkamalesh/webgo/graphs/cont
 
 ## The gopher
 
-The gopher used here was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, so sitback and enjoy a cup of coffee like this gopher.
+The gopher used here was created using [Gopherize.me](https://gopherize.me/). WebGo stays out of developers' way, so sitback and enjoy a cup of coffee.
