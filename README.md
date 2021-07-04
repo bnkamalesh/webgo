@@ -83,7 +83,7 @@ func main() {
 
 ## Error handling
 
-Webgo context has 2 methods to [set](https://github.com/bnkamalesh/webgo/blob/master/webgo.go#L60) & [get](https://github.com/bnkamalesh/webgo/blob/master/webgo.go#L66) within a request context. It enables Webgo to implement a single middleware where you can handle error logging, or any related implementation. [example](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go#L51).
+Webgo context has 2 methods to [set](https://github.com/bnkamalesh/webgo/blob/master/webgo.go#L60) & [get](https://github.com/bnkamalesh/webgo/blob/master/webgo.go#L66) erro within a request context. It enables Webgo to implement a single middleware where you can handle error returned within an HTTP handler. [set error](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go#L45), [get error](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go#L51).
 
 ## Helper functions
 
