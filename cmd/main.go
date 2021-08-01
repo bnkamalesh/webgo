@@ -47,6 +47,16 @@ func errorSetter(w http.ResponseWriter, r *http.Request) {
 	webgo.R500(w, err.Error())
 }
 
+func originalResponseWriter(w http.ResponseWriter, r *http.Request) {
+	rw := webgo.OriginalResponseWriter(w)
+	if rw == nil {
+		webgo.Send(w, "text/html", "got nil", http.StatusPreconditionFailed)
+		return
+	}
+
+	webgo.Send(w, "text/html", "success", http.StatusOK)
+}
+
 // errLogger is a middleware which will log all errors returned/set by a handler
 func errLogger(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	next(w, r)
@@ -96,6 +106,13 @@ func getRoutes() []*webgo.Route {
 			Method:        http.MethodGet,
 			Pattern:       "/error-setter",
 			Handlers:      []http.HandlerFunc{errorSetter},
+			TrailingSlash: true,
+		},
+		{
+			Name:          "original-responsewriter",
+			Method:        http.MethodGet,
+			Pattern:       "/original-responsewriter",
+			Handlers:      []http.HandlerFunc{originalResponseWriter},
 			TrailingSlash: true,
 		},
 	}

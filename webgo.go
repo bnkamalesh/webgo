@@ -165,3 +165,14 @@ func (router *Router) ShutdownHTTPS() error {
 	}
 	return err
 }
+
+// OriginalResponseWriter returns the Go response writer stored within the webgo custom response
+// writer
+func OriginalResponseWriter(rw http.ResponseWriter) http.ResponseWriter {
+	crw, ok := rw.(*customResponseWriter)
+	if !ok {
+		return nil
+	}
+
+	return crw.ResponseWriter
+}
