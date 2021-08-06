@@ -58,7 +58,7 @@ type customResponseWriter struct {
 // WriteHeader is the interface implementation to get HTTP response code and add
 // it to the custom response writer
 func (crw *customResponseWriter) WriteHeader(code int) {
-	if crw.written || crw.headerWritten {
+	if crw.headerWritten {
 		return
 	}
 
@@ -70,13 +70,7 @@ func (crw *customResponseWriter) WriteHeader(code int) {
 // Write is the interface implementation to respond to the HTTP request,
 // but check if a response was already sent.
 func (crw *customResponseWriter) Write(body []byte) (int, error) {
-	if crw.written {
-		LOGHANDLER.Warn(errMultiWrite)
-		return 0, nil
-	}
-
 	crw.WriteHeader(crw.statusCode)
-
 	crw.written = true
 	return crw.ResponseWriter.Write(body)
 }

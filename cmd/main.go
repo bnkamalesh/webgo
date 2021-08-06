@@ -2,13 +2,20 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/bnkamalesh/webgo/v5"
 	"github.com/bnkamalesh/webgo/v5/middleware/accesslog"
 	"github.com/bnkamalesh/webgo/v5/middleware/cors"
+)
+
+var (
+	lastModified = time.Now().Format(http.TimeFormat)
 )
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
@@ -70,6 +77,16 @@ func errLogger(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	}
 }
 
+// StaticFiles is used to serve static files
+func StaticFiles(rw http.ResponseWriter, r *http.Request) {
+	wctx := webgo.Context(r)
+	// '..' is replaced to prevent directory traversal which could go out of static directory
+	path := strings.ReplaceAll(wctx.Params()["w"], "..", "-")
+
+	rw.Header().Set("Last-Modified", lastModified)
+	http.ServeFile(rw, r, fmt.Sprintf("./cmd/static/%s", path))
+}
+
 func getRoutes() []*webgo.Route {
 	return []*webgo.Route{
 		{
@@ -115,13 +132,24 @@ func getRoutes() []*webgo.Route {
 			Handlers:      []http.HandlerFunc{originalResponseWriter},
 			TrailingSlash: true,
 		},
+		{
+			Name:          "static",
+			Method:        http.MethodGet,
+			Pattern:       "/static/:w*",
+			Handlers:      []http.HandlerFunc{StaticFiles},
+			TrailingSlash: true,
+		},
 	}
 }
 
 func main() {
+	port := strings.TrimSpace(os.Getenv("HTTP_PORT"))
+	if port == "" {
+		port = "8080"
+	}
 	cfg := &webgo.Config{
 		Host:         "",
-		Port:         "8080",
+		Port:         port,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 60 * time.Second,
 	}
