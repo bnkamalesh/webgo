@@ -16,7 +16,7 @@ type Route struct {
 	// Pattern is the URI pattern to match
 	Pattern string
 	// TrailingSlash if set to true, the URI will be matched with or without
-	// a trailing slash. Note: It does not *do* a redirect.
+	// a trailing slash. IMPORTANT: It does not redirect.
 	TrailingSlash bool
 
 	// FallThroughPostResponse if enabled will execute all the handlers even if a response was already sent to the client
@@ -44,6 +44,9 @@ func (r *Route) computePatternStr(patternString string, hasWildcard bool, key st
 	if hasWildcard {
 		patternKey = fmt.Sprintf(":%s*", key)
 		regexPattern = urlwildcard
+		if r.TrailingSlash {
+			regexPattern = urlwildcardWithTrailslash
+		}
 	} else {
 		patternKey = fmt.Sprintf(":%s", key)
 		regexPattern = urlchars

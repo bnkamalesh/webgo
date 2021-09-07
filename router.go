@@ -16,12 +16,11 @@ import (
 // https://tools.ietf.org/html/rfc3986
 // Though the current one allows invalid characters in the URI parameter, it has better performance.
 const (
-	urlchars            = `([^/]+)`
-	urlwildcard         = `(.*)`
-	trailingSlash       = `[\/]?`
-	errMultiHeaderWrite = `http: multiple response.WriteHeader calls`
-	errMultiWrite       = `http: multiple response.Write calls`
-	errDuplicateKey     = `Error: Duplicate URI keys found`
+	urlchars                  = `([^/]+)`
+	urlwildcard               = `(.*)[^/]`
+	urlwildcardWithTrailslash = `(.*)[/]?`
+	trailingSlash             = `[/]?`
+	errDuplicateKey           = `Error: Duplicate URI keys found`
 )
 
 var (

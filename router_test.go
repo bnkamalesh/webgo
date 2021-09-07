@@ -36,14 +36,17 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		url := baseAPI
 		if l.Path != "" {
 			switch l.TestType {
-			case "checkpath", "checkpathnotrailingslash", "chaining", "chaining-nofallthrough":
+			case "checkpath",
+				"checkpathnotrailingslash",
+				"chaining",
+				"chaining-nofallthrough":
 				{
 					url = strings.Join([]string{url, l.Path}, "")
 				}
-			case "checkparams":
+			case "checkparams", "widlcardwithouttrailingslash":
 				{
 					for idx, key := range l.ParamKeys {
-						// in case of wildcard params, they have to replaced first for proper URL construction
+						// in case of wildcard params, they have to be replaced first for proper URL construction
 						l.Path = strings.Replace(l.Path, ":"+key+"*", l.Params[idx], 1)
 						l.Path = strings.Replace(l.Path, ":"+key, l.Params[idx], 1)
 					}
@@ -60,7 +63,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 
 		switch l.TestType {
-		case "checkpath", "checkpathnotrailingslash":
+		case "checkpath", "checkpathnotrailingslash", "widlcardwithouttrailingslash":
 			{
 				err = checkPath(req, respRec)
 			}
@@ -99,7 +102,15 @@ func TestRouter_ServeHTTP(t *testing.T) {
 					)
 				}
 			}
+		} else if err == nil && l.WantErr {
+			t.Errorf(
+				"'%s' (%s '%s') expected error, but received nil",
+				l.Name,
+				l.Method,
+				url,
+			)
 		}
+
 		err = checkMiddleware(req, respRec)
 		if err != nil {
 			t.Error(err.Error())
@@ -138,7 +149,7 @@ func getRoutes() []*Route {
 					},
 				)
 			}
-		case "checkpathnotrailingslash":
+		case "checkpathnotrailingslash", "widlcardwithouttrailingslash":
 			{
 				rr = append(rr,
 					&Route{
@@ -152,6 +163,7 @@ func getRoutes() []*Route {
 				)
 
 			}
+
 		case "chaining":
 			{
 				rr = append(
@@ -457,6 +469,24 @@ func testTable() []struct {
 			Name:      "Check with wildcard - 2",
 			TestType:  "checkparams",
 			Path:      "/wildcard2/:a*",
+			Method:    http.MethodGet,
+			ParamKeys: []string{"a"},
+			Params:    []string{"hello/world/hi/there/-/~/./again"},
+			WantErr:   false,
+		},
+		{
+			Name:      "Check with wildcard - 3",
+			TestType:  "widlcardwithouttrailingslash",
+			Path:      "/wildcard3/:a*",
+			Method:    http.MethodGet,
+			ParamKeys: []string{"a"},
+			Params:    []string{"hello/world/hi/there/-/~/./again/"},
+			WantErr:   true,
+		},
+		{
+			Name:      "Check with wildcard - 4",
+			TestType:  "widlcardwithouttrailingslash",
+			Path:      "/wildcard3/:a*",
 			Method:    http.MethodGet,
 			ParamKeys: []string{"a"},
 			Params:    []string{"hello/world/hi/there/-/~/./again"},
