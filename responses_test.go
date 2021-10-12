@@ -11,6 +11,8 @@ import (
 )
 
 func TestSendHeader(t *testing.T) {
+	t.Parallel()
+
 	w := httptest.NewRecorder()
 	SendHeader(w, http.StatusNoContent)
 	if w.Result().StatusCode != http.StatusNoContent {
@@ -19,6 +21,7 @@ func TestSendHeader(t *testing.T) {
 }
 
 func TestSendError(t *testing.T) {
+	t.Parallel()
 	w := httptest.NewRecorder()
 	payload := map[string]string{"message": "hello world"}
 	SendError(w, payload, http.StatusBadRequest)
@@ -95,6 +98,7 @@ func TestSendError(t *testing.T) {
 }
 
 func TestSendResponse(t *testing.T) {
+	t.Parallel()
 	w := httptest.NewRecorder()
 	payload := map[string]string{"hello": "world"}
 
@@ -170,6 +174,7 @@ func TestSendResponse(t *testing.T) {
 }
 
 func TestSend(t *testing.T) {
+	t.Parallel()
 	w := httptest.NewRecorder()
 	payload := map[string]string{"hello": "world"}
 	reqBody, _ := json.Marshal(payload)
@@ -208,6 +213,7 @@ func TestSend(t *testing.T) {
 }
 
 func TestRender(t *testing.T) {
+	t.Parallel()
 	w := httptest.NewRecorder()
 	data := struct {
 		Hello string
@@ -274,6 +280,7 @@ func TestRender(t *testing.T) {
 }
 
 func TestResponsehelpers(t *testing.T) {
+	t.Parallel()
 	w := httptest.NewRecorder()
 	want := "hello world"
 	resp := struct {

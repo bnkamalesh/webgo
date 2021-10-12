@@ -1,7 +1,7 @@
 language: go
 go:
   # webgo is still compatible with 1.8, but the tests are importing versioned 
-  # modules which fails for older Go versions. And using `errors.Is` which was introduced in Go 1.13
+  # modules which fails for older Go versions and using `errors.Is` which was introduced in Go 1.13
   # - "1.8"
   - "1.13"
   - master

@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v5"
+	"github.com/bnkamalesh/webgo/v6"
 )
 
 func TestAccessLog(t *testing.T) {
@@ -80,13 +80,11 @@ func setup(port string) (*webgo.Router, error) {
 		CertFile:        "tests/ssl/server.crt",
 		KeyFile:         "tests/ssl/server.key",
 	}
-	router := webgo.NewRouter(cfg, []*webgo.Route{
-		{
-			Name:     "hello",
-			Pattern:  "/hello",
-			Method:   http.MethodGet,
-			Handlers: []http.HandlerFunc{handler},
-		},
+	router := webgo.NewRouter(cfg, &webgo.Route{
+		Name:     "hello",
+		Pattern:  "/hello",
+		Method:   http.MethodGet,
+		Handlers: []http.HandlerFunc{handler},
 	})
 	return router, nil
 }

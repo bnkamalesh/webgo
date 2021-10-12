@@ -33,6 +33,12 @@ type Route struct {
 	// uriPattern is the compiled regex to match the URI pattern
 	uriPattern *regexp.Regexp
 
+	// skipMiddleware if true, middleware added using `router` will not be applied to this Route.
+	// This is used only when a Route is set using the RouteGroup, which can have its own set of middleware
+	skipMiddleware bool
+
+	initialized bool
+
 	serve http.HandlerFunc
 }
 
@@ -112,6 +118,10 @@ func (r *Route) parseURIWithParams(patternString string) (string, error) {
 
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
+	if r.initialized {
+		return nil
+	}
+
 	patternString := r.Pattern
 
 	patternString, err := r.parseURIWithParams(patternString)
@@ -135,6 +145,7 @@ func (r *Route) init() error {
 	r.uriPatternString = patternString
 	r.serve = defaultRouteServe(r)
 
+	r.initialized = true
 	return nil
 }
 
@@ -157,6 +168,16 @@ func (r *Route) params(requestURI string) map[string]string {
 	}
 
 	return uriValues
+}
+
+func (r *Route) use(mm ...Middleware) {
+	for idx := range mm {
+		m := mm[idx]
+		srv := r.serve
+		r.serve = func(rw http.ResponseWriter, req *http.Request) {
+			m(rw, req, srv)
+		}
+	}
 }
 
 func routeServeChainedHandlers(r *Route) http.HandlerFunc {
@@ -184,4 +205,43 @@ func defaultRouteServe(r *Route) http.HandlerFunc {
 	// when there is only 1 handler, custom response writer is not required to check if response
 	// is already written or fallthrough is enabled
 	return r.Handlers[0]
+}
+
+type RouteGroup struct {
+	routes []*Route
+	// skipRouterMiddleware if set to true, middleware applied to the router will not be applied
+	// to this route group.
+	skipRouterMiddleware bool
+	// PathPrefix is the URI prefix for all routes in this group
+	PathPrefix string
+}
+
+func (rg *RouteGroup) Add(rr ...Route) {
+	for idx := range rr {
+		route := rr[idx]
+		route.skipMiddleware = rg.skipRouterMiddleware
+		route.Pattern = fmt.Sprintf("%s%s", rg.PathPrefix, route.Pattern)
+		_ = route.init()
+		rg.routes = append(rg.routes, &route)
+	}
+}
+
+func (rg *RouteGroup) Use(mm ...Middleware) {
+	for idx := range rg.routes {
+		route := rg.routes[idx]
+		route.use(mm...)
+	}
+}
+
+func (rg *RouteGroup) Routes() []*Route {
+	return rg.routes
+}
+
+func NewRouteGroup(pathPrefix string, skipRouterMiddleware bool, rr ...Route) *RouteGroup {
+	rg := RouteGroup{
+		PathPrefix:           pathPrefix,
+		skipRouterMiddleware: skipRouterMiddleware,
+	}
+	rg.Add(rr...)
+	return &rg
 }

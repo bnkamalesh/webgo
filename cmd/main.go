@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v5"
-	"github.com/bnkamalesh/webgo/v5/middleware/accesslog"
-	"github.com/bnkamalesh/webgo/v5/middleware/cors"
+	"github.com/bnkamalesh/webgo/v6"
+	"github.com/bnkamalesh/webgo/v6/middleware/accesslog"
+	"github.com/bnkamalesh/webgo/v6/middleware/cors"
 )
 
 var (
@@ -75,6 +75,11 @@ func errLogger(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 			log.Println("errorLogger:", err.Error())
 		}
 	}
+}
+
+func routegroupMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	w.Header().Add("routegroup", "true")
+	next(w, r)
 }
 
 // StaticFiles is used to serve static files
@@ -154,14 +159,26 @@ func main() {
 		WriteTimeout: 60 * time.Second,
 	}
 
-	router := webgo.NewRouter(cfg, getRoutes())
-	router.UseOnSpecialHandlers(accesslog.AccessLog)
-	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
-
 	webgo.GlobalLoggerConfig(
 		nil, nil,
 		webgo.LogCfgDisableDebug,
 	)
+
+	routeGroup := webgo.NewRouteGroup("/v6.2", false)
+	routeGroup.Add(webgo.Route{
+		Name:     "router-group-prefix-v6.2_api",
+		Method:   http.MethodGet,
+		Pattern:  "/api/:param",
+		Handlers: []http.HandlerFunc{chain, helloWorld},
+	})
+	routeGroup.Use(routegroupMiddleware)
+
+	routes := getRoutes()
+	routes = append(routes, routeGroup.Routes()...)
+
+	router := webgo.NewRouter(cfg, routes...)
+	router.UseOnSpecialHandlers(accesslog.AccessLog)
+	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
 
 	router.Start()
 }

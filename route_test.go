@@ -1,6 +1,7 @@
 package webgo
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -8,6 +9,7 @@ import (
 )
 
 func TestRoute_computePatternStr(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		Name                    string
 		Method                  string
@@ -72,3 +74,46 @@ func TestRoute_computePatternStr(t *testing.T) {
 		})
 	}
 }
+
+func TestRouteGroupsPathPrefix(t *testing.T) {
+	t.Parallel()
+	routes := []Route{
+		{
+			Name:     "r1",
+			Pattern:  "/a",
+			Method:   http.MethodGet,
+			Handlers: []http.HandlerFunc{dummyHandler},
+		},
+		{
+			Name:     "r2",
+			Pattern:  "/b/:c",
+			Method:   http.MethodGet,
+			Handlers: []http.HandlerFunc{dummyHandler},
+		},
+		{
+			Name:     "r3",
+			Pattern:  "/:w*",
+			Method:   http.MethodGet,
+			Handlers: []http.HandlerFunc{dummyHandler},
+		},
+	}
+
+	const prefix = "/v6.2"
+	expectedSkipMiddleware := true
+	rg := NewRouteGroup("/v6.2", expectedSkipMiddleware, routes...)
+
+	list := rg.Routes()
+	for idx := range list {
+		route := list[idx]
+		originalRoute := routes[idx]
+		expectedPattern := fmt.Sprintf("%s%s", prefix, originalRoute.Pattern)
+		if route.Pattern != expectedPattern {
+			t.Errorf("Expected pattern %q, got %q", expectedPattern, route.Pattern)
+		}
+		if route.skipMiddleware != expectedSkipMiddleware {
+			t.Errorf("Expected skip %v, got %v", expectedSkipMiddleware, route.skipMiddleware)
+		}
+	}
+}
+
+func dummyHandler(w http.ResponseWriter, r *http.Request) {}

@@ -5,6 +5,7 @@ import (
 )
 
 func Test_loggerWithCfg(t *testing.T) {
+	t.Parallel()
 	cfgs := []logCfg{
 		LogCfgDisableDebug,
 		LogCfgDisableInfo,

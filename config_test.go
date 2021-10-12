@@ -7,6 +7,7 @@ import (
 )
 
 func TestConfig_LoadInvalid(t *testing.T) {
+	t.Parallel()
 	tl := &testLogger{
 		out: bytes.Buffer{},
 	}
@@ -28,6 +29,7 @@ func TestConfig_LoadInvalid(t *testing.T) {
 }
 
 func TestConfig_LoadValid(t *testing.T) {
+	t.Parallel()
 	cfg := Config{}
 	cfg.Load("tests/config.json")
 
@@ -42,6 +44,7 @@ func TestConfig_LoadValid(t *testing.T) {
 }
 
 func TestConfig_Validate(t *testing.T) {
+	t.Parallel()
 	type fields struct {
 		Host               string
 		Port               string
