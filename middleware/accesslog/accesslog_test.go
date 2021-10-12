@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v5"
+	"github.com/bnkamalesh/webgo/v6"
 )
 
 func TestAccessLog(t *testing.T) {

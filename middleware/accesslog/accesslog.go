@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v5"
+	"github.com/bnkamalesh/webgo/v6"
 )
 
 // AccessLog is a middleware which prints access log to stdout
