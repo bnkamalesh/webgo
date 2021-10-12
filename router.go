@@ -212,23 +212,21 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 // Use adds a middleware layer
-func (rtr *Router) Use(flist ...Middleware) {
+func (rtr *Router) Use(mm ...Middleware) {
 	for _, handlers := range rtr.allHandlers {
 		for idx := range handlers {
 			route := handlers[idx]
-			for idx := range flist {
-				f := flist[idx]
-				srv := route.serve
-				route.serve = func(rw http.ResponseWriter, req *http.Request) {
-					f(rw, req, srv)
-				}
+			if route.skipMiddleware {
+				continue
 			}
+
+			route.use(mm...)
 		}
 	}
 }
 
 // UseOnSpecialHandlers adds middleware to the 2 special handlers of webgo
-func (rtr *Router) UseOnSpecialHandlers(flist ...Middleware) {
+func (rtr *Router) UseOnSpecialHandlers(mm ...Middleware) {
 	// v3.2.1 introduced the feature of adding middleware to both notfound & not implemented
 	// handlers
 	/*
@@ -239,18 +237,49 @@ func (rtr *Router) UseOnSpecialHandlers(flist ...Middleware) {
 		  middleware separately to NOTFOUND & NOTIMPLEMENTED handlers
 	*/
 
-	for idx := range flist {
-		f := flist[idx]
+	for idx := range mm {
+		m := mm[idx]
 		nf := rtr.NotFound
 		rtr.NotFound = func(rw http.ResponseWriter, req *http.Request) {
-			f(rw, req, nf)
+			m(rw, req, nf)
 		}
 
 		ni := rtr.NotImplemented
 		rtr.NotImplemented = func(rw http.ResponseWriter, req *http.Request) {
-			f(rw, req, ni)
+			m(rw, req, ni)
 		}
 	}
+}
+
+// Add is a convenience method used to add a new route to an already initialized router
+// Important: `.Use` should be used only after all routes are added
+func (rtr *Router) Add(routes ...*Route) {
+	hmap := httpHandlers(routes)
+	rtr.optHandlers = append(rtr.optHandlers, hmap[http.MethodOptions]...)
+	rtr.headHandlers = append(rtr.headHandlers, hmap[http.MethodHead]...)
+	rtr.getHandlers = append(rtr.getHandlers, hmap[http.MethodGet]...)
+	rtr.postHandlers = append(rtr.postHandlers, hmap[http.MethodPost]...)
+	rtr.putHandlers = append(rtr.putHandlers, hmap[http.MethodPut]...)
+	rtr.patchHandlers = append(rtr.patchHandlers, hmap[http.MethodPatch]...)
+	rtr.deleteHandlers = append(rtr.deleteHandlers, hmap[http.MethodDelete]...)
+
+	all := rtr.allHandlers
+	if all == nil {
+		all = map[string][]*Route{}
+	}
+
+	for _, key := range supportedHTTPMethods {
+		newlist, hasKey := hmap[key]
+		if !hasKey {
+			continue
+		}
+		if all[key] == nil {
+			all[key] = make([]*Route, 0, len(hmap))
+		}
+		all[key] = append(all[key], newlist...)
+	}
+
+	rtr.allHandlers = all
 }
 
 func newCRW(rw http.ResponseWriter, rCode int) *customResponseWriter {
@@ -280,24 +309,16 @@ func releasePoolResources(crw *customResponseWriter, cp *ContextPayload) {
 }
 
 // NewRouter initializes & returns a new router instance with all the configurations and routes set
-func NewRouter(cfg *Config, routes []*Route) *Router {
-	handlers := httpHandlers(routes)
+func NewRouter(cfg *Config, routes ...*Route) *Router {
 	r := &Router{
-		optHandlers:    handlers[http.MethodOptions],
-		headHandlers:   handlers[http.MethodHead],
-		getHandlers:    handlers[http.MethodGet],
-		postHandlers:   handlers[http.MethodPost],
-		putHandlers:    handlers[http.MethodPut],
-		patchHandlers:  handlers[http.MethodPatch],
-		deleteHandlers: handlers[http.MethodDelete],
-		allHandlers:    handlers,
-
 		NotFound: http.NotFound,
 		NotImplemented: func(rw http.ResponseWriter, req *http.Request) {
 			Send(rw, "", "501 Not Implemented", http.StatusNotImplemented)
 		},
 		config: cfg,
 	}
+
+	r.Add(routes...)
 
 	return r
 }
