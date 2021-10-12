@@ -75,29 +75,32 @@ func TestRoute_computePatternStr(t *testing.T) {
 	}
 }
 
-func TestRouteGroups_computePatternStr(t *testing.T) {
+func TestRouteGroupsPathPrefix(t *testing.T) {
 	t.Parallel()
 	routes := []Route{
 		{
-			Name:    "r1",
-			Pattern: "/a",
-			Method:  http.MethodGet,
+			Name:     "r1",
+			Pattern:  "/a",
+			Method:   http.MethodGet,
+			Handlers: []http.HandlerFunc{dummyHandler},
 		},
 		{
-			Name:    "r2",
-			Pattern: "/b/:c",
-			Method:  http.MethodGet,
+			Name:     "r2",
+			Pattern:  "/b/:c",
+			Method:   http.MethodGet,
+			Handlers: []http.HandlerFunc{dummyHandler},
 		},
 		{
-			Name:    "r3",
-			Pattern: "/:w*",
-			Method:  http.MethodGet,
+			Name:     "r3",
+			Pattern:  "/:w*",
+			Method:   http.MethodGet,
+			Handlers: []http.HandlerFunc{dummyHandler},
 		},
 	}
 
-	prefix := "/v5.4"
+	const prefix = "/v6.2"
 	expectedSkipMiddleware := true
-	rg := NewRouteGroup("/v5.4", expectedSkipMiddleware, routes...)
+	rg := NewRouteGroup("/v6.2", expectedSkipMiddleware, routes...)
 
 	list := rg.Routes()
 	for idx := range list {
@@ -112,3 +115,5 @@ func TestRouteGroups_computePatternStr(t *testing.T) {
 		}
 	}
 }
+
+func dummyHandler(w http.ResponseWriter, r *http.Request) {}

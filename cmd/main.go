@@ -77,6 +77,11 @@ func errLogger(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	}
 }
 
+func routegroupMiddleware(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	w.Header().Add("routegroup", "true")
+	next(w, r)
+}
+
 // StaticFiles is used to serve static files
 func StaticFiles(rw http.ResponseWriter, r *http.Request) {
 	wctx := webgo.Context(r)
@@ -159,13 +164,14 @@ func main() {
 		webgo.LogCfgDisableDebug,
 	)
 
-	routeGroup := webgo.NewRouteGroup("/v5.4", true)
+	routeGroup := webgo.NewRouteGroup("/v6.2", false)
 	routeGroup.Add(webgo.Route{
-		Name:     "router-group-prefix-v5.4_api",
+		Name:     "router-group-prefix-v6.2_api",
 		Method:   http.MethodGet,
 		Pattern:  "/api/:param",
 		Handlers: []http.HandlerFunc{chain, helloWorld},
 	})
+	routeGroup.Use(routegroupMiddleware)
 
 	routes := getRoutes()
 	routes = append(routes, routeGroup.Routes()...)

@@ -548,7 +548,7 @@ func (tl *testLogger) Fatal(data ...interface{}) {
 }
 
 func Test_httpHandlers(t *testing.T) {
-	t.Parallel()
+	// t.Parallel()
 	tl := &testLogger{
 		out: bytes.Buffer{},
 	}

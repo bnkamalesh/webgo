@@ -37,6 +37,8 @@ type Route struct {
 	// This is used only when a Route is set using the RouteGroup, which can have its own set of middleware
 	skipMiddleware bool
 
+	initialized bool
+
 	serve http.HandlerFunc
 }
 
@@ -116,6 +118,10 @@ func (r *Route) parseURIWithParams(patternString string) (string, error) {
 
 // init prepares the URIKeys, compile regex for the provided pattern
 func (r *Route) init() error {
+	if r.initialized {
+		return nil
+	}
+
 	patternString := r.Pattern
 
 	patternString, err := r.parseURIWithParams(patternString)
@@ -139,6 +145,7 @@ func (r *Route) init() error {
 	r.uriPatternString = patternString
 	r.serve = defaultRouteServe(r)
 
+	r.initialized = true
 	return nil
 }
 
@@ -214,6 +221,7 @@ func (rg *RouteGroup) Add(rr ...Route) {
 		route := rr[idx]
 		route.skipMiddleware = rg.skipRouterMiddleware
 		route.Pattern = fmt.Sprintf("%s%s", rg.PathPrefix, route.Pattern)
+		_ = route.init()
 		rg.routes = append(rg.routes, &route)
 	}
 }
