@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v5.3.1
+# WebGo v6.2.0
 
 WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with no 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -118,7 +118,7 @@ cfg := &webgo.Config{
 	CertFile: "/path/to/certfile",
 	KeyFile: "/path/to/keyfile",
 }
-router := webgo.NewRouter(cfg, routes())
+router := webgo.NewRouter(cfg, routes()...)
 router.StartHTTPS()
 ```
 
@@ -132,7 +132,7 @@ cfg := &webgo.Config{
 	KeyFile: "/path/to/keyfile",
 }
 
-router := webgo.NewRouter(cfg, routes())
+router := webgo.NewRouter(cfg, routes()...)
 go router.StartHTTPS()
 router.Start()
 ```
@@ -154,7 +154,7 @@ func main() {
 		WriteTimeout:    60 * time.Second,
 		ShutdownTimeout: 15 * time.Second,
 	}
-	router := webgo.NewRouter(cfg, routes())
+	router := webgo.NewRouter(cfg, routes()...)
 
 	go func() {
 		<-osSig

@@ -229,6 +229,6 @@ func setup(port string, routes []*webgo.Route) (*webgo.Router, error) {
 		CertFile:        "tests/ssl/server.crt",
 		KeyFile:         "tests/ssl/server.key",
 	}
-	router := webgo.NewRouter(cfg, routes)
+	router := webgo.NewRouter(cfg, routes...)
 	return router, nil
 }

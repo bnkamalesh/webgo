@@ -21,6 +21,7 @@ import (
 )
 
 func TestResponseStatus(t *testing.T) {
+	t.Parallel()
 	w := newCRW(httptest.NewRecorder(), http.StatusOK)
 	SendError(w, nil, http.StatusNotFound)
 	if http.StatusNotFound != ResponseStatus(w) {
@@ -45,7 +46,8 @@ func TestResponseStatus(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	router, _ := setup("9696")
+	t.Parallel()
+	router, _ := setup(t, "9696")
 	go router.Start()
 	time.Sleep(time.Second * 2)
 	err := router.Shutdown()
@@ -54,7 +56,8 @@ func TestStart(t *testing.T) {
 	}
 }
 func TestStartHTTPS(t *testing.T) {
-	router, _ := setup("8443")
+	t.Parallel()
+	router, _ := setup(t, "8443")
 	go router.StartHTTPS()
 	time.Sleep(time.Second * 2)
 	err := router.ShutdownHTTPS()
@@ -64,8 +67,9 @@ func TestStartHTTPS(t *testing.T) {
 }
 
 func TestErrorHandling(t *testing.T) {
+	t.Parallel()
 	err := errors.New("hello world, failed")
-	router, _ := setup("7878")
+	router, _ := setup(t, "7878")
 	w := httptest.NewRecorder()
 	r, _ := http.NewRequest(http.MethodGet, "/", nil)
 	router.ServeHTTP(w, r)
