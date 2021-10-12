@@ -11,7 +11,7 @@ before_install:
 
 script:
   # go.mod is overwritten to avoid go version being part of the mod file, which fails tests on mismatching version
-  - echo "module github.com/bnkamalesh/webgo/v5" > go.mod
+  - sed -i 's/go [0-9]*\.[0-9]*//' go.mod
   - go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
 
 after_success:
