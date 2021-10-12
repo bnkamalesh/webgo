@@ -41,7 +41,7 @@ You can try the following API calls with the sample app. It also uses all the fe
 		- http://localhost:8080/matchall/hello
 		- http://localhost:8080/matchall/hello/world
 		- http://localhost:8080/matchall/hello/world/user
-3. `http://localhost:8080/api/<param>
+3. `http://localhost:8080/api/<param>`
 	- Route with a named 'param' configured
 	- It will match all requests which match `/api/<single parameter>`
 	- e.g.
@@ -49,3 +49,9 @@ You can try the following API calls with the sample app. It also uses all the fe
 		- http://localhost:8080/api/world
 4. `http://localhost:8080/error-setter`
 	- Route which sets an error and sets response status 500
+5. `http://localhost:8080/v5.4/api/<param>`
+	- Route with a named 'param' configured
+	- It will match all requests which match `/v5.4/api/<single parameter>`
+	- e.g.
+		- http://localhost:8080/v5.4/api/hello
+		- http://localhost:8080/v5.4/api/world

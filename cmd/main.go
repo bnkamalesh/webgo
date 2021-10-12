@@ -154,14 +154,25 @@ func main() {
 		WriteTimeout: 60 * time.Second,
 	}
 
-	router := webgo.NewRouter(cfg, getRoutes())
-	router.UseOnSpecialHandlers(accesslog.AccessLog)
-	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
-
 	webgo.GlobalLoggerConfig(
 		nil, nil,
 		webgo.LogCfgDisableDebug,
 	)
+
+	routeGroup := webgo.NewRouteGroup("/v5.4", true)
+	routeGroup.Add(webgo.Route{
+		Name:     "router-group-prefix-v5.4_api",
+		Method:   http.MethodGet,
+		Pattern:  "/api/:param",
+		Handlers: []http.HandlerFunc{chain, helloWorld},
+	})
+
+	routes := getRoutes()
+	routes = append(routes, routeGroup.Routes()...)
+
+	router := webgo.NewRouter(cfg, routes...)
+	router.UseOnSpecialHandlers(accesslog.AccessLog)
+	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
 
 	router.Start()
 }

@@ -15,8 +15,9 @@ import (
 )
 
 func TestRouter_ServeHTTP(t *testing.T) {
+	t.Parallel()
 	port := "9696"
-	router, err := setup(port)
+	router, err := setup(t, port)
 	if err != nil {
 		t.Error(err.Error())
 		return
@@ -118,7 +119,8 @@ func TestRouter_ServeHTTP(t *testing.T) {
 	}
 }
 
-func setup(port string) (*Router, error) {
+func setup(t *testing.T, port string) (*Router, error) {
+	t.Helper()
 	cfg := &Config{
 		Port:            port,
 		ReadTimeout:     time.Second * 1,
@@ -127,11 +129,13 @@ func setup(port string) (*Router, error) {
 		CertFile:        "tests/ssl/server.crt",
 		KeyFile:         "tests/ssl/server.key",
 	}
-	router := NewRouter(cfg, getRoutes())
+	router := NewRouter(cfg, getRoutes(t)...)
 	return router, nil
 }
 
-func getRoutes() []*Route {
+func getRoutes(t *testing.T) []*Route {
+	t.Helper()
+
 	list := testTable()
 	rr := make([]*Route, 0, len(list))
 	for _, l := range list {
@@ -544,6 +548,7 @@ func (tl *testLogger) Fatal(data ...interface{}) {
 }
 
 func Test_httpHandlers(t *testing.T) {
+	t.Parallel()
 	tl := &testLogger{
 		out: bytes.Buffer{},
 	}
