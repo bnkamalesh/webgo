@@ -1,4 +1,4 @@
-module github.com/bnkamalesh/webgo/v5
+module github.com/bnkamalesh/webgo/v6
 
 go 1.14
 
