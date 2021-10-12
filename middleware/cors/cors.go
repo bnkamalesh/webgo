@@ -16,7 +16,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/bnkamalesh/webgo/v5"
+	"github.com/bnkamalesh/webgo/v6"
 )
 
 const (
