@@ -40,6 +40,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			case "checkpath",
 				"checkpathnotrailingslash",
 				"chaining",
+				"notfound",
 				"chaining-nofallthrough":
 				{
 					url = strings.Join([]string{url, l.Path}, "")
@@ -55,6 +56,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 				}
 			}
 		}
+
 		respRec := httptest.NewRecorder()
 		req := httptest.NewRequest(
 			l.Method,
@@ -64,9 +66,13 @@ func TestRouter_ServeHTTP(t *testing.T) {
 		router.ServeHTTP(respRec, req)
 
 		switch l.TestType {
-		case "checkpath", "checkpathnotrailingslash", "widlcardwithouttrailingslash":
+		case "checkpath", "checkpathnotrailingslash":
 			{
 				err = checkPath(req, respRec)
+			}
+		case "widlcardwithouttrailingslash":
+			{
+				err = checkPathWildCard(req, respRec)
 			}
 		case "chaining":
 			{
@@ -88,7 +94,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 
 		if err != nil && !l.WantErr {
 			t.Errorf(
-				"'%s' (%s '%s') failed with error %s",
+				"'%s' (%s '%s'): %s",
 				l.Name,
 				l.Method,
 				url,
@@ -214,11 +220,12 @@ func chainNoFallthroughHandler(w http.ResponseWriter, r *http.Request) {
 
 func successHandler(w http.ResponseWriter, r *http.Request) {
 	wctx := Context(r)
+	params := wctx.Params()
 	R200(
 		w,
 		map[string]interface{}{
 			"path":   r.URL.Path,
-			"params": wctx.Params(),
+			"params": params,
 		},
 	)
 }
@@ -232,16 +239,61 @@ func checkPath(req *http.Request, resp *httptest.ResponseRecorder) error {
 
 	body := struct {
 		Data struct {
-			Path string
+			Path   string
+			Params map[string]string
 		}
 	}{}
 	err = json.Unmarshal(rbody, &body)
 	if err != nil {
-		return fmt.Errorf("json decode failed '%s', for response '%s'", err.Error(), string(rbody))
+		return fmt.Errorf(
+			"json decode failed '%s', got response: '%s'",
+			err.Error(),
+			string(rbody),
+		)
 	}
 
 	if want != body.Data.Path {
 		return fmt.Errorf("wanted URI path '%s', got '%s'", want, body.Data.Path)
+	}
+
+	return nil
+}
+
+func checkPathWildCard(req *http.Request, resp *httptest.ResponseRecorder) error {
+	want := req.URL.EscapedPath()
+	rbody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response, '%s'", err.Error())
+	}
+
+	body := struct {
+		Data struct {
+			Path   string
+			Params map[string]string
+		}
+	}{}
+	err = json.Unmarshal(rbody, &body)
+	if err != nil {
+		return fmt.Errorf("json decode failed '%s', got response: '%s'", err.Error(), string(rbody))
+	}
+
+	if want != body.Data.Path {
+		return fmt.Errorf("wanted URI path '%s', got '%s'", want, body.Data.Path)
+	}
+
+	if len(body.Data.Params) != 1 {
+		return fmt.Errorf("expected no.of params: %d, got %d. response: '%s'", 1, len(body.Data.Params), string(rbody))
+	}
+
+	wantWildcardParamValue := ""
+	parts := strings.Split(want, "/")[2:]
+	wantWildcardParamValue = strings.Join(parts, "/")
+	if body.Data.Params["a"] != wantWildcardParamValue {
+		return fmt.Errorf(
+			"wildcard value\nexpected: %s\ngot: %s",
+			wantWildcardParamValue,
+			body.Data.Params["a"],
+		)
 	}
 
 	return nil
@@ -466,7 +518,7 @@ func testTable() []struct {
 			Path:      "/wildcard/:a*",
 			Method:    http.MethodGet,
 			ParamKeys: []string{"a"},
-			Params:    []string{"hello/world/hi/there"},
+			Params:    []string{"w1/hello/world/hi/there"},
 			WantErr:   false,
 		},
 		{
@@ -475,7 +527,7 @@ func testTable() []struct {
 			Path:      "/wildcard2/:a*",
 			Method:    http.MethodGet,
 			ParamKeys: []string{"a"},
-			Params:    []string{"hello/world/hi/there/-/~/./again"},
+			Params:    []string{"w2/hello/world/hi/there/-/~/./again"},
 			WantErr:   false,
 		},
 		{
@@ -484,7 +536,7 @@ func testTable() []struct {
 			Path:      "/wildcard3/:a*",
 			Method:    http.MethodGet,
 			ParamKeys: []string{"a"},
-			Params:    []string{"hello/world/hi/there/-/~/./again/"},
+			Params:    []string{"w3/hello/world/hi/there/-/~/./again/"},
 			WantErr:   true,
 		},
 		{
@@ -493,7 +545,7 @@ func testTable() []struct {
 			Path:      "/wildcard3/:a*",
 			Method:    http.MethodGet,
 			ParamKeys: []string{"a"},
-			Params:    []string{"hello/world/hi/there/-/~/./again"},
+			Params:    []string{"w4/hello/world/hi/there/-/~/./again"},
 			WantErr:   false,
 		},
 		{
@@ -594,4 +646,72 @@ func Test_httpHandlers(t *testing.T) {
 		)
 	}
 	tl.out.Reset()
+}
+
+func TestWildcardMadness(t *testing.T) {
+	port := "9696"
+	t.Helper()
+	cfg := &Config{
+		Port:            port,
+		ReadTimeout:     time.Second * 1,
+		WriteTimeout:    time.Second * 1,
+		ShutdownTimeout: time.Second * 10,
+		CertFile:        "tests/ssl/server.crt",
+		KeyFile:         "tests/ssl/server.key",
+	}
+	router := NewRouter(cfg, []*Route{
+		{
+			Name:          "wildcard madness",
+			Pattern:       "/hello/:w*/world/:p1/:w2*/hi/there",
+			Handlers:      []http.HandlerFunc{successHandler},
+			Method:        http.MethodGet,
+			TrailingSlash: true,
+		},
+	}...)
+
+	baseAPI := fmt.Sprintf("http://localhost:%s", port)
+	url := fmt.Sprintf(
+		"%s%s",
+		baseAPI,
+		"/hello/a/b/c/-d/~/e/world/fgh/i/j/k~/l-/hi/there/",
+	)
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+	respRec := httptest.NewRecorder()
+	router.ServeHTTP(respRec, req)
+
+	rbody, err := ioutil.ReadAll(respRec.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	if respRec.Code != http.StatusOK {
+		t.Errorf("expected status code: %d, got: %d. response: '%s'", http.StatusOK, respRec.Code, string(rbody))
+	}
+
+	url = fmt.Sprintf(
+		"%s%s",
+		baseAPI,
+		"/hello/a/b/c/-d/~/e/world/fgh/i/j/k~/l-/hi/there",
+	)
+
+	req, _ = http.NewRequest(http.MethodGet, url, nil)
+	respRec = httptest.NewRecorder()
+	router.ServeHTTP(respRec, req)
+
+	if respRec.Code != http.StatusOK {
+		t.Errorf("expected status code: %d, got: %d", http.StatusOK, respRec.Code)
+	}
+
+	err = checkParams(
+		req,
+		respRec,
+		[]string{"w", "p1", "w2"},
+		[]string{
+			"a/b/c/-d/~/e",
+			"fgh",
+			"i/j/k~/l-",
+		})
+	if err != nil {
+		t.Error(err)
+	}
 }
