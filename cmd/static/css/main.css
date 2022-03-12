@@ -1,0 +1,40 @@
+* {
+  transition: color 0.25s, margin 0.25s, padding 0.25s, width 0.25s, height 0.25s, background-color 0.25s;
+}
+html, body {
+  font-family: sans-serif;
+  font-size: 16px;
+  line-height: 1.5em;
+  font-weight: 400;
+  background: #efefef;
+  color: #444;
+}
+p {
+  margin: 0 0 1em;
+}
+
+a {
+  color: #999;
+}
+a:hover {
+  color: #222;
+}
+
+section.main {
+  background: #fff;
+  width: 90%;
+  max-width: 360px;
+  margin: 10vw auto;
+  padding: 0 2em;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#sse {
+  font-size: 12px;
+  line-height: 1.5em;
+  background: rgba(0,0,0,0.1);
+  padding: 0.5em;
+  border-radius: 4px;
+  margin-left: 0.5em;
+}

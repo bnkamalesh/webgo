@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bnkamalesh/webgo/v6"
+	"github.com/bnkamalesh/webgo/v6/extensions/sse"
 	"github.com/bnkamalesh/webgo/v6/middleware/accesslog"
 	"github.com/bnkamalesh/webgo/v6/middleware/cors"
 )
@@ -18,7 +20,7 @@ var (
 	lastModified = time.Now().Format(http.TimeFormat)
 )
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
+func paramHandler(w http.ResponseWriter, r *http.Request) {
 	// WebGo context
 	wctx := webgo.Context(r)
 	// URI parameters, map[string]string
@@ -43,10 +45,27 @@ func chain(w http.ResponseWriter, r *http.Request) {
 	r.Header.Set("chained", "true")
 }
 
-func helloHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello world"))
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	out, err := os.ReadFile("./cmd/static/index.html")
+	if err != nil {
+		webgo.SendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, _ = w.Write(out)
 }
 
+func SSEHandler(sse *sse.SSE) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := webgo.Context(r).Params()
+		r.Header.Set(sse.ClientIDHeader, params["clientID"])
+
+		err := sse.Handler(w, r)
+		if err != nil && !errors.Is(err, context.Canceled) {
+			log.Println("errorLogger:", err.Error())
+			return
+		}
+	}
+}
 func errorSetter(w http.ResponseWriter, r *http.Request) {
 	err := errors.New("oh no, server error")
 	webgo.SetError(r, err)
@@ -92,27 +111,27 @@ func StaticFiles(rw http.ResponseWriter, r *http.Request) {
 	http.ServeFile(rw, r, fmt.Sprintf("./cmd/static/%s", path))
 }
 
-func getRoutes() []*webgo.Route {
+func getRoutes(sse *sse.SSE) []*webgo.Route {
 	return []*webgo.Route{
 		{
 			Name:          "root",
 			Method:        http.MethodGet,
 			Pattern:       "/",
-			Handlers:      []http.HandlerFunc{helloHandler},
+			Handlers:      []http.HandlerFunc{homeHandler},
 			TrailingSlash: true,
 		},
 		{
 			Name:          "matchall",
 			Method:        http.MethodGet,
 			Pattern:       "/matchall/:wildcard*",
-			Handlers:      []http.HandlerFunc{helloWorld},
+			Handlers:      []http.HandlerFunc{paramHandler},
 			TrailingSlash: true,
 		},
 		{
 			Name:                    "api",
 			Method:                  http.MethodGet,
 			Pattern:                 "/api/:param",
-			Handlers:                []http.HandlerFunc{chain, helloWorld},
+			Handlers:                []http.HandlerFunc{chain, paramHandler},
 			TrailingSlash:           true,
 			FallThroughPostResponse: true,
 		},
@@ -144,6 +163,13 @@ func getRoutes() []*webgo.Route {
 			Handlers:      []http.HandlerFunc{StaticFiles},
 			TrailingSlash: true,
 		},
+		{
+			Name:          "sse",
+			Method:        http.MethodGet,
+			Pattern:       "/sse/:clientID",
+			Handlers:      []http.HandlerFunc{SSEHandler(sse)},
+			TrailingSlash: true,
+		},
 	}
 }
 
@@ -169,16 +195,34 @@ func main() {
 		Name:     "router-group-prefix-v6.2_api",
 		Method:   http.MethodGet,
 		Pattern:  "/api/:param",
-		Handlers: []http.HandlerFunc{chain, helloWorld},
+		Handlers: []http.HandlerFunc{chain, paramHandler},
 	})
 	routeGroup.Use(routegroupMiddleware)
 
-	routes := getRoutes()
+	sseService := sse.New()
+	routes := getRoutes(sseService)
 	routes = append(routes, routeGroup.Routes()...)
 
 	router := webgo.NewRouter(cfg, routes...)
 	router.UseOnSpecialHandlers(accesslog.AccessLog)
 	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
+
+	// broadcast server time to all SSE listeners
+	go func() {
+		retry := time.Millisecond * 500
+		for {
+			now := time.Now().Format(http.TimeFormat)
+			sseService.Clients.Range(func(key, value interface{}) bool {
+				msg, _ := value.(chan *sse.Message)
+				msg <- &sse.Message{
+					Data:  now,
+					Retry: retry,
+				}
+				return true
+			})
+			time.Sleep(time.Second)
+		}
+	}()
 
 	router.Start()
 }
