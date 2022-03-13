@@ -199,7 +199,7 @@ WebGo exposes a singleton & global scoped logger variable [LOGHANDLER](https://g
 
 The default logger uses Go standard library's `log.Logger` with `os.Stdout` (for debug and info logs) & `os.Stderr` (for warning, error, fatal) as default io.Writers. You can set the io.Writer as well as disable specific types of logs using the `GlobalLoggerConfig(stdout, stderr, cfgs...)` function.
 
-### Server-Sent Events
+## Server-Sent Events
 
 [MDN has a very good documentation of what SSE (Server-Sent Events)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) are. The sample app provided shows how to use the SSE extension of webgo.
 ## Usage
