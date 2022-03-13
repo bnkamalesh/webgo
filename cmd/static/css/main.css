@@ -30,11 +30,21 @@ section.main {
   overflow: hidden;
 }
 
-#sse {
+table {
+  width: 100%;
   font-size: 12px;
   line-height: 1.5em;
-  background: rgba(0,0,0,0.1);
-  padding: 0.5em;
-  border-radius: 4px;
-  margin-left: 0.5em;
+  border: 1px solid #eee;
+  border-collapse: collapse;
+}
+tr, td {
+  border: 1px solid #eee;
+}
+td {
+  padding: 0.25rem;
+  text-align: right;
+}
+td:nth-child(1) {
+  text-align: left;
+  background-color: rgba(0,0,0,0.02);
 }

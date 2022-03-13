@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type SSE struct {
 	Clients            sync.Map
+	clientsCount       atomic.Value
 	ClientIDHeader     string
 	UnsupportedMessage func(http.ResponseWriter, *http.Request) error
 }
@@ -30,7 +32,7 @@ func (sse *SSE) Handler(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusOK)
 
 	clientID := r.Header.Get(sse.ClientIDHeader)
-	msg, _ := sse.GetClientMessageChan(clientID)
+	msg, _ := sse.ClientMessageChan(clientID)
 	defer sse.RemoveClientMessageChan(clientID)
 	ctx := r.Context()
 	for {
@@ -57,18 +59,27 @@ func (sse *SSE) Handler(w http.ResponseWriter, r *http.Request) error {
 	}
 }
 
-// GetClientMessageChan returns a message channel to stream data to a client
+// ClientMessageChan returns a message channel to stream data to a client
 // The boolean value is `true` if the client didn't exist before
-func (sse *SSE) GetClientMessageChan(clientID string) (chan *Message, bool) {
+func (sse *SSE) ClientMessageChan(clientID string) (chan *Message, bool) {
 	msg, ok := sse.Clients.Load(clientID)
 	if !ok {
 		msg = make(chan *Message)
 		sse.Clients.Store(clientID, msg)
+		count := sse.clientsCount.Load().(int)
+		sse.clientsCount.Store(count + 1)
 	}
 	return msg.(chan *Message), !ok
 }
+
 func (sse *SSE) RemoveClientMessageChan(clientID string) {
 	sse.Clients.Delete(clientID)
+	count := sse.clientsCount.Load().(int)
+	sse.clientsCount.Store(count - 1)
+}
+
+func (sse *SSE) ClientsCount() int {
+	return sse.clientsCount.Load().(int)
 }
 
 // Message represents a valid SSE message
@@ -119,6 +130,7 @@ func New() *SSE {
 			return err
 		},
 	}
+	s.clientsCount.Store(int(0))
 
 	return s
 }
