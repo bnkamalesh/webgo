@@ -18,7 +18,7 @@ $ mkdir -p github.com/bnkamalesh
 $ cd github.com/bnkamalesh
 $ git clone https://github.com/bnkamalesh/webgo.git
 $ cd webgo
-$ go run cmd/main.go
+$ go run cmd/*.go
 
 Info 2020/06/03 12:55:26 HTTP server, listening on :8080
 ```
@@ -32,7 +32,7 @@ $ docker run \
 -p 8080:8080 \
 -v ${PWD}:/go/src/github.com/bnkamalesh/webgo/ \
 -w /go/src/github.com/bnkamalesh/webgo/cmd \
---rm -ti golang:latest go run main.go
+--rm -ti golang:latest go run *.go
 
 Info 2020/06/03 12:55:26 HTTP server, listening on :8080
 ```
