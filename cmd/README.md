@@ -2,7 +2,7 @@
 
 ### Server Sent Events
 
-![sse-demo](https://user-images.githubusercontent.com/1092882/158008892-b1a04fa7-cb5c-4bb9-9210-00cbdd163ef0.png)
+![sse-demo](https://user-images.githubusercontent.com/1092882/158047065-447eb868-1efd-4a8d-b748-7caee2b3fcfd.png)
 
 This picture shows the sample SSE implementation provided with this application. 
 
