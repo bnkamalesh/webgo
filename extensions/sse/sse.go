@@ -11,9 +11,12 @@ import (
 )
 
 type SSE struct {
-	Clients            sync.Map
-	clientsCount       atomic.Value
-	ClientIDHeader     string
+	Clients      sync.Map
+	clientsCount atomic.Value
+	// ClientIDHeader is the HTTP request header in which the client ID is set. Default is `sse-clientid`
+	ClientIDHeader string
+	// UnsupportedMessage is used to send the error response to client if the
+	// server doesn't support SSE
 	UnsupportedMessage func(http.ResponseWriter, *http.Request) error
 }
 
@@ -34,6 +37,7 @@ func (sse *SSE) Handler(w http.ResponseWriter, r *http.Request) error {
 	clientID := r.Header.Get(sse.ClientIDHeader)
 	msg, _ := sse.ClientMessageChan(clientID)
 	defer sse.RemoveClientMessageChan(clientID)
+
 	ctx := r.Context()
 	for {
 		select {
@@ -72,13 +76,23 @@ func (sse *SSE) ClientMessageChan(clientID string) (chan *Message, bool) {
 	return msg.(chan *Message), !ok
 }
 
+// RemoveClientMessageChan removes the channel from clients map given a clientID
 func (sse *SSE) RemoveClientMessageChan(clientID string) {
 	sse.Clients.Delete(clientID)
 	count := sse.clientsCount.Load().(int)
 	sse.clientsCount.Store(count - 1)
 }
 
-func (sse *SSE) ClientsCount() int {
+// Broadcast sends the message to all active clients
+func (sse *SSE) Broadcast(msg Message) {
+	sse.Clients.Range(func(key, value interface{}) bool {
+		mchan, _ := value.(chan *Message)
+		mchan <- &msg
+		return true
+	})
+}
+
+func (sse *SSE) ActiveClients() int {
 	return sse.clientsCount.Load().(int)
 }
 
@@ -121,8 +135,12 @@ func (m *Message) Bytes() []byte {
 }
 
 func New() *SSE {
+	clientsCount := atomic.Value{}
+	clientsCount.Store(int(0))
+
 	s := &SSE{
 		Clients:        sync.Map{},
+		clientsCount:   clientsCount,
 		ClientIDHeader: "sse-clientid",
 		UnsupportedMessage: func(w http.ResponseWriter, r *http.Request) error {
 			w.WriteHeader(http.StatusNotImplemented)
@@ -130,7 +148,6 @@ func New() *SSE {
 			return err
 		},
 	}
-	s.clientsCount.Store(int(0))
 
 	return s
 }

@@ -145,13 +145,9 @@ func main() {
 		retry := time.Millisecond * 500
 		for {
 			now := time.Now().Format(time.RFC1123Z)
-			sseService.Clients.Range(func(key, value interface{}) bool {
-				msg, _ := value.(chan *sse.Message)
-				msg <- &sse.Message{
-					Data:  now + fmt.Sprintf(" (%d)", sseService.ClientsCount()),
-					Retry: retry,
-				}
-				return true
+			sseService.Broadcast(sse.Message{
+				Data:  now + fmt.Sprintf(" (%d)", sseService.ActiveClients()),
+				Retry: retry,
 			})
 			time.Sleep(time.Second)
 		}

@@ -4,7 +4,8 @@
 
 ![sse-demo](https://user-images.githubusercontent.com/1092882/158047065-447eb868-1efd-4a8d-b748-7caee2b3fcfd.png)
 
-This picture shows the sample SSE implementation provided with this application. 
+This picture shows the sample SSE implementation provided with this application. In the sample app, the server is
+sending timestamp every second, to all the clients.
 
 **Important**: *[SSE](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) 
 is a live connection between server & client. So a short WriteTimeout duration in webgo.Config will 
