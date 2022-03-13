@@ -111,7 +111,7 @@ func setup() (*webgo.Router, *sse.SSE) {
 		Host:         "",
 		Port:         port,
 		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 60 * time.Second,
+		WriteTimeout: 1 * time.Hour,
 	}
 
 	webgo.GlobalLoggerConfig(
