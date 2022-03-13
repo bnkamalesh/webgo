@@ -13,14 +13,17 @@ const webgo = async () => {
 
     const start = () => {
       const source = new EventSource(url);
+      const configState = { initialBackoff, maxBackoff, backoffStep, backoff };
+
       source.onopen = () => {
         // reset backoff to initial, so further failures will again start with initial backoff
         // instead of previous duration
         backoff = initialBackoff;
+        configState.backoff = backoff
       };
 
-      source.onmessage = (event) => {
-        onMessage && onMessage(event);
+      source.onmessage = (event, configState) => {
+        onMessage && onMessage(event, configState);
       };
 
       source.onerror = (err) => {
@@ -36,7 +39,7 @@ const webgo = async () => {
             }
           }
         }, backoff);
-        onError && onError(err);
+        onError && onError(err, configState);
       };
     };
     return start;
@@ -50,6 +53,14 @@ const webgo = async () => {
   const sseClientsDOM = document.getElementById("sse-clients");
   const sseClientIDDOM = document.getElementById("sse-client-id");
 
+  const formatBackoff = (backoff, precision = 2) => {
+    let boff = `${backoff}ms`;
+    if (backoff >= 1000) {
+      boff = `${parseFloat(backoff / 1000).toFixed(precision)}s`;
+    }
+    return boff;
+  };
+
   sse(`/sse/${clientID}`, {
     onMessage: (event) => {
       const parts = event.data?.split("(");
@@ -59,11 +70,26 @@ const webgo = async () => {
       sseClientsDOM.innerText = activeClients;
       sseClientIDDOM.innerText = clientID;
     },
-    onError: (err) => {
+    onError: (err, { backoff }) => {
+      sseClientsDOM.innerText = "N/A";
+
+      let interval = null;
+      interval = window.setInterval(() => {
+        sseDOM.innerHTML = `SSE failed, attempting reconnect in <strong>${formatBackoff(
+          backoff,
+          0
+        )}</strong>`;
+        backoff -= 1000;
+        if (backoff <  0) {
+          sseDOM.innerHTML = `SSE failed, attempting reconnect in <strong>0s</strong>`;
+          window.clearInterval(interval);
+        }
+      }, 1000);
+
       console.log(err);
-      sseDOM.innerText = `SSE error, restarting`;
     },
-    backoffStep: 150,
+    initialBackoff: 1000,
+    backoffStep: 1000,
   })();
 };
 webgo();
