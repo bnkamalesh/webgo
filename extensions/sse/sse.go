@@ -1,4 +1,5 @@
-// Package sse implements Server Sent Events(SSE)
+// Package sse implements Server-Sent Events(SSE)
+// This extension is compliant with any net/http implementation, and is not limited to WebGo.
 package sse
 
 import (
@@ -18,6 +19,12 @@ type SSE struct {
 	// UnsupportedMessage is used to send the error response to client if the
 	// server doesn't support SSE
 	UnsupportedMessage func(http.ResponseWriter, *http.Request) error
+
+	// OnCreateClient is a hook, for when a client is added to the active clients
+	OnCreateClient func(clientID string, count int)
+
+	// OnRemoveClient is a hook, for when a client is removed from the active clients
+	OnRemoveClient func(clientID string, count int)
 }
 
 // Handler returns an error rather than being directly used as an http.HandlerFunc,
@@ -63,6 +70,12 @@ func (sse *SSE) Handler(w http.ResponseWriter, r *http.Request) error {
 	}
 }
 
+// HandlerFunc is a convenience function which can be directly used with net/http implementations.
+// Important: You cannot handle any error returned by the Handler
+func (sse *SSE) HandlerFunc(w http.ResponseWriter, r *http.Request) {
+	_ = sse.Handler(w, r)
+}
+
 // ClientMessageChan returns a message channel to stream data to a client
 // The boolean value is `true` if the client didn't exist before
 func (sse *SSE) ClientMessageChan(clientID string) (chan *Message, bool) {
@@ -71,8 +84,11 @@ func (sse *SSE) ClientMessageChan(clientID string) (chan *Message, bool) {
 		msg = make(chan *Message)
 		sse.Clients.Store(clientID, msg)
 		count := sse.clientsCount.Load().(int)
-		sse.clientsCount.Store(count + 1)
+		count++
+		sse.clientsCount.Store(count)
+		sse.OnCreateClient(clientID, count)
 	}
+
 	return msg.(chan *Message), !ok
 }
 
@@ -80,7 +96,10 @@ func (sse *SSE) ClientMessageChan(clientID string) (chan *Message, bool) {
 func (sse *SSE) RemoveClientMessageChan(clientID string) {
 	sse.Clients.Delete(clientID)
 	count := sse.clientsCount.Load().(int)
-	sse.clientsCount.Store(count - 1)
+	count--
+	sse.clientsCount.Store(count)
+
+	sse.OnRemoveClient(clientID, count)
 }
 
 // Broadcast sends the message to all active clients
@@ -134,19 +153,25 @@ func (m *Message) Bytes() []byte {
 	return buff.Bytes()
 }
 
+func DefaultUnsupportedMessageHandler(w http.ResponseWriter, r *http.Request) error {
+	w.WriteHeader(http.StatusNotImplemented)
+	_, err := w.Write([]byte("Streaming not supported"))
+	return err
+}
+
+func DefaultHook(clientID string, count int) {}
+
 func New() *SSE {
 	clientsCount := atomic.Value{}
 	clientsCount.Store(int(0))
 
 	s := &SSE{
-		Clients:        sync.Map{},
-		clientsCount:   clientsCount,
-		ClientIDHeader: "sse-clientid",
-		UnsupportedMessage: func(w http.ResponseWriter, r *http.Request) error {
-			w.WriteHeader(http.StatusNotImplemented)
-			_, err := w.Write([]byte("Streaming not supported"))
-			return err
-		},
+		Clients:            sync.Map{},
+		clientsCount:       clientsCount,
+		ClientIDHeader:     "sse-clientid",
+		UnsupportedMessage: DefaultUnsupportedMessageHandler,
+		OnRemoveClient:     DefaultHook,
+		OnCreateClient:     DefaultHook,
 	}
 
 	return s
