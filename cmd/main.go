@@ -129,6 +129,12 @@ func setup() (*webgo.Router, *sse.SSE) {
 	routeGroup.Use(routegroupMiddleware)
 
 	sseService := sse.New()
+	sseService.OnRemoveClient = func(clientID string, count int) {
+		log.Println(fmt.Sprintf("Client %q removed, active client(s): %d", clientID, count))
+	}
+	sseService.OnCreateClient = func(clientID string, count int) {
+		log.Println(fmt.Sprintf("Client %q added, active client(s): %d", clientID, count))
+	}
 	routes := getRoutes(sseService)
 	routes = append(routes, routeGroup.Routes()...)
 
