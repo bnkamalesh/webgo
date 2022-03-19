@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -129,11 +130,11 @@ func setup() (*webgo.Router, *sse.SSE) {
 	routeGroup.Use(routegroupMiddleware)
 
 	sseService := sse.New()
-	sseService.OnRemoveClient = func(clientID string, count int) {
+	sseService.OnRemoveClient = func(ctx context.Context, clientID string, count int) {
 		log.Println(fmt.Sprintf("Client %q removed, active client(s): %d", clientID, count))
 	}
-	sseService.OnCreateClient = func(clientID string, count int) {
-		log.Println(fmt.Sprintf("Client %q added, active client(s): %d", clientID, count))
+	sseService.OnCreateClient = func(ctx context.Context, client *sse.Client, count int) {
+		log.Println(fmt.Sprintf("Client %q added, active client(s): %d", client.ID, count))
 	}
 	routes := getRoutes(sseService)
 	routes = append(routes, routeGroup.Routes()...)

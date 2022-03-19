@@ -16,6 +16,7 @@ const webgo = async () => {
       const configState = { initialBackoff, maxBackoff, backoffStep, backoff };
 
       source.onopen = () => {
+        clearTimeout(sseRetryTimeout);
         // reset backoff to initial, so further failures will again start with initial backoff
         // instead of previous duration
         backoff = initialBackoff;
