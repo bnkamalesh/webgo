@@ -131,11 +131,12 @@ func setup() (*webgo.Router, *sse.SSE) {
 
 	sseService := sse.New()
 	sseService.OnRemoveClient = func(ctx context.Context, clientID string, count int) {
-		log.Println(fmt.Sprintf("Client %q removed, active client(s): %d", clientID, count))
+		log.Printf("\nClient %q removed, active client(s): %d\n", clientID, count)
 	}
 	sseService.OnCreateClient = func(ctx context.Context, client *sse.Client, count int) {
-		log.Println(fmt.Sprintf("Client %q added, active client(s): %d", client.ID, count))
+		log.Printf("\nClient %q added, active client(s): %d\n", client.ID, count)
 	}
+
 	routes := getRoutes(sseService)
 	routes = append(routes, routeGroup.Routes()...)
 
@@ -147,6 +148,10 @@ func setup() (*webgo.Router, *sse.SSE) {
 
 func main() {
 	router, sseService := setup()
+	clients := []*sse.Client{}
+	sseService.OnCreateClient = func(ctx context.Context, client *sse.Client, count int) {
+		clients = append(clients, client)
+	}
 	// broadcast server time to all SSE listeners
 	go func() {
 		retry := time.Millisecond * 500

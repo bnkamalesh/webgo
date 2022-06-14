@@ -20,6 +20,9 @@ func main() {
         Retry: time.MilliSecond,
 	})
 
+	// You can replace the ClientManager with your custom implementation, and override the default one
+	// sseService.Clients = <your custom client manager>
+
     // send message to an individual client
     clientID := "cli123"
     cli := sseService.Client(clientID)
@@ -31,7 +34,7 @@ func main() {
 
 ## Client Manager
 
-Client manager is an interface which is required for SSE to function, was implemented so it's easier for you to replace it if required. The default implementation is rather simple one, using a mutex. If you have a custom implementation which is faster/better, you can easily swap out the default one.
+Client manager is an interface which is required for SSE to function, since this is an interface it's easier for you to replace if required. The default implementation is a simple one using mutex. If you have a custom implementation which is faster/better, you can easily swap out the default one.
 
 ```golang
 type ClientManager interface {

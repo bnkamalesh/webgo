@@ -1,51 +1,4 @@
 const webgo = async () => {
-  const sse = (url, config = {}) => {
-    const {
-      onMessage,
-      onError,
-      initialBackoff = 10, // milliseconds
-      maxBackoff = 15 * 1000, // 15 seconds
-      backoffStep = 50, // milliseconds
-    } = config;
-
-    let backoff = initialBackoff,
-      sseRetryTimeout = null;
-
-    const start = () => {
-      const source = new EventSource(url);
-      const configState = { initialBackoff, maxBackoff, backoffStep, backoff };
-
-      source.onopen = () => {
-        clearTimeout(sseRetryTimeout);
-        // reset backoff to initial, so further failures will again start with initial backoff
-        // instead of previous duration
-        backoff = initialBackoff;
-        configState.backoff = backoff
-      };
-
-      source.onmessage = (event, configState) => {
-        onMessage && onMessage(event, configState);
-      };
-
-      source.onerror = (err) => {
-        source.close();
-        clearTimeout(sseRetryTimeout);
-        // reattempt connecting with *linear* backoff
-        sseRetryTimeout = window.setTimeout(() => {
-          start(url, onMessage);
-          if (backoff < maxBackoff) {
-            backoff += backoffStep;
-            if (backoff > maxBackoff) {
-              backoff = maxBackoff;
-            }
-          }
-        }, backoff);
-        onError && onError(err, configState);
-      };
-    };
-    return start;
-  };
-
   const clientID = Math.random()
     .toString(36)
     .replace(/[^a-z]+/g, "")
@@ -62,9 +15,14 @@ const webgo = async () => {
     return boff;
   };
 
-  sse(`/sse/${clientID}`, {
-    onMessage: (event) => {
-      const parts = event.data?.split("(");
+  const config = {
+    url: `/sse/${clientID}`,
+    onMessage: (data) => {
+      const parts = data?.split?.("(");
+      if (!parts || !parts.length) {
+        return;
+      }
+
       const date = new Date(parts[0]);
       const activeClients = parts[1].replace(")", "");
       sseDOM.innerText = date.toLocaleString();
@@ -81,7 +39,7 @@ const webgo = async () => {
           0
         )}</strong>`;
         backoff -= 1000;
-        if (backoff <  0) {
+        if (backoff < 0) {
           sseDOM.innerHTML = `SSE failed, attempting reconnect in <strong>0s</strong>`;
           window.clearInterval(interval);
         }
@@ -91,6 +49,25 @@ const webgo = async () => {
     },
     initialBackoff: 1000,
     backoffStep: 1000,
-  })();
+  };
+
+  const sseworker = new Worker("/static/js/sse.js");
+  sseworker.onerror = (e) => {
+    sseworker.terminate();
+  };
+
+  sseworker.onmessage = (e) => {
+    if (e?.data?.error) {
+      config.onError("SSE failed", e?.data);
+    } else {
+      config.onMessage(e?.data);
+    }
+  };
+
+  sseworker.postMessage({
+    url: config.url,
+    initialBackoff: config.initialBackoff,
+    backoffStep: config.backoffStep,
+  });
 };
 webgo();
