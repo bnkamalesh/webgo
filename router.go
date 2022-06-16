@@ -204,11 +204,9 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		),
 	)
 
+	defer releasePoolResources(crw, ctxPayload)
 	route.serve(crw, r)
 
-	// IMPORTANT/TODO: if the handler panics, resources are not released from the pool.
-	// `defer releasePoolResources(crw, ctxPayload)` would solve the problem but with a potential performance hit
-	releasePoolResources(crw, ctxPayload)
 }
 
 // Use adds a middleware layer
