@@ -123,14 +123,13 @@ func TestMatchWithWildcard(t *testing.T) {
 		}
 
 		uri := "/hello/world/how/are/you/static2/hello2/world2/how2/are2/you2/static2"
-		wantParams := map[string]string{}
 		matched, params := route.matchPath(uri)
 		if matched {
 			t.Errorf("Expected no match, got match")
 			return
 		}
-		if reflect.DeepEqual(params, wantParams) {
-			t.Errorf("Expected params %v, got %v", wantParams, params)
+		if params != nil {
+			t.Errorf("Expected params %v, got %v", nil, params)
 			return
 		}
 	})
@@ -193,7 +192,7 @@ func TestMatchWithWildcard(t *testing.T) {
 			t.Errorf("Expected match, got no match")
 			return
 		}
-		if reflect.DeepEqual(params, wantParams) {
+		if !reflect.DeepEqual(params, wantParams) {
 			t.Errorf("Expected params %v, got %v", wantParams, params)
 			return
 		}

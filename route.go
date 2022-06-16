@@ -136,7 +136,7 @@ func (r *Route) matchWithWildcard(requestURI string) (bool, map[string]string) {
 
 		uriParameter = append(uriParameter, fragment)
 		if currentFragment.isVariable {
-			params[currentFragment.fragment] = uriParameter[0]
+			params[currentFragment.fragment] = strings.Join(uriParameter, "/")
 		}
 
 		if !currentFragment.hasWildcard {
