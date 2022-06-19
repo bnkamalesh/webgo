@@ -114,11 +114,18 @@ func (r *Route) matchPath(requestURI string) (bool, map[string]string) {
 }
 
 func (r *Route) matchWithWildcard(requestURI string) (bool, map[string]string) {
+	// if r.fragments is empty, it means there are no variables in the URI pattern
+	// hence no point checking
+	if len(r.fragments) == 0 {
+		return false, nil
+	}
+
 	params := make(map[string]string, r.paramsCount)
 	uriFragments := strings.Split(requestURI, "/")[1:]
 	fragmentsLastIdx := len(r.fragments) - 1
 	fragmentIdx := 0
 	uriParameter := make([]string, 0, len(uriFragments))
+
 	for idx, fragment := range uriFragments {
 		// if part is empty, it means it's end of URI with trailing slash
 		if fragment == "" {

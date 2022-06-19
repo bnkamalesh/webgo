@@ -197,4 +197,45 @@ func TestMatchWithWildcard(t *testing.T) {
 			return
 		}
 	})
+
+	t.Run("root URI, no match", func(t *testing.T) {
+		route := Route{
+			Name:                    "",
+			Method:                  http.MethodGet,
+			TrailingSlash:           true,
+			FallThroughPostResponse: true,
+			Pattern:                 "/-/health",
+			Handlers:                []http.HandlerFunc{dummyHandler},
+		}
+		err := route.init()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		matched, _ := route.matchPath("/")
+		if matched {
+			t.Errorf("Expected no match, got match")
+			return
+		}
+	})
+	t.Run("root URI, should match", func(t *testing.T) {
+		route := Route{
+			Name:                    "",
+			Method:                  http.MethodGet,
+			TrailingSlash:           true,
+			FallThroughPostResponse: true,
+			Pattern:                 "/",
+			Handlers:                []http.HandlerFunc{dummyHandler},
+		}
+		err := route.init()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		matched, _ := route.matchPath("/")
+		if !matched {
+			t.Errorf("Expected match, got no match")
+			return
+		}
+	})
 }
