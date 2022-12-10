@@ -215,7 +215,7 @@ func chainHandler(w http.ResponseWriter, r *http.Request) {
 
 func chainNoFallthroughHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("chained", "true")
-	w.Write([]byte(`yay, blocked!`))
+	_, _ = w.Write([]byte(`yay, blocked!`))
 }
 
 func successHandler(w http.ResponseWriter, r *http.Request) {

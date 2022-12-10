@@ -111,8 +111,11 @@ func setup() (*webgo.Router, *sse.SSE) {
 	cfg := &webgo.Config{
 		Host:         "",
 		Port:         port,
+		HTTPSPort:    "9595",
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 1 * time.Hour,
+		CertFile:     "./certs/localhost.crt",
+		KeyFile:      "./certs/localhost.decrypted.key",
 	}
 
 	webgo.GlobalLoggerConfig(
@@ -165,5 +168,5 @@ func main() {
 		}
 	}()
 
-	router.Start()
+	router.StartHTTPS()
 }

@@ -18,9 +18,10 @@ func StaticFilesHandler(rw http.ResponseWriter, r *http.Request) {
 	wctx := webgo.Context(r)
 	// '..' is replaced to prevent directory traversal which could go out of static directory
 	path := strings.ReplaceAll(wctx.Params()["w"], "..", "-")
+	path = strings.ReplaceAll(path, "~", "-")
 
 	rw.Header().Set("Last-Modified", lastModified)
-	http.ServeFile(rw, r, fmt.Sprintf("./cmd/static/%s", path))
+	http.ServeFile(rw, r, fmt.Sprintf("./static/%s", path))
 }
 
 func OriginalResponseWriterHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +35,7 @@ func OriginalResponseWriterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	fs, err := os.OpenFile("./cmd/static/index.html", os.O_RDONLY, 0600)
+	fs, err := os.OpenFile("./static/index.html", os.O_RDONLY, 0600)
 	if err != nil {
 		webgo.SendError(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -51,8 +52,58 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		webgo.SendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
+	pushHomepage(r, w)
 	_, _ = w.Write(out)
+
+}
+
+func pushCSS(pusher http.Pusher, r *http.Request, path string) {
+	cssOpts := &http.PushOptions{
+		Header: http.Header{
+			"Accept-Encoding": r.Header["Accept-Encoding"],
+			"Content-Type":    []string{"text/css; charset=UTF-8"},
+		},
+	}
+	err := pusher.Push(path, cssOpts)
+	if err != nil {
+		webgo.LOGHANDLER.Error(err)
+	}
+}
+
+func pushJS(pusher http.Pusher, r *http.Request, path string) {
+	cssOpts := &http.PushOptions{
+		Header: http.Header{
+			"Accept-Encoding": r.Header["Accept-Encoding"],
+			"Content-Type":    []string{"application/javascript"},
+		},
+	}
+	err := pusher.Push(path, cssOpts)
+	if err != nil {
+		webgo.LOGHANDLER.Error(err)
+	}
+}
+
+func pushHomepage(r *http.Request, w http.ResponseWriter) {
+	pusher, ok := w.(http.Pusher)
+	if !ok {
+		return
+	}
+
+	cp, _ := r.Cookie("pusher")
+	if cp != nil {
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:   "pusher",
+		Value:  "css,js",
+		MaxAge: 300,
+	}
+	http.SetCookie(w, cookie)
+	pushCSS(pusher, r, "/static/css/main.css")
+	pushCSS(pusher, r, "/static/css/normalize.css")
+	pushJS(pusher, r, "/static/js/main.js")
+	pushJS(pusher, r, "/static/js/sse.js")
 }
 
 func SSEHandler(sse *sse.SSE) http.HandlerFunc {
