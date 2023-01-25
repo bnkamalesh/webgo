@@ -9,7 +9,6 @@ on:
 jobs:
   tests:
     name: Tests
-    permissions: read
     runs-on: ubuntu-latest
     steps:
       - uses: docker://golang:1.13
