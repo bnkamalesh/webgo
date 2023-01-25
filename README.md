@@ -9,7 +9,7 @@
 
 # WebGo v6.6.6
 
-WebGo is a minimalistic framework for [Go](https://golang.org) to build web applications (server side) with no 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
+WebGo is a minimalistic router for [Go](https://golang.org) to build web applications (server side) with no 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
 ### Contents
 
@@ -24,21 +24,20 @@ WebGo is a minimalistic framework for [Go](https://golang.org) to build web appl
 9. [Server-Sent Events](https://github.com/bnkamalesh/webgo#server-sent-events)
 10. [Usage](https://github.com/bnkamalesh/webgo#usage)
 
-
 ## Router
 
 Webgo has a simplistic, regex based router and supports defining [URI](https://developer.mozilla.org/en-US/docs/Glossary/URI)s with the following patterns
 
 1. `/api/users` - URI with no dynamic values
-2. `/api/users/:userID` 
-	- URI with a named parameter, `userID`
-	- If TrailingSlash is set to true, it will accept the URI ending with a '/', refer to [sample](https://github.com/bnkamalesh/webgo#sample)
+2. `/api/users/:userID`
+   - URI with a named parameter, `userID`
+   - If TrailingSlash is set to true, it will accept the URI ending with a '/', refer to [sample](https://github.com/bnkamalesh/webgo#sample)
 3. `/api/users/:misc*`
-	- Named URI parameter `misc`, with a wildcard suffix '*'
-	- This matches everything after `/api/users`. e.g. `/api/users/a/b/c/d`
+   - Named URI parameter `misc`, with a wildcard suffix '\*'
+   - This matches everything after `/api/users`. e.g. `/api/users/a/b/c/d`
 
 When there are multiple handlers matching the same URI, only the first occurring handler will handle the request.
-Refer to the [sample](https://github.com/bnkamalesh/webgo#sample) to see how routes are configured.  You can access named parameters of the URI using the `Context` function. 
+Refer to the [sample](https://github.com/bnkamalesh/webgo#sample) to see how routes are configured. You can access named parameters of the URI using the `Context` function.
 
 Note: webgo Context is **not** available inside the special handlers (not found & method not implemented)
 
@@ -53,9 +52,9 @@ func helloWorld(w http.ResponseWriter, r *http.Request) {
 	webgo.R200(
 		w,
 		fmt.Sprintf(
-			"Route name: '%s', params: '%s'", 
+			"Route name: '%s', params: '%s'",
 			route.Name,
-			params, 
+			params,
 		),
 	)
 }
@@ -71,7 +70,7 @@ WebGo [middlware](https://godoc.org/github.com/bnkamalesh/webgo#Middleware) lets
 
 NotFound && NotImplemented are considered `Special` handlers. `webgo.Context(r)` within special handlers will return `nil`.
 
-Any number of middleware can be added to the router, the order of execution of middleware would be [LIFO](https://en.wikipedia.org/wiki/Stack_(abstract_data_type)) (Last In First Out). i.e. in case of the following code
+Any number of middleware can be added to the router, the order of execution of middleware would be [LIFO](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) (Last In First Out). i.e. in case of the following code
 
 ```golang
 func main() {
@@ -92,8 +91,8 @@ WebGo provides a few helper functions. When using `Send` or `SendResponse` (othe
 
 ```json
 {
-	"data": "<any valid JSON payload>",
-	"status": "<HTTP status code, of type integer>"
+  "data": "<any valid JSON payload>",
+  "status": "<HTTP status code, of type integer>"
 }
 ```
 
@@ -101,14 +100,14 @@ When using `SendError`, the response is wrapped in WebGo's [error response struc
 
 ```json
 {
-	"errors": "<any valid JSON payload>",
-	"status": "<HTTP status code, of type integer>"
+  "errors": "<any valid JSON payload>",
+  "status": "<HTTP status code, of type integer>"
 }
 ```
 
 ## HTTPS ready
 
-HTTPS server can be started easily, by providing the key & cert file. You can also have both HTTP & HTTPS servers running side by side. 
+HTTPS server can be started easily, by providing the key & cert file. You can also have both HTTP & HTTPS servers running side by side.
 
 Start HTTPS server
 
@@ -202,9 +201,11 @@ The default logger uses Go standard library's `log.Logger` with `os.Stdout` (for
 ## Server-Sent Events
 
 [MDN has a very good documentation of what SSE (Server-Sent Events)](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) are. The sample app provided shows how to use the SSE extension of webgo.
+
 ## Usage
 
 A fully functional sample is provided [here](https://github.com/bnkamalesh/webgo/blob/master/cmd/main.go).
+
 ### Benchmark
 
 1. [the-benchmarker](https://github.com/the-benchmarker/web-frameworks)

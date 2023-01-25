@@ -53,6 +53,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pushHomepage(r, w)
+
 	_, _ = w.Write(out)
 
 }
