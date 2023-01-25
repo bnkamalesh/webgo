@@ -12,5 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: docker://golang:1.13
+      - run: echo PWD
+      - run: ls -lah
       - run: sed -i 's/go [0-9]*\.[0-9]*//' go.mod
       - run: go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
