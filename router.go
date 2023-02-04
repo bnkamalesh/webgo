@@ -22,7 +22,7 @@ type httpResponseWriter interface {
 
 func init() {
 	// ensure the custom response writer implements all the required functions
-	crw := newCRW(nil, 0)
+	crw := &customResponseWriter{}
 	_ = httpResponseWriter(crw)
 }
 
