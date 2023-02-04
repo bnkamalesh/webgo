@@ -14,7 +14,7 @@ import (
 // responsewriter used
 type httpResponseWriter interface {
 	http.ResponseWriter
-	http.CloseNotifier
+	http.CloseNotifier //nolint
 	http.Flusher
 	http.Hijacker
 	http.Pusher
@@ -94,8 +94,8 @@ func (crw *customResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 // CloseNotify implements the http.CloseNotifier interface
-func (crw *customResponseWriter) CloseNotify() <-chan bool {
-	if n, ok := crw.ResponseWriter.(http.CloseNotifier); ok {
+func (crw *customResponseWriter) CloseNotify() <-chan bool { //nolint
+	if n, ok := crw.ResponseWriter.(http.CloseNotifier); ok { //nolint
 		return n.CloseNotify()
 	}
 	return nil
