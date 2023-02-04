@@ -1,4 +1,5 @@
-run-name: Tests & Build
+name: Webgo tests
+
 on:
   push:
     branches:
@@ -7,11 +8,16 @@ on:
     branches:
       - master
 jobs:
-  tests:
-    name: Tests
+  build:
     runs-on: ubuntu-latest
-    container:
-      image: golang:1.13
     steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.13
+
+      - name: Test
+        run: go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
       # - run: sed -i 's/go [0-9]*\.[0-9]*//' go.mod
-      - run: go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
