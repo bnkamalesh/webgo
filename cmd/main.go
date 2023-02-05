@@ -111,8 +111,11 @@ func setup() (*webgo.Router, *sse.SSE) {
 	cfg := &webgo.Config{
 		Host:         "",
 		Port:         port,
+		HTTPSPort:    "9595",
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 1 * time.Hour,
+		CertFile:     "./certs/localhost.crt",
+		KeyFile:      "./certs/localhost.decrypted.key",
 	}
 
 	webgo.GlobalLoggerConfig(
@@ -120,9 +123,9 @@ func setup() (*webgo.Router, *sse.SSE) {
 		webgo.LogCfgDisableDebug,
 	)
 
-	routeGroup := webgo.NewRouteGroup("/v6.2", false)
+	routeGroup := webgo.NewRouteGroup("/v6.7", false)
 	routeGroup.Add(webgo.Route{
-		Name:     "router-group-prefix-v6.2_api",
+		Name:     "router-group-prefix-v6.7_api",
 		Method:   http.MethodGet,
 		Pattern:  "/api/:param",
 		Handlers: []http.HandlerFunc{chain, ParamHandler},
@@ -165,5 +168,6 @@ func main() {
 		}
 	}()
 
+	go router.StartHTTPS()
 	router.Start()
 }

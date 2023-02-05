@@ -68,7 +68,7 @@ func TestAccessLog(t *testing.T) {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(`hello`))
+	_, _ = w.Write([]byte(`hello`))
 }
 
 func setup(port string) (*webgo.Router, error) {
