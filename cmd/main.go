@@ -123,9 +123,9 @@ func setup() (*webgo.Router, *sse.SSE) {
 		webgo.LogCfgDisableDebug,
 	)
 
-	routeGroup := webgo.NewRouteGroup("/v6.2", false)
+	routeGroup := webgo.NewRouteGroup("/v6.7", false)
 	routeGroup.Add(webgo.Route{
-		Name:     "router-group-prefix-v6.2_api",
+		Name:     "router-group-prefix-v6.7_api",
 		Method:   http.MethodGet,
 		Pattern:  "/api/:param",
 		Handlers: []http.HandlerFunc{chain, ParamHandler},
@@ -168,5 +168,6 @@ func main() {
 		}
 	}()
 
-	router.StartHTTPS()
+	go router.StartHTTPS()
+	router.Start()
 }

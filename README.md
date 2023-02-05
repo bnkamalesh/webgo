@@ -7,7 +7,7 @@
 [![](https://godoc.org/github.com/nathany/looper?status.svg)](http://godoc.org/github.com/bnkamalesh/webgo)
 [![](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go#web-frameworks)
 
-# WebGo v6.6.6
+# WebGo v6.7.0
 
 WebGo is a minimalistic router for [Go](https://golang.org) to build web applications (server side) with no 3rd party dependencies. WebGo will always be Go standard library compliant; with the HTTP handlers having the same signature as [http.HandlerFunc](https://golang.org/pkg/net/http/#HandlerFunc).
 
@@ -26,7 +26,7 @@ WebGo is a minimalistic router for [Go](https://golang.org) to build web applica
 
 ## Router
 
-Webgo has a simplistic, regex based router and supports defining [URI](https://developer.mozilla.org/en-US/docs/Glossary/URI)s with the following patterns
+Webgo has a simplistic, linear path matching router and supports defining [URI](https://developer.mozilla.org/en-US/docs/Glossary/URI)s with the following patterns
 
 1. `/api/users` - URI with no dynamic values
 2. `/api/users/:userID`
@@ -179,14 +179,12 @@ func main() {
 		// }
 	}()
 
-	signal.Notify(osSig, os.Interrupt, syscall.SIGTERM)
+	go func(){
+		time.Sleep(time.Second*15)
+		signal.Notify(osSig, os.Interrupt, syscall.SIGTERM)
+	}()
 
 	router.Start()
-
-	for {
-		// Prevent main thread from exiting, and wait for shutdown to complete
-		time.Sleep(time.Second * 1)
-	}
 }
 ```
 
