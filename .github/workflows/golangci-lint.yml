@@ -13,7 +13,7 @@ permissions:
   # pull-requests: read
 jobs:
   golangci:
-    name: lint
+    name: Static analysis
     runs-on: ubuntu-latest
     steps:
       - uses: actions/setup-go@v3

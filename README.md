@@ -1,6 +1,6 @@
 <p align="center"><img src="https://user-images.githubusercontent.com/1092882/60883564-20142380-a268-11e9-988a-d98fb639adc6.png" alt="webgo gopher" width="256px"/></p>
 
-[![](https://travis-ci.org/bnkamalesh/webgo.svg?branch=master)](https://travis-ci.org/bnkamalesh/webgo)
+[![](https://github.com/bnkamalesh/webgo/actions/workflows/tests.yaml/badge.svg)](https://github.com/bnkamalesh/webgo/actions/workflows/tests.yaml)
 [![coverage](https://img.shields.io/codecov/c/github/bnkamalesh/webgo.svg)](https://codecov.io/gh/bnkamalesh/webgo)
 [![](https://goreportcard.com/badge/github.com/bnkamalesh/webgo)](https://goreportcard.com/report/github.com/bnkamalesh/webgo)
 [![](https://api.codeclimate.com/v1/badges/85b3a55c3fa6b4c5338d/maintainability)](https://codeclimate.com/github/bnkamalesh/webgo/maintainability)
