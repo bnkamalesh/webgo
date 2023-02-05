@@ -28,8 +28,6 @@ jobs:
 
       - name: Set up Go latest
         uses: actions/setup-go@v3
-        with:
-          go-version: latest
 
       - name: Test
         run: go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
