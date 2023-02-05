@@ -9,6 +9,7 @@ on:
       - master
 jobs:
   testold:
+    name: "Test with Go 1.13"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -22,6 +23,7 @@ jobs:
         run: go test -coverprofile=coverage.txt -covermode=atomic $(go list ./... | grep -v /cmd)
 
   testlatest:
+    name: "Test with default latest Go"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
