@@ -85,6 +85,38 @@ func ResponseStatus(rw http.ResponseWriter) int {
 	}
 	return crw.statusCode
 }
+func (router *Router) setupServer() {
+	cfg := router.config
+	router.httpsServer = &http.Server{
+		Addr:         "",
+		Handler:      router,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: cfg.InsecureSkipVerify,
+		},
+	}
+	router.httpServer = &http.Server{
+		Addr:         "",
+		Handler:      router,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
+	}
+	router.SetupMiddleware()
+}
+
+// SetupMiddleware initializes all the middleware added using "Use".
+// This function need not be called explicitly, if using router.Start()
+// or router.StartHTTPS(). Instead if the router is being passed to an external server
+// then the SetupMiddleware function should be called
+func (router *Router) SetupMiddleware() {
+	// load middleware for all routes
+	for _, routes := range router.allHandlers {
+		for _, route := range routes {
+			route.setupMiddleware(router.config.ReverseMiddleware)
+		}
+	}
+}
 
 // StartHTTPS starts the server with HTTPS enabled
 func (router *Router) StartHTTPS() {
@@ -97,22 +129,15 @@ func (router *Router) StartHTTPS() {
 		LOGHANDLER.Fatal("No key file provided for HTTPS")
 	}
 
+	router.setupServer()
+
 	host := cfg.Host
 	if len(cfg.HTTPSPort) > 0 {
 		host += ":" + cfg.HTTPSPort
 	}
+	router.httpsServer.Addr = host
 
-	router.httpsServer = &http.Server{
-		Addr:         host,
-		Handler:      router,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: cfg.InsecureSkipVerify,
-		},
-	}
-
-	LOGHANDLER.Info("HTTPS server, listening on", host)
+	LOGHANDLER.Info("HTTPS server, listening on", router.httpsServer.Addr)
 	err := router.httpsServer.ListenAndServeTLS(cfg.CertFile, cfg.KeyFile)
 	if err != nil && err != http.ErrServerClosed {
 		LOGHANDLER.Error("HTTPS server exited with error:", err.Error())
@@ -121,20 +146,16 @@ func (router *Router) StartHTTPS() {
 
 // Start starts the HTTP server with the appropriate configurations
 func (router *Router) Start() {
+	router.setupServer()
+
 	cfg := router.config
 	host := cfg.Host
-
 	if len(cfg.Port) > 0 {
 		host += ":" + cfg.Port
 	}
+	router.httpServer.Addr = host
 
-	router.httpServer = &http.Server{
-		Addr:         host,
-		Handler:      router,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-	}
-	LOGHANDLER.Info("HTTP server, listening on", host)
+	LOGHANDLER.Info("HTTP server, listening on", router.httpServer.Addr)
 	err := router.httpServer.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		LOGHANDLER.Error("HTTP server exited with error:", err.Error())

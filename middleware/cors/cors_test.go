@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v6"
+	"github.com/bnkamalesh/webgo/v7"
 )
 
 func TestCORSEmptyconfig(t *testing.T) {
@@ -31,6 +31,7 @@ func TestCORSEmptyconfig(t *testing.T) {
 		return
 	}
 	router.Use(CORS(&Config{TimeoutSecs: 50}))
+	router.SetupMiddleware()
 
 	url := fmt.Sprintf("http://localhost:%s/hello", port)
 	w := httptest.NewRecorder()
@@ -129,6 +130,7 @@ func TestCORSWithConfig(t *testing.T) {
 		nil,
 	)
 
+	router.SetupMiddleware()
 	router.ServeHTTP(w, req)
 
 	if w.Header().Get(headerMethods) != "GET,OPTIONS" {
@@ -230,5 +232,6 @@ func setup(port string, routes []*webgo.Route) (*webgo.Router, error) {
 		KeyFile:         "tests/ssl/server.key",
 	}
 	router := webgo.NewRouter(cfg, routes...)
+
 	return router, nil
 }

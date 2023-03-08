@@ -30,9 +30,9 @@ func TestRouteGroupsPathPrefix(t *testing.T) {
 		},
 	}
 
-	const prefix = "/v6.2"
+	const prefix = "/v7.0.0"
 	expectedSkipMiddleware := true
-	rg := NewRouteGroup("/v6.2", expectedSkipMiddleware, routes...)
+	rg := NewRouteGroup("/v7.0.0", expectedSkipMiddleware, routes...)
 
 	list := rg.Routes()
 	for idx := range list {

@@ -28,6 +28,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 	}
 	router.Use(m)
 	router.UseOnSpecialHandlers(m)
+	router.SetupMiddleware()
 
 	list := testTable()
 
@@ -136,6 +137,7 @@ func setup(t *testing.T, port string) (*Router, error) {
 		KeyFile:         "tests/ssl/server.key",
 	}
 	router := NewRouter(cfg, getRoutes(t)...)
+	router.SetupMiddleware()
 	return router, nil
 }
 

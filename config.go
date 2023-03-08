@@ -31,6 +31,11 @@ type Config struct {
 
 	// ShutdownTimeout is the duration in which graceful shutdown is completed
 	ShutdownTimeout time.Duration
+
+	// ReverseMiddleware if true, will reverse the order of execution middleware
+	// from the order of it was added. e.g. router.Use(m1,m2), m2 will execute first
+	// if ReverseMiddleware is true
+	ReverseMiddleware bool
 }
 
 // Load config file from the provided filepath and validate

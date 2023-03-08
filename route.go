@@ -33,6 +33,8 @@ type Route struct {
 	// skipMiddleware if true, middleware added using `router` will not be applied to this Route.
 	// This is used only when a Route is set using the RouteGroup, which can have its own set of middleware
 	skipMiddleware bool
+	// middlewareList is used at the last stage, i.e. right before starting the server
+	middlewarelist []Middleware
 
 	initialized bool
 
@@ -83,15 +85,36 @@ func (r *Route) parseURIWithParams() {
 	r.fragments = rFragments
 }
 
-// init prepares the URIKeys, compile regex for the provided pattern
+func (r *Route) setupMiddleware(reverse bool) {
+	if reverse {
+		for _, m := range r.middlewarelist {
+			srv := r.serve
+			r.serve = func(rw http.ResponseWriter, req *http.Request) {
+				m(rw, req, srv)
+			}
+		}
+	} else {
+		for i := len(r.middlewarelist) - 1; i >= 0; i-- {
+			m := r.middlewarelist[i]
+			srv := r.serve
+			r.serve = func(rw http.ResponseWriter, req *http.Request) {
+				m(rw, req, srv)
+			}
+		}
+	}
+	// clear middlewarelist since it's already setup for the route
+	r.middlewarelist = nil
+}
+
+// init does all the initializations required for the route
 func (r *Route) init() error {
 	if r.initialized {
 		return nil
 	}
+	r.initialized = true
+
 	r.parseURIWithParams()
 	r.serve = defaultRouteServe(r)
-
-	r.initialized = true
 	return nil
 }
 
@@ -176,13 +199,10 @@ func (r *Route) matchWithWildcard(requestURI string) (bool, map[string]string) {
 }
 
 func (r *Route) use(mm ...Middleware) {
-	for idx := range mm {
-		m := mm[idx]
-		srv := r.serve
-		r.serve = func(rw http.ResponseWriter, req *http.Request) {
-			m(rw, req, srv)
-		}
+	if r.middlewarelist == nil {
+		r.middlewarelist = make([]Middleware, 0, len(mm))
 	}
+	r.middlewarelist = append(r.middlewarelist, mm...)
 }
 
 func routeServeChainedHandlers(r *Route) http.HandlerFunc {
@@ -226,14 +246,12 @@ func (rg *RouteGroup) Add(rr ...Route) {
 		route := rr[idx]
 		route.skipMiddleware = rg.skipRouterMiddleware
 		route.Pattern = fmt.Sprintf("%s%s", rg.PathPrefix, route.Pattern)
-		_ = route.init()
 		rg.routes = append(rg.routes, &route)
 	}
 }
 
 func (rg *RouteGroup) Use(mm ...Middleware) {
-	for idx := range rg.routes {
-		route := rg.routes[idx]
+	for _, route := range rg.routes {
 		route.use(mm...)
 	}
 }

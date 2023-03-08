@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v6"
+	"github.com/bnkamalesh/webgo/v7"
 )
 
 func TestAccessLog(t *testing.T) {
@@ -28,6 +28,7 @@ func TestAccessLog(t *testing.T) {
 		return
 	}
 	router.Use(AccessLog)
+	router.SetupMiddleware()
 
 	url := fmt.Sprintf("http://localhost:%s/hello", port)
 	w := httptest.NewRecorder()

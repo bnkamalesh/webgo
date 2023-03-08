@@ -63,9 +63,9 @@ You can try the following API calls with the sample app. It also uses all the fe
      - http://localhost:8080/api/world
 4. `http://localhost:8080/error-setter`
    - Route which sets an error and sets response status 500
-5. `http://localhost:8080/v6.7/api/<param>`
+5. `http://localhost:8080/v7.0.0/api/<param>`
    - Route with a named 'param' configured
-   - It will match all requests which match `/v6.7/api/<single parameter>`
+   - It will match all requests which match `/v7.0.0/api/<single parameter>`
    - e.g.
-     - http://localhost:8080/v6.7/api/hello
-     - http://localhost:8080/v6.7/api/world
+     - http://localhost:8080/v7.0.0/api/hello
+     - http://localhost:8080/v7.0.0/api/world

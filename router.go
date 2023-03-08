@@ -216,7 +216,6 @@ func (rtr *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	defer releasePoolResources(crw, ctxPayload)
 	route.serve(crw, r)
-
 }
 
 // Use adds a middleware layer
