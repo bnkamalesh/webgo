@@ -137,7 +137,6 @@ func setup(t *testing.T, port string) (*Router, error) {
 		KeyFile:         "tests/ssl/server.key",
 	}
 	router := NewRouter(cfg, getRoutes(t)...)
-	router.SetupMiddleware()
 	return router, nil
 }
 
