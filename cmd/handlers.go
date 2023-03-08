@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/bnkamalesh/webgo/v6"
-	"github.com/bnkamalesh/webgo/v6/extensions/sse"
+	"github.com/bnkamalesh/webgo/v7"
+	"github.com/bnkamalesh/webgo/v7/extensions/sse"
 )
 
 // StaticFilesHandler is used to serve static files
@@ -137,9 +137,10 @@ func ParamHandler(w http.ResponseWriter, r *http.Request) {
 	webgo.R200(
 		w,
 		map[string]interface{}{
-			"route":   route.Name,
-			"params":  params,
-			"chained": r.Header.Get("chained"),
+			"route_name":    route.Name,
+			"route_pattern": route.Pattern,
+			"params":        params,
+			"chained":       r.Header.Get("chained"),
 		},
 	)
 }

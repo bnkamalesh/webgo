@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bnkamalesh/webgo/v6"
-	"github.com/bnkamalesh/webgo/v6/extensions/sse"
-	"github.com/bnkamalesh/webgo/v6/middleware/accesslog"
-	"github.com/bnkamalesh/webgo/v6/middleware/cors"
+	"github.com/bnkamalesh/webgo/v7"
+	"github.com/bnkamalesh/webgo/v7/extensions/sse"
+	"github.com/bnkamalesh/webgo/v7/middleware/accesslog"
+	"github.com/bnkamalesh/webgo/v7/middleware/cors"
 )
 
 var (
@@ -123,9 +123,9 @@ func setup() (*webgo.Router, *sse.SSE) {
 		webgo.LogCfgDisableDebug,
 	)
 
-	routeGroup := webgo.NewRouteGroup("/v6.7", false)
+	routeGroup := webgo.NewRouteGroup("/v7.0.0", false)
 	routeGroup.Add(webgo.Route{
-		Name:     "router-group-prefix-v6.7_api",
+		Name:     "router-group-prefix-v7.0.0_api",
 		Method:   http.MethodGet,
 		Pattern:  "/api/:param",
 		Handlers: []http.HandlerFunc{chain, ParamHandler},
@@ -145,7 +145,12 @@ func setup() (*webgo.Router, *sse.SSE) {
 
 	router := webgo.NewRouter(cfg, routes...)
 	router.UseOnSpecialHandlers(accesslog.AccessLog)
-	router.Use(errLogger, accesslog.AccessLog, cors.CORS(nil))
+	router.Use(
+		errLogger,
+		cors.CORS(nil),
+		accesslog.AccessLog,
+	)
+
 	return router, sseService
 }
 

@@ -1,9 +1,9 @@
 /*
 Package cors sets the appropriate CORS(https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
 response headers, and lets you customize. Following customizations are allowed:
-	- provide a list of allowed domains
-	- provide a list of headers
-	- set the max-age of CORS headers
+  - provide a list of allowed domains
+  - provide a list of headers
+  - set the max-age of CORS headers
 
 The list of allowed methods are
 */
@@ -16,7 +16,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/bnkamalesh/webgo/v6"
+	"github.com/bnkamalesh/webgo/v7"
 )
 
 const (

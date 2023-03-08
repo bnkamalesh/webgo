@@ -28,6 +28,7 @@ func TestRouter_ServeHTTP(t *testing.T) {
 	}
 	router.Use(m)
 	router.UseOnSpecialHandlers(m)
+	router.SetupMiddleware()
 
 	list := testTable()
 

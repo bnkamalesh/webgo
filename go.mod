@@ -1,3 +1,3 @@
-module github.com/bnkamalesh/webgo/v6
+module github.com/bnkamalesh/webgo/v7
 
 go 1.19
