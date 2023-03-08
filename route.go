@@ -87,7 +87,8 @@ func (r *Route) parseURIWithParams() {
 
 func (r *Route) setupMiddleware(reverse bool) {
 	if reverse {
-		for _, m := range r.middlewarelist {
+		for i := range r.middlewarelist {
+			m := r.middlewarelist[i]
 			srv := r.serve
 			r.serve = func(rw http.ResponseWriter, req *http.Request) {
 				m(rw, req, srv)
